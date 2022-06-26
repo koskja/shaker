@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "server",
+    "libf",
+    "libf-derive"
+]
