@@ -2,7 +2,7 @@
 use std::any::{type_name, type_name_of_val};
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener};
 
-use libf::types::{VarInt, LimitedSlice};
+use libf::types::{LimitedSlice, VarInt};
 use libf::Packet;
 fn main() -> Result<(), std::io::Error> {
     /*let l = libf::First {

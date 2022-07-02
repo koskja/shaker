@@ -7,6 +7,7 @@ use num_traits::{NumCast, PrimInt};
 
 use crate::Packet;
 
+// FIXME: Serialize/deserialize everything as signed, even unsigned types
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, SerializeFn)]
 pub struct VarInt<T: PrimInt + From<u8>>(pub T);
 impl<'a, T: PrimInt + From<u8>> Packet<'a> for VarInt<T> {
@@ -73,22 +74,27 @@ impl<'a, const MAX: usize> Packet<'a> for LimitedSlice<'a, MAX> {
         )(input)
     }
 }
-/*#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, SerializeFn)]
-pub struct Str<'a>(&'a str);
-impl<'a> Packet for Str<'a> {
+#[derive(Debug)]
+pub struct LimitedString<'a, const MAX: usize>(pub &'a str);
+impl<'a, const MAX: usize> Packet<'a> for LimitedString<'a, MAX> {
     fn serialize<W: Write>(&self, w: WriteContext<W>) -> GenResult<W> {
-        cookie_factory::sequence::pair(VarInt(self.0.len() as u32), cookie_factory::combinator::string(self.0))(w)
+        assert!(self.0.len() <= MAX);
+        cookie_factory::sequence::pair(
+            VarInt(self.0.len() as u32),
+            cookie_factory::combinator::string(self.0),
+        )(w)
     }
 
-    fn deserialize<'b>(input: &'b [u8]) -> IResult<&'b [u8], Self>
-    where
-        Self: 'b + Sized {
-        nom::multi::length_value(
-            nom::combinator::map(VarInt::<u32>::deserialize, |x| x.0 as usize),
-            |x| Ok((&[], std::str::from_utf8(x)?))
+    fn deserialize(input: &'a [u8]) -> IResult<&'a [u8], Self> {
+        nom::combinator::map_res(
+            nom::multi::length_data(nom::combinator::verify(
+                VarInt::<u32>::deserialize_prim::<usize>,
+                |&x| x <= MAX,
+            )),
+            |x| std::str::from_utf8(x).map(Self),
         )(input)
     }
-}*/
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, SerializeFn)]
 pub struct Bool(pub bool);
