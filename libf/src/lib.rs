@@ -23,27 +23,11 @@ pub struct First {
     pub b: VarInt<i32>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Packet)]
 pub struct Second<'a> {
     pub a: VarInt<u32>,
-    //#[borrow('a)]
     pub b: LimitedSlice<'a, 2>,
-}
-impl<'a, 'this: 'a> Packet<'this> for Second<'a> {
-    fn serialize<W: Write>(&self, w: WriteContext<W>) -> GenResult<W> {
-        let w = <VarInt<u32> as Packet>::serialize(&self.a, w)?;
-        let w = <LimitedSlice<'a, 2> as Packet>::serialize(&self.b, w)?;
-        Ok(w)
-    }
-    fn deserialize(input: &'this [u8]) -> IResult<&'this [u8], Self> {
-        nom::combinator::map(
-            nom::sequence::tuple((
-                <VarInt<u32> as Packet>::deserialize,
-                <LimitedSlice<'a, 2> as Packet>::deserialize,
-            )),
-            |(a, b)| Self { a, b },
-        )(input)
-    }
+    pub c: LimitedSlice<'a, 3>,
 }
 
 #[derive(Debug, Packet)]
@@ -51,5 +35,5 @@ impl<'a, 'this: 'a> Packet<'this> for Second<'a> {
 pub enum Login<'this> {
     First(First) = 0xF0,
     Second(Second<'this>) = 0x01,
-    Third(Second<'this>),
+    Tis { a: Second<'this>, b: First },
 }

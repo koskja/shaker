@@ -55,7 +55,7 @@ impl<T: PrimInt + From<u8>> VarInt<T> {
 }
 #[derive(Debug)]
 pub struct LimitedSlice<'a, const MAX: usize>(pub &'a [u8]);
-impl<'a, const MAX: usize> Packet<'a> for LimitedSlice<'a, MAX> {
+impl<'t: 'a, 'a, const MAX: usize> Packet<'t> for LimitedSlice<'a, MAX> {
     fn serialize<W: Write>(&self, w: WriteContext<W>) -> GenResult<W> {
         assert!(self.0.len() <= MAX);
         cookie_factory::sequence::pair(
@@ -64,7 +64,7 @@ impl<'a, const MAX: usize> Packet<'a> for LimitedSlice<'a, MAX> {
         )(w)
     }
 
-    fn deserialize(input: &'a [u8]) -> IResult<&'a [u8], Self> {
+    fn deserialize(input: &'t [u8]) -> IResult<&'t [u8], Self> {
         nom::combinator::map(
             nom::multi::length_data(nom::combinator::verify(
                 VarInt::<u32>::deserialize_prim::<usize>,
@@ -76,7 +76,7 @@ impl<'a, const MAX: usize> Packet<'a> for LimitedSlice<'a, MAX> {
 }
 #[derive(Debug)]
 pub struct LimitedString<'a, const MAX: usize>(pub &'a str);
-impl<'a, const MAX: usize> Packet<'a> for LimitedString<'a, MAX> {
+impl<'t: 'a, 'a, const MAX: usize> Packet<'t> for LimitedString<'a, MAX> {
     fn serialize<W: Write>(&self, w: WriteContext<W>) -> GenResult<W> {
         assert!(self.0.len() <= MAX);
         cookie_factory::sequence::pair(
@@ -85,7 +85,7 @@ impl<'a, const MAX: usize> Packet<'a> for LimitedString<'a, MAX> {
         )(w)
     }
 
-    fn deserialize(input: &'a [u8]) -> IResult<&'a [u8], Self> {
+    fn deserialize(input: &'t [u8]) -> IResult<&'t [u8], Self> {
         nom::combinator::map_res(
             nom::multi::length_data(nom::combinator::verify(
                 VarInt::<u32>::deserialize_prim::<usize>,
@@ -124,7 +124,6 @@ macro_rules! packet_primitive {
     };
 }
 mod primitives {
-    use super::*;
     use cookie_factory::bytes as ser;
     use nom::number::complete as de;
     packet_primitive!(u8, ser::be_u8, de::be_u8);

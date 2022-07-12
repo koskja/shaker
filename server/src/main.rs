@@ -12,6 +12,7 @@ fn main() -> Result<(), std::io::Error> {
     let l = libf::Second {
         a: VarInt(568),
         b: LimitedSlice(&[83, 54, 33]),
+        c: LimitedSlice(&[83, 54, 33]),
     };
     println!("{}", type_name_of_val(&l));
     let mut buf = vec![];
