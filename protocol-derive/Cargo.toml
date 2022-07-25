@@ -1,13 +1,12 @@
 [package]
-name = "server"
+name = "protocol-derive"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[lib]
+proc-macro = true
+
 [dependencies]
-protocol-lib = { path = "../protocol-lib" }
-nom = "7"
-cookie-factory = "0.3.2"
-anyhow="1"
-json = "0.12"
+protocol-derive-impl = { path = "../protocol-derive-impl" }

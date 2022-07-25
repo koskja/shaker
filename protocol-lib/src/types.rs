@@ -1,9 +1,9 @@
 use std::io::Write;
 
 use cookie_factory::{GenResult, WriteContext};
-use libf_derive::SerializeFn;
 use nom::IResult;
 use num_traits::{NumCast, PrimInt};
+use protocol_derive::SerializeFn;
 
 use crate::Packet;
 

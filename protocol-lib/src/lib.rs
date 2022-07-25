@@ -8,8 +8,8 @@ pub mod types;
 use std::io::Write;
 
 use cookie_factory::{GenResult, WriteContext};
-use libf_derive::Packet;
 use nom::IResult;
+use protocol_derive::Packet;
 use types::{LimitedSlice, VarInt};
 
 pub trait Packet<'a>: Sized {

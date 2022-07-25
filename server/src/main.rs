@@ -1,28 +1,27 @@
 #![feature(type_name_of_val)]
 use std::any::{type_name, type_name_of_val};
+use std::collections::HashMap;
+use std::io;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpListener};
+use std::path::PathBuf;
+use std::str::FromStr;
 
-use libf::types::{LimitedSlice, VarInt};
-use libf::Packet;
-fn main() -> Result<(), std::io::Error> {
-    /*let l = libf::First {
-        a: VarInt(69420),
-        b: VarInt(-6554423),
-    }; */
-    let l = libf::Second {
-        a: VarInt(568),
-        b: LimitedSlice(&[83, 54, 33]),
-        c: LimitedSlice(&[83, 54, 33]),
-    };
-    println!("{}", type_name_of_val(&l));
-    let mut buf = vec![];
-    cookie_factory::gen(|x| l.serialize(x), &mut buf).unwrap();
-    let res = libf::Second::deserialize(&buf).unwrap();
-    println!("{:?}", res);
-    /*let socket = SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 25565);
-    let listener = TcpListener::bind(socket)?;
-    for con in listener.incoming() {
-        let mut _con = con?;
-    }*/
+use anyhow::bail;
+
+fn get_protocol(version: &str) -> anyhow::Result<String> {
+    let paths = std::fs::read_to_string("minecraft-data/data/dataPaths.json")?;
+    let j = json::parse(&paths)?;
+    let s = j["pc"][version]["protocol"].to_string();
+    if s == "null" {
+        bail!("Cannot find version {version}")
+    }
+    let dir = PathBuf::from_str("minecraft-data/data/")?;
+    std::fs::read_to_string(dir.join(&s).join("protocol.json")).map_err(Into::into)
+}
+
+fn main() -> anyhow::Result<()> {
+    let s = get_protocol("1.18")?;
+    println!("{s}");
+    let proto = json::parse(&s)?;
     Ok(())
 }

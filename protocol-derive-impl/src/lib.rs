@@ -15,7 +15,6 @@ use syn::{
     Lifetime, MetaList, NestedMeta, TypeParam, WherePredicate,
 };
 
-#[proc_macro_derive(SerializeFn)]
 pub fn sfn(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     // Parse the string representation
     let ast = syn::parse(input).unwrap();
@@ -41,7 +40,7 @@ pub fn sfn(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 /// ```
 /// If implicit lifetime bounds aren't desired, one can apply `#[packet(borrow = "explicit")]` to the entire struct,
 /// disabling implicit lifetime bounds generation. Then it is neccessary to use `#[packet(borrow)]` or `#[packet(borrow = "'a + 'b")]` for the individual fields. It is also possible to use these attributes without explicit borrows. In that case, they override the default.
-#[proc_macro_derive(Packet, attributes(packet))]
+
 pub fn packet(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     // Parse the string representation
     let ast = syn::parse(input).unwrap();
@@ -293,7 +292,7 @@ fn get_borrow_lifetimes(ast: &syn::DeriveInput) -> Punctuated<Lifetime, syn::Tok
     let mut p: Punctuated<_, syn::Token![+]> = Punctuated::new();
     p.extend(lifetimes.into_iter());
     let l: Punctuated<Lifetime, syn::Token![+]> = syn::parse_quote!(#p);
-    eprintln!("{}", l.to_token_stream());
+    //eprintln!("{}", l.to_token_stream());
     l
 }
 fn add_this_lifetime(
