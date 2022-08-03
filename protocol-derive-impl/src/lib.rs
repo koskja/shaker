@@ -11,8 +11,8 @@ use lifetime::get_type_lifetimes;
 use proc_macro2::TokenStream;
 use quote::{ToTokens, __private::Literal};
 use syn::{
-    parse::Parser, parse_str, punctuated::Punctuated, ExprLit, GenericParam,
-    Lifetime, MetaList, NestedMeta, TypeParam, WherePredicate,
+    parse::Parser, parse_str, punctuated::Punctuated, ExprLit, GenericParam, Lifetime, MetaList,
+    NestedMeta, TypeParam, WherePredicate,
 };
 
 pub fn sfn(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
@@ -124,32 +124,38 @@ fn impl_packet(ast: &syn::DeriveInput) -> TokenStream {
             let l: Vec<_> = variants.iter().map(|(x, _, _)| x).collect();
             let variant_contents: Vec<_> = variants
                 .iter()
-                .map(|(_, ident, x)| {
-                    match x {
-                        syn::Fields::Named(n) => {
-                            let names: Vec<_> = n.named.iter().map(|x| x.ident.clone().unwrap()).collect();
-                            (quote! {
+                .map(|(_, ident, x)| match x {
+                    syn::Fields::Named(n) => {
+                        let names: Vec<_> =
+                            n.named.iter().map(|x| x.ident.clone().unwrap()).collect();
+                        (
+                            quote! {
                                 #ident {
                                     #(
                                         #names
                                     ),*
                                 }
-                            }, names)
-                        },
-                        syn::Fields::Unnamed(u) => {
-                            let vars: Vec<_> = gen_identifiers(u.unnamed.len()).collect();
-                            (quote! {
+                            },
+                            names,
+                        )
+                    }
+                    syn::Fields::Unnamed(u) => {
+                        let vars: Vec<_> = gen_identifiers(u.unnamed.len()).collect();
+                        (
+                            quote! {
                                 #ident(#(
                                     #vars
                                 ),*)
-                            }, vars)
-
-                        },
-                        syn::Fields::Unit => todo!(),
+                            },
+                            vars,
+                        )
                     }
-                }).collect();
+                    syn::Fields::Unit => todo!(),
+                })
+                .collect();
             let variant_patterns: Vec<_> = variant_contents.iter().map(|(x, _)| x).collect();
-            let variant_values: Vec<Vec<_>> = variant_contents.iter().map(|(_, x)| x.clone()).collect();
+            let variant_values: Vec<Vec<_>> =
+                variant_contents.iter().map(|(_, x)| x.clone()).collect();
             quote! {
                 impl #impl_generics Packet<'_t> for #name #type_generics #where_clause {
                     #[allow(unused_variables)]
@@ -348,6 +354,8 @@ fn impl_serialize_fn(ast: &syn::DeriveInput) -> TokenStream {
     .into();
     r
 }
-fn gen_identifiers(count: usize) -> impl Iterator<Item = syn::Ident>  {
-    (0..count).into_iter().map(|x| syn::Ident::new(&format!("field{}", x), proc_macro2::Span::call_site()))
+fn gen_identifiers(count: usize) -> impl Iterator<Item = syn::Ident> {
+    (0..count)
+        .into_iter()
+        .map(|x| syn::Ident::new(&format!("field{}", x), proc_macro2::Span::call_site()))
 }

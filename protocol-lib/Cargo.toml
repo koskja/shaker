@@ -11,3 +11,5 @@ cookie-factory = "0.3.2"
 num-traits = "0.2"
 num-derive = "0.3"
 protocol-derive = { path = "../protocol-derive" }
+uuid = "1"
+quartz_nbt = "0.2"

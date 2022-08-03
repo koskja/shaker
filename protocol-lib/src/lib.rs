@@ -11,10 +11,11 @@ use cookie_factory::{GenResult, WriteContext};
 use nom::IResult;
 use protocol_derive::Packet;
 use types::{LimitedSlice, VarInt};
+mod varint;
 
-pub trait Packet<'a>: Sized {
+pub trait Packet<'t>: Sized {
     fn serialize<W: Write>(&self, w: WriteContext<W>) -> GenResult<W>;
-    fn deserialize(input: &'a [u8]) -> IResult<&'a [u8], Self>;
+    fn deserialize(input: &'t [u8]) -> IResult<&'t [u8], Self>;
 }
 
 #[derive(Debug, Packet)]

@@ -1,58 +1,26 @@
-use std::io::Write;
+use std::{
+    io::{Cursor, Write},
+    marker::PhantomData,
+    ops::Deref,
+};
 
-use cookie_factory::{GenResult, WriteContext};
-use nom::IResult;
-use num_traits::{NumCast, PrimInt};
+use cookie_factory::{GenError, GenResult, WriteContext};
+use nom::{
+    branch::alt,
+    bytes::complete::{tag, take},
+    combinator::{map, map_opt, map_res},
+    multi::{length_count, length_data},
+    sequence::preceded,
+    IResult,
+};
+use num_traits::PrimInt;
 use protocol_derive::SerializeFn;
 
+pub use super::varint::VarInt;
 use crate::Packet;
-
+pub use uuid::Uuid;
 // FIXME: Serialize/deserialize everything as signed, even unsigned types
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, SerializeFn)]
-pub struct VarInt<T: PrimInt + From<u8>>(pub T);
-impl<'a, T: PrimInt + From<u8>> Packet<'a> for VarInt<T> {
-    fn serialize<W: Write>(&self, mut w: WriteContext<W>) -> GenResult<W> {
-        let mut val = self.0;
-        loop {
-            let mut bottom_byte = (val & (<T as From<u8>>::from(0xFFu8))).to_u8().unwrap();
-            bottom_byte &= 0x7F;
-            val = val.unsigned_shr(7);
-            if val.is_zero() {
-                w.write(&[bottom_byte])?;
-                return Ok(w);
-            }
-            bottom_byte |= 0x80;
-            w.write(&[bottom_byte])?;
-        }
-    }
 
-    fn deserialize(input: &'a [u8]) -> IResult<&'a [u8], Self> {
-        let max_len = {
-            let max = T::max_value();
-            max.count_ones().div_ceil(7)
-        } as usize;
-        let mut result: T = 0u8.into();
-        for (pos, &val) in input.iter().take(max_len).enumerate() {
-            let trimmed_byte: T = (val & 0x7F).into();
-            result = result | (trimmed_byte.unsigned_shl(pos as u32 * 7));
-            if val & 0x80 != 0x80 {
-                return IResult::Ok((&input[pos + 1..], Self(result)));
-            }
-        }
-        IResult::Err(nom::Err::Error(nom::error::Error::new(
-            input,
-            nom::error::ErrorKind::TooLarge,
-        )))
-    }
-}
-impl<T: PrimInt + From<u8>> VarInt<T> {
-    pub fn deserialize_self<'a>(input: &'a [u8]) -> IResult<&'a [u8], T> {
-        Self::deserialize(input).map(|(i, this)| (i, this.0))
-    }
-    pub fn deserialize_prim<'a, U: NumCast>(input: &'a [u8]) -> IResult<&'a [u8], U> {
-        Self::deserialize(input).map(|(i, this)| (i, U::from(this.0).unwrap()))
-    }
-}
 #[derive(Debug)]
 pub struct LimitedSlice<'a, const MAX: usize>(pub &'a [u8]);
 impl<'t: 'a, 'a, const MAX: usize> Packet<'t> for LimitedSlice<'a, MAX> {
@@ -107,6 +75,151 @@ impl<'a> Packet<'a> for Bool {
         nom::combinator::map(nom::number::complete::be_u8, |x| Self(x != 0))(input)
     }
 }
+pub struct PrefixedBuffer<'a, T>(pub &'a [u8], pub PhantomData<T>);
+impl<'t: 'a, 'a, T: Packet<'t> + PrimInt + TryFrom<usize>> Packet<'t> for PrefixedBuffer<'a, T> {
+    fn serialize<W: Write>(&self, w: WriteContext<W>) -> GenResult<W> {
+        let length = T::try_from(self.0.len()).map_err(|_| GenError::CustomError(0))?;
+        let w = length.serialize(w)?;
+        cookie_factory::combinator::slice(self.0)(w)
+    }
+
+    fn deserialize(input: &'t [u8]) -> IResult<&'t [u8], Self> {
+        map(
+            length_data(map_opt(T::deserialize, |x| x.to_usize())),
+            |x| Self(x, PhantomData),
+        )(input)
+    }
+}
+impl<'a, T> Deref for PrefixedBuffer<'a, T> {
+    type Target = [u8];
+
+    fn deref(&self) -> &Self::Target {
+        self.0
+    }
+}
+pub struct PrefixedString<'a, T>(pub &'a str, pub PhantomData<T>);
+impl<'t: 'a, 'a, T: Packet<'t> + PrimInt + TryFrom<usize>> Packet<'t> for PrefixedString<'a, T> {
+    fn serialize<W: Write>(&self, w: WriteContext<W>) -> GenResult<W> {
+        PrefixedBuffer(self.0.as_bytes(), PhantomData::<T>).serialize(w)
+    }
+
+    fn deserialize(input: &'t [u8]) -> IResult<&'t [u8], Self> {
+        map(
+            map_res(PrefixedBuffer::<T>::deserialize, |x| {
+                std::str::from_utf8(x.0)
+            }),
+            |x| Self(x, PhantomData),
+        )(input)
+    }
+}
+pub struct PrefixedArray<T, U>(pub Vec<T>, pub PhantomData<U>);
+impl<'t, T: Packet<'t>, U: Packet<'t> + PrimInt + TryFrom<usize>> Packet<'t>
+    for PrefixedArray<T, U>
+{
+    fn serialize<W: Write>(&self, w: WriteContext<W>) -> GenResult<W> {
+        let length = U::try_from(self.0.len()).map_err(|_| GenError::CustomError(0))?;
+        let mut w = length.serialize(w)?;
+        for i in &self.0 {
+            w = i.serialize(w)?;
+        }
+        Ok(w)
+    }
+
+    fn deserialize(input: &'t [u8]) -> IResult<&'t [u8], Self> {
+        map(
+            length_count(map_opt(U::deserialize, |x| x.to_usize()), T::deserialize),
+            |x| Self(x, PhantomData),
+        )(input)
+    }
+}
+impl<'t> Packet<'t> for uuid::Uuid {
+    fn serialize<W: Write>(&self, w: WriteContext<W>) -> GenResult<W> {
+        let (top, bot) = self.as_u64_pair();
+        let w = cookie_factory::bytes::be_u64(top)(w)?;
+        cookie_factory::bytes::be_u64(bot)(w)
+    }
+
+    fn deserialize(input: &'t [u8]) -> IResult<&'t [u8], Self> {
+        map_res(take(16usize), Self::from_slice)(input)
+    }
+}
+impl<'t: 'a, 'a, T: Packet<'t> + 'a> Packet<'t> for Option<T> {
+    fn serialize<W: Write>(&self, w: WriteContext<W>) -> GenResult<W> {
+        if let Some(value) = self {
+            let w = cookie_factory::bytes::be_u8(0x01)(w)?;
+            value.serialize(w)
+        } else {
+            cookie_factory::bytes::be_u8(0x00)(w)
+        }
+    }
+
+    fn deserialize(input: &'t [u8]) -> IResult<&'t [u8], Self> {
+        alt((
+            map(tag([0x00]), |_| None),
+            preceded(tag([0x01]), map(T::deserialize, Some)),
+        ))(input)
+    }
+}
+pub struct Void;
+impl<'t> Packet<'t> for Void {
+    fn serialize<W: Write>(&self, w: WriteContext<W>) -> GenResult<W> {
+        GenResult::Ok(w)
+    }
+
+    fn deserialize(input: &'t [u8]) -> IResult<&'t [u8], Self> {
+        Ok((input, Self))
+    }
+}
+pub struct RestBuffer<'a>(pub &'a [u8]);
+impl<'t: 'a, 'a> Packet<'t> for RestBuffer<'a> {
+    fn serialize<W: Write>(&self, w: WriteContext<W>) -> GenResult<W> {
+        cookie_factory::combinator::slice(self.0)(w)
+    }
+
+    fn deserialize(input: &'t [u8]) -> IResult<&'t [u8], Self> {
+        Ok((&[], Self(input)))
+    }
+}
+
+pub struct Nbt(pub quartz_nbt::NbtCompound, pub String);
+impl<'t> Packet<'t> for Nbt {
+    fn serialize<W: Write>(&self, mut w: WriteContext<W>) -> GenResult<W> {
+        quartz_nbt::io::write_nbt(
+            &mut w,
+            Some(&self.1),
+            &self.0,
+            quartz_nbt::io::Flavor::Uncompressed,
+        )
+        .map_err(|_| GenError::CustomError(4))?;
+        Ok(w)
+    }
+
+    fn deserialize(input: &'t [u8]) -> IResult<&'t [u8], Self> {
+        let mut c = Cursor::new(input);
+        let x = quartz_nbt::io::read_nbt(&mut c, quartz_nbt::io::Flavor::Uncompressed).map_err(
+            |_| nom::Err::Error(nom::error::Error::new(input, nom::error::ErrorKind::Verify)),
+        )?;
+        Ok((&input[c.position() as usize..], Self(x.0, x.1)))
+    }
+}
+
+pub struct OptionalNbt(pub Option<Nbt>);
+impl<'t> Packet<'t> for OptionalNbt {
+    fn serialize<W: Write>(&self, w: WriteContext<W>) -> GenResult<W> {
+        match self.0 {
+            Some(ref x) => x.serialize(w),
+            None => cookie_factory::bytes::be_u8(0x00)(w),
+        }
+    }
+
+    fn deserialize(input: &'t [u8]) -> IResult<&'t [u8], Self> {
+        alt((
+            map(tag([0x00]), |_| Self(None)),
+            map(Nbt::deserialize, |x| Self(Some(x))),
+        ))(input)
+    }
+}
+
 macro_rules! packet_primitive {
     ($inner:ty, $s:path, $d:path) => {
         impl<'a> $crate::Packet<'a> for $inner {
