@@ -12,8 +12,8 @@
         "f32": "f32",
         "f64": "f64",
         "UUID": "Uuid",
-        "varint": "VarInt<i32>",
-        "varlong": "VarInt<i64>",
+        "varint": "VInt",
+        "varlong": "VLong",
         "pstring": "PrefixedString<'a, $countType>",
         "buffer": "PrefixedBuffer<'a, $countType>",
         "array": "PrefixedArray<$type, $countType>",
@@ -26,7 +26,9 @@
     "prelude": {
         "global": [
             "#[allow(unused_imports)]",
-            "use protocol_lib::types::*;"
+            "use protocol_lib::types::*;",
+            "type VInt = VarInt<i32>;",
+            "type VLong = VarInt<i64>;"
         ],
         "all": [
             "use crate::test::*;"

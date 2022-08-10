@@ -44,7 +44,6 @@ class Context:
             if type_def == 'native':
                 if name in self.native_typemap:
                     self.insert(name, parse_external(self.native_typemap[name]))
-                    assert name == make_unique(name)
                 elif not self.contains(name):
                     raise RuntimeError('cringe')
             else:
@@ -72,14 +71,18 @@ class Context:
     def __make_unique(self, n: str, p: str | None, s: str | None):
         p = p or ''
         s = s or ''
-        values = [n, p + n, n + s, p + n + s]
-        for val in values:
+        values = [[n], [p, n], [n, s], [p, n, s]]
+        for segs in values:
+            val = make_snakecase('_'.join(segs))
             if val not in self.used_idents:
                 self.used_idents.add(val)
                 return val
         return anon_ident()
-        
+
 def camelcased(func):
+    """
+    call `make_camelcase` on the second argument.
+    """
     return lambda a, b, c: func(a, make_camelcase(b), c)
 
 
@@ -226,7 +229,7 @@ class Mapper(IType):
 
 class Switch(IType):
     def __init__(self, name, compare_to, fields, default) -> None:
-        self._name = make_camelcase(name)
+        self._name = name
         self.compare_to = compare_to
         self.fields = fields
         self.default = default
@@ -239,7 +242,7 @@ class Switch(IType):
         a = f"pub enum {self._name}{lifetime} {{\n"
         a += "".join(
             map(
-                lambda x: f"{make_camelcase(x[0])}"
+                lambda x: f"{x[0]}"
                 + (
                     ""
                     if isinstance(x[1], NativeType) and x[1].void
@@ -274,7 +277,7 @@ class Switch(IType):
         fields = dict(
             map(
                 lambda x: (
-                    x[0],
+                    make_camelcase(x[0]),
                     ctx.parse_type(x[1], x[0], prefix=name),
                 ),
                 params["fields"].items(),
@@ -337,6 +340,9 @@ class Bitfield(IType):
 
     @camelcased
     def construct(ctx: Context, name: str, params: Any) -> IType:
+        params = deepcopy(params)
+        for x in params:
+            x['name'] = make_snakecase(x['name'])
         return Bitfield(name, params)
 
 
@@ -575,7 +581,6 @@ for n, l in ctx.types.items():
 o = ""
 protocol.pop("types")
 base_ctx = ctx.clone()
-base_idents = deepcopy(make_unique.used)
 
 for i, j in protocol.items():
     o += f"pub mod {i} {{\n"
@@ -590,7 +595,6 @@ for i, j in protocol.items():
             xdd = ctx.types[m].emit_extra()
             o += xdd
         ctx = base_ctx.clone()
-        make_unique.used = deepcopy(base_idents)
         o += "}\n"
 
     o += "}\n"
