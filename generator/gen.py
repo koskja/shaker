@@ -2,11 +2,85 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 import json
 import re
-from typing import Any, Callable, Dict, List, Union
+from typing import Any, Callable, Dict, List, Set, Union
 
 from sympy import Integer, public
 
 from helpers import *
+
+class Context:
+    types: Dict[str, 'IType']
+    type_constructors: Dict[str, 'ITypeConstructor']
+    native_typemap: Dict[str, str]
+    used_idents: Set[str]
+
+    def __init__(self, native: Dict[str, str]) -> None:
+        self.types = {}
+        self.type_constructors = {}
+        self.used_idents = set()
+        self.native_typemap = native
+    
+    def clone(self) -> 'Context':
+        return deepcopy(self)
+    
+    def insert(self, name: str, ty: Union['IType',  'ITypeConstructor']):
+        if isinstance(ty, IType):
+            if name in self.types:
+                raise RuntimeError('Cannot override type')
+            self.types[name] = ty
+        elif isinstance(ty, ITypeConstructor):
+            if name in self.type_constructors:
+                self.type_constructors[name] = ConstructorList(ty, self.type_constructors[name])
+            else:
+                self.type_constructors[name] = ty
+        else:
+            raise RuntimeError('Invalid type')
+    
+    def contains(self, type: str) -> bool:
+        return type in self.types or type in self.type_constructors
+    
+    def parse(self, name: str, type_def: str | List):
+        if isinstance(type_def, str):
+            if type_def == 'native':
+                if name in self.native_typemap:
+                    self.insert(name, parse_external(self.native_typemap[name]))
+                    assert name == make_unique(name)
+                elif not self.contains(name):
+                    raise RuntimeError('cringe')
+            else:
+                self.types[name] = TyAlias(name, self.types[type_def])
+        else: # handle template
+            assert isinstance(type_def, List)
+            template, params = self.type_constructors[type_def[0]], type_def[1]
+            if DelayedContructor.check(params):
+                ty = DelayedContructor(template, params)
+            else:
+                ty = template.ctor(self, name, params)
+            self.insert(name, ty)
+
+    def parse_type(self, type_def: str | List, name: str, prefix = None, suffix = None) -> 'IType':
+        name = self.__make_unique(name, prefix, suffix)
+        if name not in self.types:
+            if isinstance(type_def, str) and type_def in self.types:
+                return self.types[type_def]
+            self.parse(name, type_def)
+        return self.types[name]
+
+    def reserve_ident(self, name: str):
+        self.used_idents.add(name)
+    
+    def __make_unique(self, n: str, p: str | None, s: str | None):
+        p = p or ''
+        s = s or ''
+        values = [n, p + n, n + s, p + n + s]
+        for val in values:
+            if val not in self.used_idents:
+                self.used_idents.add(val)
+                return val
+        return anon_ident()
+        
+def camelcased(func):
+    return lambda a, b, c: func(a, make_camelcase(b), c)
 
 
 class IType(ABC):
@@ -34,21 +108,21 @@ class IType(ABC):
 class ITypeConstructor(ABC):
     @abstractmethod
     def ctor(
-        self, type_map: Dict[str, Union[IType, "ITypeConstructor"]], name: str, params
+        self, ctx: Context, name: str, params
     ) -> IType:
         pass
 
 
 class TypeConstructorDelegate(ITypeConstructor):
-    func: Callable[[Dict[str, Union[IType, "ITypeConstructor"]], str, Any], IType] = None
+    func: Callable[[Context, str, Any], IType] = None
 
     def __init__(self, func) -> None:
         self.func = func
 
     def ctor(
-        self, type_map: Dict[str, Union[IType, "ITypeConstructor"]], name: str, params
+        self, ctx: Context, name: str, params
     ) -> IType:
-        return self.func(type_map, name, params)
+        return self.func(ctx, name, params)
 
 class DelayedContructor(ITypeConstructor):
     inner: ITypeConstructor = None
@@ -58,8 +132,8 @@ class DelayedContructor(ITypeConstructor):
         self.params = json.dumps(params)
     def check(value: Any) -> bool:
         return '$' in json.dumps(value)
-    def ctor(self, type_map: Dict[str, Union[IType, "ITypeConstructor"]], name: str, params) -> IType:
-        return self.inner.ctor(type_map, name, json.loads(Template(self.params).emit(params)))
+    def ctor(self, ctx: Context, name: str, params) -> IType:
+        return self.inner.ctor(ctx, name, json.loads(Template(self.params).emit(params)))
 
 class Container(IType):
     struct_name = "INVALID"
@@ -68,7 +142,6 @@ class Container(IType):
     def __init__(self, name, fields) -> None:
         self.struct_name = name
         self.fields = fields
-        super().__init__()
 
     def emit_de(self) -> str:
         fields = "".join(
@@ -100,15 +173,15 @@ class Container(IType):
     def has_lifetime(self) -> bool:
         return any(map(lambda a: a[1].has_lifetime(), self.fields))
 
-    def construct(type_map, name, params) -> "Container":
+    @camelcased
+    def construct(ctx: Context, name: str, params: Any) -> "Container":
         fields = []
         for item in params:
             if "anon" in item:
                 item["name"] = anon_ident()
-            ty = parse2(make_unique(make_camelcase(item["name"]), prefix=name), item["type"], type_map)
+            ty = ctx.parse_type(item["type"], item["name"], prefix=name)
             fields.append([make_snakecase(item["name"]), ty])
         return Container(name, fields)
-
 
 class Mapper(IType):
     ty_name = ""
@@ -145,14 +218,15 @@ class Mapper(IType):
     def has_lifetime(self) -> bool:
         return False
 
-    def construct(type_map, name, params) -> "Mapper":
-        match_ty = type_map[params["type"]].name()
+    @camelcased
+    def construct(ctx: Context, name: str, params: Context) -> "Mapper":
+        match_ty = ctx.types[params["type"]].name()
         return Mapper(name, match_ty, params["mappings"])
 
 
 class Switch(IType):
     def __init__(self, name, compare_to, fields, default) -> None:
-        self._name = name
+        self._name = make_camelcase(name)
         self.compare_to = compare_to
         self.fields = fields
         self.default = default
@@ -165,7 +239,7 @@ class Switch(IType):
         a = f"pub enum {self._name}{lifetime} {{\n"
         a += "".join(
             map(
-                lambda x: f"{x[0]}"
+                lambda x: f"{make_camelcase(x[0])}"
                 + (
                     ""
                     if isinstance(x[1], NativeType) and x[1].void
@@ -192,15 +266,16 @@ class Switch(IType):
     def has_lifetime(self) -> bool:
         return any(map(lambda x: x.has_lifetime(), self.fields.values())) | self.default.has_lifetime()
 
-    def construct(type_map, name, params) -> IType:
+    @camelcased
+    def construct(ctx: Context, name: str, params: Any) -> IType:
         if "default" not in params:
             params["default"] = "void"
         # breakpoint()
         fields = dict(
             map(
                 lambda x: (
-                    make_camelcase(x[0]),
-                    parse2(make_unique(make_camelcase(x[0]), prefix=name), x[1], type_map),
+                    x[0],
+                    ctx.parse_type(x[1], x[0], prefix=name),
                 ),
                 params["fields"].items(),
             )
@@ -215,7 +290,7 @@ class Switch(IType):
             name,
             params["compareTo"],
             fields,
-            parse2(make_unique(f"Default", prefix=name), params["default"], type_map),
+            ctx.parse_type(params["default"], f"Default", prefix=name),
         )
 
 
@@ -260,12 +335,12 @@ class Bitfield(IType):
     def has_lifetime(self) -> bool:
         return False
 
-    def construct(type_map, name, params) -> IType:
-        a = Bitfield(name, params)
-        return a
+    @camelcased
+    def construct(ctx: Context, name: str, params: Any) -> IType:
+        return Bitfield(name, params)
 
 
-class EntityMetadata(IType):
+class EntityMetadataLoop(IType):
     item = None
 
     def __init__(self, item: IType) -> None:
@@ -286,8 +361,9 @@ class EntityMetadata(IType):
     def has_lifetime(self) -> bool:
         return self.item.has_lifetime()
 
-    def construct(type_map, name, params) -> IType:
-        return EntityMetadata(parse2(make_unique(name), params["type"][1][1]["type"], type_map))
+    @camelcased
+    def construct(ctx: Context, name: str, params: Any) -> IType:
+        return EntityMetadataLoop(ctx.parse_type(params["type"][1][1]["type"], f'{name}Item'))
 
 
 class TopbitTerminated(IType):
@@ -313,10 +389,11 @@ class TopbitTerminated(IType):
     def has_lifetime(self) -> bool:
         return self.item.has_lifetime()
 
-    def construct(type_map, name, params) -> IType:
+    @camelcased
+    def construct(ctx: Context, name: str, params: Any) -> IType:
         container = params["type"][1]
         return TopbitTerminated(
-            type_map[container[0]["type"]], type_map[container[1]["type"]]
+            ctx.types[container[0]["type"]], ctx.types[container[1]["type"]]
         )
 
 
@@ -343,13 +420,33 @@ class ExternallyTaggedArray(IType):
     def has_lifetime(self) -> bool:
         return self.item.has_lifetime()
 
+    @camelcased
     def construct(
-        type_map: Dict[str, Union[IType, "ITypeConstructor"]], name: str, params
+        ctx: Context, name: str, params
     ) -> IType:
         return ExternallyTaggedArray(
-            parse2(make_unique(name, suffix='Item'), params["type"], type_map), params["count"]
+            ctx.parse_type(params["type"], name, suffix='Item'), params["count"]
         )
 
+class TyAlias(IType):
+    def __init__(self, name: str, alias: IType) -> None:
+        self.n = name
+        self.d = alias
+
+    def emit_extra(self) -> str:
+        return f'type {self.n} = {self.d.name()};'
+
+    def emit_de(self) -> str:
+        return super().emit_de()
+
+    def emit_ser(self, val) -> str:
+        return super().emit_ser(val)
+
+    def name(self) -> str:
+        return self.n
+
+    def has_lifetime(self) -> bool:
+        return self.d.has_lifetime()
 
 class NativeType(IType):
     _name = ""
@@ -382,11 +479,11 @@ class ConstructorList(ITypeConstructor):
         self.a = a
         self.b = b
 
-    def ctor(self, type_map, name, params) -> IType:
+    def ctor(self, ctx: Context, name: str, params: Any) -> IType:
         try:
-            return self.a.ctor(type_map, name, params)
+            return self.a.ctor(ctx, name, params)
         except:
-            return self.b.ctor(type_map, name, params)
+            return self.b.ctor(ctx, name, params)
 
 class Template(ITypeConstructor):
     value = ""
@@ -394,16 +491,17 @@ class Template(ITypeConstructor):
     def __init__(self, s: str) -> None:
         self.value = s
 
-    def ctor(self, type_map, name, params) -> NativeType:
+    def ctor(self, ctx: Context, name, params) -> NativeType:
+        params = deepcopy(params)
         if isinstance(params, dict):
             for k, v in params.items():
                 if not isinstance(v, str):
-                    params[k] = parse2(make_unique(name), v, type_map).name()
+                    params[k] = ctx.parse_type(v, f'{name}Ty').name()
                 else:
-                    if v in type_map:
-                        params[k] = type_map[v].name()
+                    if v in ctx.types:
+                        params[k] = ctx.types[v].name()
         else:
-            params = parse2(make_unique(name), params, type_map).name()
+            params = ctx.parse_type(params, name).name()
 
         return NativeType(self.emit(params))
 
@@ -447,82 +545,36 @@ def getVer(version: str):
             return g.read()
 
 
-def parse2(name, type_def, type_map) -> IType | ITypeConstructor:
-    if isinstance(type_def, str):
-        if type_def in type_map:
-            return type_map[type_def]
-        raise RuntimeError("bullshit")
-
-    assert isinstance(type_def, list)  # this is a templated type
-    template_name, params = type_def[0], type_def[1]
-
-    if DelayedContructor.check(params):
-        new_type = DelayedContructor(type_map[template_name], params)
-    else:
-        new_type = type_map[template_name].ctor(type_map, make_camelcase(name), params)
-    if name in type_map:
-        if isinstance(type_map[name], ITypeConstructor):
-            type_map[name] = ConstructorList(type_map[name], new_type)
-        else:
-            raise RuntimeError('cannot override type')
-    else:
-        type_map[name] = new_type
-    return type_map[name]
-
-
-def parse_type(definition, type_map, external_mapping):
-    name, type_def = definition
-    if type_def == "native":
-        if name not in external_mapping:
-            if name in type_map:
-                return
-            raise RuntimeError(
-                f"""protocol declares type {name} as `native`
-                 but it isn't present in external mappings"""
-            )
-        else:  # save templated types unexpanded
-            ty = parse_external(external_mapping[name])
-            if name == "void":
-                ty.void = True
-
-        if name in type_map and isinstance(type_map[name], ITypeConstructor):
-            type_map[name] = ConstructorList(type_map[name], ty)
-        else:
-            type_map[name] = ty
-        return
-
-    if isinstance(type_def, str):
-        assert type_def in type_map
-        type_map[name] = type_map[type_def]
-        return
-
-    type_map[name] = parse2(make_unique(name), type_def, type_map)
-
-
 protocol = json.loads(getVer("1.18"))
 external_mapping = json.load(open("/home/koskja/shaker/type_mapping.json"))
-type_map: Dict[str, Union[IType, ITypeConstructor]] = {}
-type_map["container"] = TypeConstructorDelegate(Container.construct)
-type_map["mapper"] = TypeConstructorDelegate(Mapper.construct)
-type_map["switch"] = TypeConstructorDelegate(Switch.construct)
-type_map["bitfield"] = TypeConstructorDelegate(Bitfield.construct)
-type_map["entityMetadataLoop"] = TypeConstructorDelegate(EntityMetadata.construct)
-type_map["topBitSetTerminatedArray"] = TypeConstructorDelegate(
-    TopbitTerminated.construct
-)
-type_map["array"] = TypeConstructorDelegate(ExternallyTaggedArray.construct)
+ctx = Context(external_mapping['native'])
+
+specials = {
+"container": Container,
+"mapper": Mapper,
+"switch": Switch,
+"bitfield": Bitfield,
+"entityMetadataLoop": EntityMetadataLoop,
+"topBitSetTerminatedArray": 
+    TopbitTerminated,
+"array":ExternallyTaggedArray
+}
+for name, ty in specials.items():
+    ctx.insert(name, TypeConstructorDelegate(getattr(ty, 'construct')))
 
 print("\n".join(external_mapping["prelude"]["global"]) + "\n")
 
-for l in protocol["types"].items():
-    parse_type(l, type_map, external_mapping["native"])
-for l in type_map.values():
-    if isinstance(l, IType):
-        print(l.emit_extra())
+for name in protocol["types"].keys():
+    ctx.reserve_ident(name)
+
+for name, df in protocol["types"].items():
+    ctx.parse(name, df)
+for n, l in ctx.types.items():
+    print(l.emit_extra())
 
 o = ""
 protocol.pop("types")
-base_type_map = deepcopy(type_map)
+base_ctx = ctx.clone()
 base_idents = deepcopy(make_unique.used)
 
 for i, j in protocol.items():
@@ -530,12 +582,14 @@ for i, j in protocol.items():
     for k, l in j.items():
         o += f"pub mod {k} {{\n"
         o += "\n".join(external_mapping["prelude"]["all"]) + "\n"
-        for m in l["types"].items():
-            parse_type(m, type_map, external_mapping)
-        for m in filter(lambda x: x not in base_type_map.keys(), type_map.keys()):
-            xdd = type_map[m].emit_extra()
+        for name in l["types"].keys():
+            ctx.reserve_ident(name)
+        for name, df in l["types"].items():
+            ctx.parse(name, df)
+        for m in filter(lambda x: x not in base_ctx.types.keys(), ctx.types.keys()):
+            xdd = ctx.types[m].emit_extra()
             o += xdd
-        type_map = deepcopy(base_type_map)
+        ctx = base_ctx.clone()
         make_unique.used = deepcopy(base_idents)
         o += "}\n"
 

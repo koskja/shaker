@@ -1,3 +1,4 @@
+from copy import deepcopy
 import re
 from typing import List
 
@@ -29,7 +30,7 @@ def make_unique(s: str, prefix: str | None = None, suffix: str | None = None) ->
     used = make_unique.used
     if s not in used:
         used.add(s)
-        return s
+        return deepcopy(s)
     if isinstance(prefix, str) and (prefix + s) not in used:
         used.add(prefix+s)
         return prefix+s
