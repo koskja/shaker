@@ -28,10 +28,24 @@
             "#[allow(unused_imports)]",
             "use protocol_lib::types::*;",
             "type VInt = VarInt<i32>;",
-            "type VLong = VarInt<i64>;"
+            "type VLong = VarInt<i64>;",
+            "type VarString<'a> = PrefixedString<'a, VInt>;",
+            "type VarStringArray<'a> = PrefixedArray<PrefixedString<'a, VInt>, VInt>;",
+            "type VarArray<T> = PrefixedArray<T, VInt>;",
+            "type VarBuffer<'a> = PrefixedBuffer<'a, VInt>;"
         ],
         "all": [
             "use crate::test::*;"
         ]
-    }
+    },
+    "regex": [
+        ["PrefixedString<'a, VInt>", "VarString<'a>"],
+        ["PrefixedBuffer<'a, VInt>", "VarBuffer<'a>"],
+        ["PrefixedArray<(.*), VInt>", "VarArray<\\1>"],
+        ["VarArray<VarString<'a>>", "VarStringArray<'a>"],
+        ["toClient", "clientbound"],
+        ["toServer", "serverbound"],
+        ["u_u_i_d", "uuid"],
+        ["_i_d", "_id"]
+    ]
 }

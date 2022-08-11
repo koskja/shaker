@@ -44,6 +44,8 @@ class Context:
             if type_def == 'native':
                 if name in self.native_typemap:
                     self.insert(name, parse_external(self.native_typemap[name]))
+                    if name == 'void':
+                        self.types['void'].void = True
                 elif not self.contains(name):
                     raise RuntimeError('cringe')
             else:
@@ -57,8 +59,8 @@ class Context:
                 ty = template.ctor(self, name, params)
             self.insert(name, ty)
 
-    def parse_type(self, type_def: str | List, name: str, prefix = None, suffix = None) -> 'IType':
-        name = self.__make_unique(name, prefix, suffix)
+    def parse_type(self, type_def: str | List, name: str, prefix = None, suffix = None, force_name = False) -> 'IType':
+        name = name if force_name else self.make_unique(name, prefix, suffix)
         if name not in self.types:
             if isinstance(type_def, str) and type_def in self.types:
                 return self.types[type_def]
@@ -68,13 +70,23 @@ class Context:
     def reserve_ident(self, name: str):
         self.used_idents.add(name)
     
-    def __make_unique(self, n: str, p: str | None, s: str | None):
+    def make_unique(self, n: str, p: str | None, s: str | None):
         p = p or ''
         s = s or ''
         values = [[n], [p, n], [n, s], [p, n, s]]
         for segs in values:
-            val = make_snakecase('_'.join(segs))
+            joined = '_'.join(segs)
+            if joined[0].isdigit():
+                continue
+            val = make_snakecase(joined)
             if val not in self.used_idents:
+                last = ''
+                while last != val:
+                    last = val
+                    opts = list(demangle_name(val, len(val.split('_'))))
+                    new_opt = next(filter(lambda x: x != val and x not in self.used_idents, opts), None)
+                    if new_opt is not None:
+                        val = new_opt
                 self.used_idents.add(val)
                 return val
         return anon_ident()
@@ -276,10 +288,10 @@ class Switch(IType):
         # breakpoint()
         fields = dict(
             map(
-                lambda x: (
-                    make_camelcase(x[0]),
-                    ctx.parse_type(x[1], x[0], prefix=name),
-                ),
+                lambda x: (lambda y: (
+                    make_camelcase(y),
+                    ctx.parse_type(x[1], y, force_name=True),
+                ))(ctx.make_unique(x[0], name, None)),
                 params["fields"].items(),
             )
         )
@@ -502,7 +514,7 @@ class Template(ITypeConstructor):
         if isinstance(params, dict):
             for k, v in params.items():
                 if not isinstance(v, str):
-                    params[k] = ctx.parse_type(v, f'{name}Ty').name()
+                    params[k] = ctx.parse_type(v, name, suffix='Item').name()
                 else:
                     if v in ctx.types:
                         params[k] = ctx.types[v].name()
@@ -568,6 +580,8 @@ specials = {
 for name, ty in specials.items():
     ctx.insert(name, TypeConstructorDelegate(getattr(ty, 'construct')))
 
+o = ""
+
 print("\n".join(external_mapping["prelude"]["global"]) + "\n")
 
 for name in protocol["types"].keys():
@@ -576,9 +590,8 @@ for name in protocol["types"].keys():
 for name, df in protocol["types"].items():
     ctx.parse(name, df)
 for n, l in ctx.types.items():
-    print(l.emit_extra())
+    o += l.emit_extra()
 
-o = ""
 protocol.pop("types")
 base_ctx = ctx.clone()
 
@@ -598,4 +611,12 @@ for i, j in protocol.items():
         o += "}\n"
 
     o += "}\n"
+
+for [a, b] in external_mapping['regex']:
+    while True:
+        n = re.sub(a, b, o, flags=re.RegexFlag.MULTILINE)
+        if o == n:
+            break
+        o = n
+
 print(o)

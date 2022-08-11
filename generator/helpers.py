@@ -9,7 +9,19 @@ def eprint(*args, **kwargs):
 
 def split_words(s: str) -> List[str]:
     flat_map = lambda f, xs: (y for ys in xs for y in f(ys))
-    return list(flat_map(lambda x: re.findall('[a-zA-Z][^A-Z]*', x), s.split('_')))
+    return list(flat_map(lambda x: re.findall('[a-zA-Z0-9][^A-Z]*', x), s.split('_')))
+
+def demangle_name(s: str, level):
+    rules = [[r"ies_item", r"y"], [r"s_item", r""], [r"minecraft", r""], [r"brigadier", r""]]
+    if level > 2:
+        rules.append([r"^packet_", r""])
+    if level > 3:
+        rules += [
+            [r"attribute", r"attr"]
+        ]
+    for find, replace in rules:
+        v = re.sub(find, replace, s)
+        yield v
 
 def make_camelcase(s: str) -> str:
     return "".join(map(str.capitalize, make_ident(s)))
@@ -47,7 +59,8 @@ def make_unique(s: str, prefix: str | None = None, suffix: str | None = None) ->
 
 def make_ident(s: str) -> List[str]:
     s = s.replace(":", "_")
-    if not s[0].isalpha():
+    if s[0].isdigit():
+        breakpoint()
         s = "F" + s
     elif s in keywords:
         s = "r_" + s

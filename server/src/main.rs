@@ -1,4 +1,5 @@
 #![feature(type_name_of_val)]
+#![allow(dead_code)]
 mod test;
 
 use std::fs::read_to_string;
