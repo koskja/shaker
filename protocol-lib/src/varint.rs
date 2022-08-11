@@ -8,8 +8,8 @@ use protocol_derive::SerializeFn;
 use crate::Packet;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, SerializeFn)]
-pub struct VarInt<T: PrimInt + From<u8>>(pub T);
-impl<'a, T: PrimInt + From<u8>> Packet<'a> for VarInt<T> {
+pub struct VInt<T: PrimInt + From<u8>>(pub T);
+impl<'a, T: PrimInt + From<u8>> Packet<'a> for VInt<T> {
     fn serialize<W: Write>(&self, mut w: WriteContext<W>) -> GenResult<W> {
         let mut val = self.0;
         loop {
@@ -44,7 +44,7 @@ impl<'a, T: PrimInt + From<u8>> Packet<'a> for VarInt<T> {
         )))
     }
 }
-impl<T: PrimInt + From<u8>> VarInt<T> {
+impl<T: PrimInt + From<u8>> VInt<T> {
     pub fn deserialize_self<'a>(input: &'a [u8]) -> IResult<&'a [u8], T> {
         Self::deserialize(input).map(|(i, this)| (i, this.0))
     }
@@ -52,7 +52,7 @@ impl<T: PrimInt + From<u8>> VarInt<T> {
         Self::deserialize(input).map(|(i, this)| (i, U::from(this.0).unwrap()))
     }
 }
-impl<T: PrimInt + From<u8>> num_traits::Saturating for VarInt<T> {
+impl<T: PrimInt + From<u8>> num_traits::Saturating for VInt<T> {
     fn saturating_add(self, v: Self) -> Self {
         Self(T::saturating_add(self.0, v.0))
     }
@@ -61,49 +61,49 @@ impl<T: PrimInt + From<u8>> num_traits::Saturating for VarInt<T> {
         Self(T::saturating_sub(self.0, v.0))
     }
 }
-impl<T: PrimInt + From<u8>> num_traits::Num for VarInt<T> {
+impl<T: PrimInt + From<u8>> num_traits::Num for VInt<T> {
     type FromStrRadixErr = <T as num_traits::Num>::FromStrRadixErr;
 
     fn from_str_radix(str: &str, radix: u32) -> Result<Self, Self::FromStrRadixErr> {
         T::from_str_radix(str, radix).map(Self)
     }
 }
-impl<T: PrimInt + From<u8>> core::ops::Add for VarInt<T> {
-    type Output = VarInt<T>;
+impl<T: PrimInt + From<u8>> core::ops::Add for VInt<T> {
+    type Output = VInt<T>;
 
     fn add(self, rhs: Self) -> Self::Output {
         Self(T::add(self.0, rhs.0))
     }
 }
-impl<T: PrimInt + From<u8>> core::ops::Sub for VarInt<T> {
-    type Output = VarInt<T>;
+impl<T: PrimInt + From<u8>> core::ops::Sub for VInt<T> {
+    type Output = VInt<T>;
 
     fn sub(self, rhs: Self) -> Self::Output {
         Self(T::sub(self.0, rhs.0))
     }
 }
-impl<T: PrimInt + From<u8>> core::ops::Mul for VarInt<T> {
-    type Output = VarInt<T>;
+impl<T: PrimInt + From<u8>> core::ops::Mul for VInt<T> {
+    type Output = VInt<T>;
 
     fn mul(self, rhs: Self) -> Self::Output {
         Self(T::mul(self.0, rhs.0))
     }
 }
-impl<T: PrimInt + From<u8>> core::ops::Div for VarInt<T> {
-    type Output = VarInt<T>;
+impl<T: PrimInt + From<u8>> core::ops::Div for VInt<T> {
+    type Output = VInt<T>;
 
     fn div(self, rhs: Self) -> Self::Output {
         Self(T::div(self.0, rhs.0))
     }
 }
-impl<T: PrimInt + From<u8>> core::ops::Rem for VarInt<T> {
-    type Output = VarInt<T>;
+impl<T: PrimInt + From<u8>> core::ops::Rem for VInt<T> {
+    type Output = VInt<T>;
 
     fn rem(self, rhs: Self) -> Self::Output {
         Self(T::rem(self.0, rhs.0))
     }
 }
-impl<T: PrimInt + From<u8>> num_traits::Zero for VarInt<T> {
+impl<T: PrimInt + From<u8>> num_traits::Zero for VInt<T> {
     fn zero() -> Self {
         Self(T::zero())
     }
@@ -112,74 +112,74 @@ impl<T: PrimInt + From<u8>> num_traits::Zero for VarInt<T> {
         T::is_zero(&self.0)
     }
 }
-impl<T: PrimInt + From<u8>> num_traits::One for VarInt<T> {
+impl<T: PrimInt + From<u8>> num_traits::One for VInt<T> {
     fn one() -> Self {
         Self(T::one())
     }
 }
-impl<T: PrimInt + From<u8>> num_traits::CheckedAdd for VarInt<T> {
+impl<T: PrimInt + From<u8>> num_traits::CheckedAdd for VInt<T> {
     fn checked_add(&self, v: &Self) -> Option<Self> {
         T::checked_add(&self.0, &v.0).map(Self)
     }
 }
-impl<T: PrimInt + From<u8>> num_traits::CheckedSub for VarInt<T> {
+impl<T: PrimInt + From<u8>> num_traits::CheckedSub for VInt<T> {
     fn checked_sub(&self, v: &Self) -> Option<Self> {
         T::checked_sub(&self.0, &v.0).map(Self)
     }
 }
-impl<T: PrimInt + From<u8>> num_traits::CheckedMul for VarInt<T> {
+impl<T: PrimInt + From<u8>> num_traits::CheckedMul for VInt<T> {
     fn checked_mul(&self, v: &Self) -> Option<Self> {
         T::checked_mul(&self.0, &v.0).map(Self)
     }
 }
-impl<T: PrimInt + From<u8>> num_traits::CheckedDiv for VarInt<T> {
+impl<T: PrimInt + From<u8>> num_traits::CheckedDiv for VInt<T> {
     fn checked_div(&self, v: &Self) -> Option<Self> {
         T::checked_div(&self.0, &v.0).map(Self)
     }
 }
-impl<T: PrimInt + From<u8>> core::ops::Shr<usize> for VarInt<T> {
+impl<T: PrimInt + From<u8>> core::ops::Shr<usize> for VInt<T> {
     type Output = Self;
 
     fn shr(self, rhs: usize) -> Self::Output {
         Self(T::shr(self.0, rhs))
     }
 }
-impl<T: PrimInt + From<u8>> core::ops::Shl<usize> for VarInt<T> {
+impl<T: PrimInt + From<u8>> core::ops::Shl<usize> for VInt<T> {
     type Output = Self;
 
     fn shl(self, rhs: usize) -> Self::Output {
         Self(T::shl(self.0, rhs))
     }
 }
-impl<T: PrimInt + From<u8>> core::ops::BitAnd for VarInt<T> {
-    type Output = VarInt<T>;
+impl<T: PrimInt + From<u8>> core::ops::BitAnd for VInt<T> {
+    type Output = VInt<T>;
 
     fn bitand(self, rhs: Self) -> Self::Output {
         Self(T::bitand(self.0, rhs.0))
     }
 }
-impl<T: PrimInt + From<u8>> core::ops::BitOr for VarInt<T> {
-    type Output = VarInt<T>;
+impl<T: PrimInt + From<u8>> core::ops::BitOr for VInt<T> {
+    type Output = VInt<T>;
 
     fn bitor(self, rhs: Self) -> Self::Output {
         Self(T::bitor(self.0, rhs.0))
     }
 }
-impl<T: PrimInt + From<u8>> core::ops::BitXor for VarInt<T> {
-    type Output = VarInt<T>;
+impl<T: PrimInt + From<u8>> core::ops::BitXor for VInt<T> {
+    type Output = VInt<T>;
 
     fn bitxor(self, rhs: Self) -> Self::Output {
         Self(T::bitxor(self.0, rhs.0))
     }
 }
-impl<T: PrimInt + From<u8>> core::ops::Not for VarInt<T> {
-    type Output = VarInt<T>;
+impl<T: PrimInt + From<u8>> core::ops::Not for VInt<T> {
+    type Output = VInt<T>;
 
     fn not(self) -> Self::Output {
         Self(T::not(self.0))
     }
 }
-impl<T: PrimInt + From<u8>> num_traits::Bounded for VarInt<T> {
+impl<T: PrimInt + From<u8>> num_traits::Bounded for VInt<T> {
     fn min_value() -> Self {
         Self(T::min_value())
     }
@@ -188,7 +188,7 @@ impl<T: PrimInt + From<u8>> num_traits::Bounded for VarInt<T> {
         Self(T::max_value())
     }
 }
-impl<T: PrimInt + From<u8>> num_traits::ToPrimitive for VarInt<T> {
+impl<T: PrimInt + From<u8>> num_traits::ToPrimitive for VInt<T> {
     fn to_i64(&self) -> Option<i64> {
         T::to_i64(&self.0)
     }
@@ -197,13 +197,13 @@ impl<T: PrimInt + From<u8>> num_traits::ToPrimitive for VarInt<T> {
         T::to_u64(&self.0)
     }
 }
-impl<T: PrimInt + From<u8>> num_traits::NumCast for VarInt<T> {
+impl<T: PrimInt + From<u8>> num_traits::NumCast for VInt<T> {
     fn from<U: num_traits::ToPrimitive>(n: U) -> Option<Self> {
         <T as num_traits::NumCast>::from(n).map(Self)
     }
 }
 
-impl<T: PrimInt + From<u8>> PrimInt for VarInt<T> {
+impl<T: PrimInt + From<u8>> PrimInt for VInt<T> {
     fn count_ones(self) -> u32 {
         T::count_ones(self.0)
     }

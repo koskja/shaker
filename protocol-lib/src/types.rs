@@ -16,7 +16,7 @@ use nom::{
 use num_traits::PrimInt;
 use protocol_derive::SerializeFn;
 
-pub use super::varint::VarInt;
+pub use super::varint::VInt;
 use crate::Packet;
 pub use uuid::Uuid;
 // FIXME: Serialize/deserialize everything as signed, even unsigned types
@@ -27,7 +27,7 @@ impl<'t: 'a, 'a, const MAX: usize> Packet<'t> for LimitedSlice<'a, MAX> {
     fn serialize<W: Write>(&self, w: WriteContext<W>) -> GenResult<W> {
         assert!(self.0.len() <= MAX);
         cookie_factory::sequence::pair(
-            VarInt(self.0.len() as u32),
+            VInt(self.0.len() as u32),
             cookie_factory::combinator::slice(self.0),
         )(w)
     }
@@ -35,7 +35,7 @@ impl<'t: 'a, 'a, const MAX: usize> Packet<'t> for LimitedSlice<'a, MAX> {
     fn deserialize(input: &'t [u8]) -> IResult<&'t [u8], Self> {
         nom::combinator::map(
             nom::multi::length_data(nom::combinator::verify(
-                VarInt::<u32>::deserialize_prim::<usize>,
+                VInt::<u32>::deserialize_prim::<usize>,
                 |&x| x <= MAX,
             )),
             |x| Self(x),
@@ -48,7 +48,7 @@ impl<'t: 'a, 'a, const MAX: usize> Packet<'t> for LimitedString<'a, MAX> {
     fn serialize<W: Write>(&self, w: WriteContext<W>) -> GenResult<W> {
         assert!(self.0.len() <= MAX);
         cookie_factory::sequence::pair(
-            VarInt(self.0.len() as u32),
+            VInt(self.0.len() as u32),
             cookie_factory::combinator::string(self.0),
         )(w)
     }
@@ -56,7 +56,7 @@ impl<'t: 'a, 'a, const MAX: usize> Packet<'t> for LimitedString<'a, MAX> {
     fn deserialize(input: &'t [u8]) -> IResult<&'t [u8], Self> {
         nom::combinator::map_res(
             nom::multi::length_data(nom::combinator::verify(
-                VarInt::<u32>::deserialize_prim::<usize>,
+                VInt::<u32>::deserialize_prim::<usize>,
                 |&x| x <= MAX,
             )),
             |x| std::str::from_utf8(x).map(Self),

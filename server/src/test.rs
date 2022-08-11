@@ -1,21 +1,21 @@
 
 #[allow(unused_imports)]
 use protocol_lib::types::*;
-type VInt = VarInt<i32>;
-type VLong = VarInt<i64>;
-type VarString<'a> = PrefixedString<'a, VInt>;
-type VarStringArray<'a> = PrefixedArray<PrefixedString<'a, VInt>, VInt>;
-type VarArray<T> = PrefixedArray<T, VInt>;
-type VarBuffer<'a> = PrefixedBuffer<'a, VInt>;
+type VarInt = VInt<i32>;
+type VarLong = VInt<i64>;
+type VarString<'a> = PrefixedString<'a, VarInt>;
+type VarStringArray<'a> = PrefixedArray<PrefixedString<'a, VarInt>, VarInt>;
+type VarArray<T> = PrefixedArray<T, VarInt>;
+type VarBuffer<'a> = PrefixedBuffer<'a, VarInt>;
 
-type optvarint = VInt;
+type optvarint = VarInt;
 pub struct Position {
     x: i32,
     z: i32,
     y: i16,
 }
 pub struct RTrue {
-    item_id: VInt,
+    item_id: VarInt,
     item_count: i8,
     nbt_data: OptionalNbt,
 }
@@ -29,10 +29,10 @@ pub struct Slot {
     ident0: Ident0,
 }
 pub struct Data2 {
-    block_state: VInt,
+    block_state: VarInt,
 }
 pub struct Data3 {
-    block_state: VInt,
+    block_state: VarInt,
 }
 pub struct Data14 {
     red: f32,
@@ -50,21 +50,21 @@ pub struct Data15 {
     to_blue: f32,
 }
 pub struct Data24 {
-    block_state: VInt,
+    block_state: VarInt,
 }
 pub struct Data35 {
     item: Slot,
 }
 pub enum Destination {
     Block(Position),
-    Entity(VInt),
+    Entity(VarInt),
     Default,
 }
 pub struct Data36<'a> {
     origin: Position,
     position_type: VarString<'a>,
     destination: Destination,
-    ticks: VInt,
+    ticks: VarInt,
 }
 pub enum Data<'a> {
     Data2(Data2),
@@ -77,7 +77,7 @@ pub enum Data<'a> {
     Default,
 }
 pub struct Particle<'a> {
-    particle_id: VInt,
+    particle_id: VarInt,
     data: Data<'a>,
 }
 pub struct EntityMetadataItem8 {
@@ -86,13 +86,13 @@ pub struct EntityMetadataItem8 {
     roll: f32,
 }
 pub struct EntityMetadataItem16 {
-    villager_type: VInt,
-    villager_profession: VInt,
-    level: VInt,
+    villager_type: VarInt,
+    villager_profession: VarInt,
+    level: VarInt,
 }
 pub enum EntityMetadataItem<'a> {
     EntityMetadataItem0(i8),
-    EntityMetadataItem1(VInt),
+    EntityMetadataItem1(VarInt),
     EntityMetadataItem2(f32),
     EntityMetadataItem3(VarString<'a>),
     EntityMetadataItem4(VarString<'a>),
@@ -102,14 +102,14 @@ pub enum EntityMetadataItem<'a> {
     EntityMetadataItem8(EntityMetadataItem8),
     EntityMetadataItem9(Position),
     EntityMetadataItem10(Option<Position>),
-    EntityMetadataItem11(VInt),
+    EntityMetadataItem11(VarInt),
     EntityMetadataItem12(Option<Uuid>),
-    EntityMetadataItem13(VInt),
+    EntityMetadataItem13(VarInt),
     EntityMetadataItem14(Nbt),
     EntityMetadataItem15(Particle<'a>),
     EntityMetadataItem16(EntityMetadataItem16),
     EntityMetadataItem17(optvarint),
-    EntityMetadataItem18(VInt),
+    EntityMetadataItem18(VarInt),
     Default,
 }
 pub struct MinecraftSmeltingFormat<'a> {
@@ -117,11 +117,11 @@ pub struct MinecraftSmeltingFormat<'a> {
     ingredient: VarArray<Slot>,
     result: Slot,
     experience: f32,
-    cook_time: VInt,
+    cook_time: VarInt,
 }
 pub struct Tag<'a> {
     tag_name: VarString<'a>,
-    entries: VarArray<VInt>,
+    entries: VarArray<VarInt>,
 }
 pub struct Ident4 {
     x: u8,
@@ -130,7 +130,7 @@ pub struct Ident4 {
 pub struct ChunkBlockEntity {
     ident4: Ident4,
     y: i16,
-    r_type: VInt,
+    r_type: VarInt,
     nbt_data: OptionalNbt,
 }
 pub struct Flags {
@@ -141,7 +141,7 @@ pub struct Flags {
     command_node_type: u8,
 }
 pub enum RedirectNode {
-    RedirectNode1(VInt),
+    RedirectNode1(VarInt),
     Default,
 }
 pub struct ExtraNodeData1<'a> {
@@ -305,7 +305,7 @@ pub enum ExtraNodeData<'a> {
 }
 pub struct CommandNode<'a> {
     flags: Flags,
-    children: VarArray<VInt>,
+    children: VarArray<VarInt>,
     redirect_node: RedirectNode,
     extra_node_data: ExtraNodeData<'a>,
 }
@@ -323,10 +323,10 @@ pub mod handshaking {
     pub mod serverbound {
         use crate::test::*;
         pub struct PacketSetProtocol<'a> {
-            protocol_version: VInt,
+            protocol_version: VarInt,
             server_host: VarString<'a>,
             server_port: u16,
-            next_state: VInt,
+            next_state: VarInt,
         }
         pub struct PacketLegacyServerListPing {
             payload: u8,
@@ -394,10 +394,10 @@ pub mod login {
             username: VarString<'a>,
         }
         pub struct PacketCompress {
-            threshold: VInt,
+            threshold: VarInt,
         }
         pub struct PacketLoginPluginRequest<'a> {
-            message_id: VInt,
+            message_id: VarInt,
             channel: VarString<'a>,
             data: RestBuffer<'a>,
         }
@@ -424,7 +424,7 @@ pub mod login {
             verify_token: VarBuffer<'a>,
         }
         pub struct PacketLoginPluginResponse<'a> {
-            message_id: VInt,
+            message_id: VarInt,
             data: Option<RestBuffer<'a>>,
         }
         pub enum Params<'a> {
@@ -443,9 +443,9 @@ pub mod play {
     pub mod clientbound {
         use crate::test::*;
         pub struct PacketSpawnEntity {
-            entity_id: VInt,
+            entity_id: VarInt,
             object_uuid: Uuid,
-            r_type: VInt,
+            r_type: VarInt,
             x: f64,
             y: f64,
             z: f64,
@@ -457,16 +457,16 @@ pub mod play {
             velocity_z: i16,
         }
         pub struct PacketSpawnEntityExperienceOrb {
-            entity_id: VInt,
+            entity_id: VarInt,
             x: f64,
             y: f64,
             z: f64,
             count: i16,
         }
         pub struct PacketSpawnEntityLiving {
-            entity_id: VInt,
+            entity_id: VarInt,
             entity_uuid: Uuid,
-            r_type: VInt,
+            r_type: VarInt,
             x: f64,
             y: f64,
             z: f64,
@@ -478,14 +478,14 @@ pub mod play {
             velocity_z: i16,
         }
         pub struct PacketSpawnEntityPainting {
-            entity_id: VInt,
+            entity_id: VarInt,
             entity_uuid: Uuid,
-            title: VInt,
+            title: VarInt,
             location: Position,
             direction: u8,
         }
         pub struct PacketNamedEntitySpawn {
-            entity_id: VInt,
+            entity_id: VarInt,
             player_uuid: Uuid,
             x: f64,
             y: f64,
@@ -494,13 +494,13 @@ pub mod play {
             pitch: i8,
         }
         pub struct PacketAnimation {
-            entity_id: VInt,
+            entity_id: VarInt,
             animation: u8,
         }
         pub struct StatisticsEntry {
-            category_id: VInt,
-            statistic_id: VInt,
-            value: VInt,
+            category_id: VarInt,
+            statistic_id: VarInt,
+            value: VarInt,
         }
         pub struct PacketStatistics {
             entries: VarArray<StatisticsEntry>,
@@ -519,7 +519,7 @@ pub mod play {
             title: VarString<'a>,
             description: VarString<'a>,
             icon: Slot,
-            frame_type: VInt,
+            frame_type: VarInt,
             flags: Ident7Flags,
             background_texture: BackgroundTexture<'a>,
             x_cord: f32,
@@ -554,24 +554,24 @@ pub mod play {
             progress_mapping: VarArray<ProgressMappingItem<'a>>,
         }
         pub struct PacketBlockBreakAnimation {
-            entity_id: VInt,
+            entity_id: VarInt,
             location: Position,
             destroy_stage: i8,
         }
         pub struct PacketTileEntityData {
             location: Position,
-            action: VInt,
+            action: VarInt,
             nbt_data: OptionalNbt,
         }
         pub struct PacketBlockAction {
             location: Position,
             byte1: u8,
             byte2: u8,
-            block_id: VInt,
+            block_id: VarInt,
         }
         pub struct PacketBlockChange {
             location: Position,
-            r_type: VInt,
+            r_type: VarInt,
         }
         pub enum BossBarTitle<'a> {
             BossBarTitle0(VarString<'a>),
@@ -584,13 +584,13 @@ pub mod play {
             Default,
         }
         pub enum Color {
-            Color0(VInt),
-            Color4(VInt),
+            Color0(VarInt),
+            Color4(VarInt),
             Default,
         }
         pub enum Dividers {
-            Dividers0(VInt),
-            Dividers4(VInt),
+            Dividers0(VarInt),
+            Dividers4(VarInt),
             Default,
         }
         pub enum BossBarFlags {
@@ -600,7 +600,7 @@ pub mod play {
         }
         pub struct PacketBossBar<'a> {
             entity_uuid: Uuid,
-            action: VInt,
+            action: VarInt,
             title: BossBarTitle<'a>,
             health: Health,
             color: Color,
@@ -616,17 +616,17 @@ pub mod play {
             tooltip: Option<VarString<'a>>,
         }
         pub struct PacketTabComplete<'a> {
-            transaction_id: VInt,
-            start: VInt,
-            length: VInt,
+            transaction_id: VarInt,
+            start: VarInt,
+            length: VarInt,
             matches: VarArray<Matche<'a>>,
         }
         pub struct PacketDeclareCommands<'a> {
             nodes: VarArray<CommandNode<'a>>,
-            root_index: VInt,
+            root_index: VarInt,
         }
         pub enum FacePlayerEntityId {
-            FacePlayerEntityIdTrue(VInt),
+            FacePlayerEntityIdTrue(VarInt),
             Default,
         }
         pub enum EntityFeetEyes<'a> {
@@ -634,7 +634,7 @@ pub mod play {
             Default,
         }
         pub struct PacketFacePlayer<'a> {
-            feet_eyes: VInt,
+            feet_eyes: VarInt,
             x: f64,
             y: f64,
             z: f64,
@@ -643,7 +643,7 @@ pub mod play {
             entity_feet_eyes: EntityFeetEyes<'a>,
         }
         pub struct PacketNbtQueryResponse {
-            transaction_id: VInt,
+            transaction_id: VarInt,
             nbt: OptionalNbt,
         }
         pub struct PacketChat<'a> {
@@ -659,19 +659,19 @@ pub mod play {
         pub struct PacketMultiBlockChange {
             chunk_coordinates: ChunkCoordinates,
             not_trust_edges: bool,
-            records: VarArray<VLong>,
+            records: VarArray<VarLong>,
         }
         pub struct PacketCloseWindow {
             window_id: u8,
         }
         pub struct PacketOpenWindow<'a> {
-            window_id: VInt,
-            inventory_type: VInt,
+            window_id: VarInt,
+            inventory_type: VarInt,
             window_title: VarString<'a>,
         }
         pub struct PacketWindowItems {
             window_id: u8,
-            state_id: VInt,
+            state_id: VarInt,
             items: VarArray<Slot>,
             carried_item: Slot,
         }
@@ -682,13 +682,13 @@ pub mod play {
         }
         pub struct PacketSetSlot {
             window_id: i8,
-            state_id: VInt,
+            state_id: VarInt,
             slot: i16,
             item: Slot,
         }
         pub struct PacketSetCooldown {
-            item_id: VInt,
-            cooldown_ticks: VInt,
+            item_id: VarInt,
+            cooldown_ticks: VarInt,
         }
         pub struct PacketCustomPayload<'a> {
             channel: VarString<'a>,
@@ -696,7 +696,7 @@ pub mod play {
         }
         pub struct PacketNamedSoundEffect<'a> {
             sound_name: VarString<'a>,
-            sound_category: VInt,
+            sound_category: VarInt,
             x: i32,
             y: i32,
             z: i32,
@@ -735,7 +735,7 @@ pub mod play {
         }
         pub struct PacketOpenHorseWindow {
             window_id: u8,
-            nb_slots: VInt,
+            nb_slots: VarInt,
             entity_id: i32,
         }
         pub struct PacketKeepAlive {
@@ -762,10 +762,10 @@ pub mod play {
             global: bool,
         }
         pub struct WorldParticlesData2 {
-            block_state: VInt,
+            block_state: VarInt,
         }
         pub struct WorldParticlesData3 {
-            block_state: VInt,
+            block_state: VarInt,
         }
         pub struct WorldParticlesData14 {
             red: f32,
@@ -783,21 +783,21 @@ pub mod play {
             to_blue: f32,
         }
         pub struct WorldParticlesData24 {
-            block_state: VInt,
+            block_state: VarInt,
         }
         pub struct WorldParticlesData35 {
             item: Slot,
         }
         pub enum WorldParticlesData36Destination {
             MinecraftBlock(Position),
-            WorldParticlesData36DestinationEntity(VInt),
+            WorldParticlesData36DestinationEntity(VarInt),
             Default,
         }
         pub struct WorldParticlesData36<'a> {
             origin: Position,
             position_type: VarString<'a>,
             destination: WorldParticlesData36Destination,
-            ticks: VInt,
+            ticks: VarInt,
         }
         pub enum WorldParticlesData<'a> {
             WorldParticlesData2(WorldParticlesData2),
@@ -823,8 +823,8 @@ pub mod play {
             data: WorldParticlesData<'a>,
         }
         pub struct PacketUpdateLight {
-            chunk_x: VInt,
-            chunk_z: VInt,
+            chunk_x: VarInt,
+            chunk_z: VarInt,
             trust_edges: bool,
             sky_light_mask: VarArray<i64>,
             block_light_mask: VarArray<i64>,
@@ -843,16 +843,16 @@ pub mod play {
             dimension: Nbt,
             world_name: VarString<'a>,
             hashed_seed: i64,
-            max_players: VInt,
-            view_distance: VInt,
-            simulation_distance: VInt,
+            max_players: VarInt,
+            view_distance: VarInt,
+            simulation_distance: VarInt,
             reduced_debug_info: bool,
             enable_respawn_screen: bool,
             is_debug: bool,
             is_flat: bool,
         }
         pub struct Ident10<'a> {
-            r_type: VInt,
+            r_type: VarInt,
             x: i8,
             z: i8,
             direction: u8,
@@ -875,7 +875,7 @@ pub mod play {
             Default(VarBuffer<'a>),
         }
         pub struct PacketMap<'a> {
-            item_damage: VInt,
+            item_damage: VarInt,
             scale: i8,
             locked: bool,
             icons: Option<VarArray<Ident10<'a>>>,
@@ -898,22 +898,22 @@ pub mod play {
             demand: i32,
         }
         pub struct PacketTradeList {
-            window_id: VInt,
+            window_id: VarInt,
             trades: PrefixedArray<Trade, u8>,
-            villager_level: VInt,
-            experience: VInt,
+            villager_level: VarInt,
+            experience: VarInt,
             is_regular_villager: bool,
             can_restock: bool,
         }
         pub struct PacketRelEntityMove {
-            entity_id: VInt,
+            entity_id: VarInt,
             d_x: i16,
             d_y: i16,
             d_z: i16,
             on_ground: bool,
         }
         pub struct PacketEntityMoveLook {
-            entity_id: VInt,
+            entity_id: VarInt,
             d_x: i16,
             d_y: i16,
             d_z: i16,
@@ -922,7 +922,7 @@ pub mod play {
             on_ground: bool,
         }
         pub struct PacketEntityLook {
-            entity_id: VInt,
+            entity_id: VarInt,
             yaw: i8,
             pitch: i8,
             on_ground: bool,
@@ -935,7 +935,7 @@ pub mod play {
             pitch: f32,
         }
         pub struct PacketOpenBook {
-            hand: VInt,
+            hand: VarInt,
         }
         pub struct PacketOpenSignEntity {
             location: Position,
@@ -950,12 +950,12 @@ pub mod play {
             walking_speed: f32,
         }
         pub struct PacketEndCombatEvent {
-            duration: VInt,
+            duration: VarInt,
             entity_id: i32,
         }
         pub struct PacketEnterCombatEvent {}
         pub struct PacketDeathCombatEvent<'a> {
-            player_id: VInt,
+            player_id: VarInt,
             entity_id: i32,
             message: VarString<'a>,
         }
@@ -973,13 +973,13 @@ pub mod play {
             Default,
         }
         pub enum Gamemode {
-            Gamemode0(VInt),
-            Gamemode1(VInt),
+            Gamemode0(VarInt),
+            Gamemode1(VarInt),
             Default,
         }
         pub enum Ping {
-            Ping0(VInt),
-            Ping2(VInt),
+            Ping0(VarInt),
+            Ping2(VarInt),
             Default,
         }
         pub enum PlayerInfoDataItemDisplayName<'a> {
@@ -996,7 +996,7 @@ pub mod play {
             display_name: PlayerInfoDataItemDisplayName<'a>,
         }
         pub struct PacketPlayerInfo<'a> {
-            action: VInt,
+            action: VarInt,
             data: VarArray<PlayerInfoDataItem<'a>>,
         }
         pub struct PacketPosition {
@@ -1006,7 +1006,7 @@ pub mod play {
             yaw: f32,
             pitch: f32,
             flags: i8,
-            teleport_id: VInt,
+            teleport_id: VarInt,
             dismount_vehicle: bool,
         }
         pub enum Recipes2<'a> {
@@ -1014,7 +1014,7 @@ pub mod play {
             Default,
         }
         pub struct PacketUnlockRecipes<'a> {
-            action: VInt,
+            action: VarInt,
             crafting_book_open: bool,
             filtering_craftable: bool,
             smelting_book_open: bool,
@@ -1027,10 +1027,10 @@ pub mod play {
             recipes2: Recipes2<'a>,
         }
         pub struct PacketEntityDestroy {
-            entity_ids: VarArray<VInt>,
+            entity_ids: VarArray<VarInt>,
         }
         pub struct PacketRemoveEntityEffect {
-            entity_id: VInt,
+            entity_id: VarInt,
             effect_id: i8,
         }
         pub struct PacketResourcePackSend<'a> {
@@ -1050,28 +1050,28 @@ pub mod play {
             copy_metadata: bool,
         }
         pub struct PacketEntityHeadRotation {
-            entity_id: VInt,
+            entity_id: VarInt,
             head_yaw: i8,
         }
         pub struct PacketCamera {
-            camera_id: VInt,
+            camera_id: VarInt,
         }
         pub struct PacketHeldItemSlot {
             slot: i8,
         }
         pub struct PacketUpdateViewPosition {
-            chunk_x: VInt,
-            chunk_z: VInt,
+            chunk_x: VarInt,
+            chunk_z: VarInt,
         }
         pub struct PacketUpdateViewDistance {
-            view_distance: VInt,
+            view_distance: VarInt,
         }
         pub struct PacketScoreboardDisplayObjective<'a> {
             position: i8,
             name: VarString<'a>,
         }
         pub struct PacketEntityMetadata<'a> {
-            entity_id: VInt,
+            entity_id: VarInt,
             metadata: Vec<EntityMetadataItem<'a>>,
         }
         pub struct PacketAttachEntity {
@@ -1079,23 +1079,23 @@ pub mod play {
             vehicle_id: i32,
         }
         pub struct PacketEntityVelocity {
-            entity_id: VInt,
+            entity_id: VarInt,
             velocity_x: i16,
             velocity_y: i16,
             velocity_z: i16,
         }
         pub struct PacketEntityEquipment {
-            entity_id: VInt,
+            entity_id: VarInt,
             equipments: std::collections::HashMap<i8, Slot>,
         }
         pub struct PacketExperience {
             experience_bar: f32,
-            level: VInt,
-            total_experience: VInt,
+            level: VarInt,
+            total_experience: VarInt,
         }
         pub struct PacketUpdateHealth {
             health: f32,
-            food: VInt,
+            food: VarInt,
             food_saturation: f32,
         }
         pub enum DisplayText<'a> {
@@ -1104,8 +1104,8 @@ pub mod play {
             Default,
         }
         pub enum ScoreboardObjectiveType {
-            ScoreboardObjectiveType0(VInt),
-            ScoreboardObjectiveType2(VInt),
+            ScoreboardObjectiveType0(VarInt),
+            ScoreboardObjectiveType2(VarInt),
             Default,
         }
         pub struct PacketScoreboardObjective<'a> {
@@ -1115,8 +1115,8 @@ pub mod play {
             r_type: ScoreboardObjectiveType,
         }
         pub struct PacketSetPassengers {
-            entity_id: VInt,
-            passengers: VarArray<VInt>,
+            entity_id: VarInt,
+            passengers: VarArray<VarInt>,
         }
         pub enum TeamsName<'a> {
             TeamsName0(VarString<'a>),
@@ -1139,8 +1139,8 @@ pub mod play {
             Default,
         }
         pub enum Formatting {
-            Formatting0(VInt),
-            Formatting2(VInt),
+            Formatting0(VarInt),
+            Formatting2(VarInt),
             Default,
         }
         pub enum Prefix<'a> {
@@ -1173,11 +1173,11 @@ pub mod play {
         }
         pub enum ScoreboardScoreValue {
             ScoreboardScoreValue1,
-            Default(VInt),
+            Default(VarInt),
         }
         pub struct PacketScoreboardScore<'a> {
             item_name: VarString<'a>,
-            action: VInt,
+            action: VarInt,
             score_name: VarString<'a>,
             value: ScoreboardScoreValue,
         }
@@ -1190,15 +1190,15 @@ pub mod play {
             time: i64,
         }
         pub struct PacketEntitySoundEffect {
-            sound_id: VInt,
-            sound_category: VInt,
-            entity_id: VInt,
+            sound_id: VarInt,
+            sound_category: VarInt,
+            entity_id: VarInt,
             volume: f32,
             pitch: f32,
         }
         pub enum Source {
-            Source3(VInt),
-            Source1(VInt),
+            Source3(VarInt),
+            Source1(VarInt),
             Default,
         }
         pub enum Sound<'a> {
@@ -1212,8 +1212,8 @@ pub mod play {
             sound: Sound<'a>,
         }
         pub struct PacketSoundEffect {
-            sound_id: VInt,
-            sound_category: VInt,
+            sound_id: VarInt,
+            sound_category: VarInt,
             x: i32,
             y: i32,
             z: i32,
@@ -1225,12 +1225,12 @@ pub mod play {
             footer: VarString<'a>,
         }
         pub struct PacketCollect {
-            collected_entity_id: VInt,
-            collector_entity_id: VInt,
-            pickup_item_count: VInt,
+            collected_entity_id: VarInt,
+            collector_entity_id: VarInt,
+            pickup_item_count: VarInt,
         }
         pub struct PacketEntityTeleport {
-            entity_id: VInt,
+            entity_id: VarInt,
             x: f64,
             y: f64,
             z: f64,
@@ -1249,14 +1249,14 @@ pub mod play {
             modifiers: VarArray<Modifier>,
         }
         pub struct PacketEntityUpdateAttributes<'a> {
-            entity_id: VInt,
+            entity_id: VarInt,
             properties: VarArray<EntityUpdateAttrsProperty<'a>>,
         }
         pub struct PacketEntityEffect {
-            entity_id: VInt,
+            entity_id: VarInt,
             effect_id: i8,
             amplifier: i8,
-            duration: VInt,
+            duration: VarInt,
             hide_particles: i8,
         }
         pub struct PacketSelectAdvancementTab<'a> {
@@ -1268,8 +1268,8 @@ pub mod play {
             result: Slot,
         }
         pub struct CraftingShaped<'a> {
-            width: VInt,
-            height: VInt,
+            width: VarInt,
+            height: VarInt,
             group: VarString<'a>,
             ingredients: Vec<Vec<VarArray<Slot>>>,
             result: Slot,
@@ -1326,20 +1326,20 @@ pub mod play {
         }
         pub struct PacketAcknowledgePlayerDigging {
             location: Position,
-            block: VInt,
-            status: VInt,
+            block: VarInt,
+            status: VarInt,
             successful: bool,
         }
         pub enum SculkVibrationSignalDestination {
             SculkVibrationSignalDestinationBlock(Position),
-            SculkVibrationSignalDestinationEntityId(VInt),
+            SculkVibrationSignalDestinationEntityId(VarInt),
             Default,
         }
         pub struct PacketSculkVibrationSignal<'a> {
             source_position: Position,
             destination_identifier: VarString<'a>,
             destination: SculkVibrationSignalDestination,
-            arrival_ticks: VInt,
+            arrival_ticks: VarInt,
         }
         pub struct PacketClearTitles {
             reset: bool,
@@ -1349,10 +1349,10 @@ pub mod play {
             z: f64,
             old_diameter: f64,
             new_diameter: f64,
-            speed: VLong,
-            portal_teleport_boundary: VInt,
-            warning_blocks: VInt,
-            warning_time: VInt,
+            speed: VarLong,
+            portal_teleport_boundary: VarInt,
+            warning_blocks: VarInt,
+            warning_time: VarInt,
         }
         pub struct PacketActionBar<'a> {
             text: VarString<'a>,
@@ -1364,16 +1364,16 @@ pub mod play {
         pub struct PacketWorldBorderLerpSize {
             old_diameter: f64,
             new_diameter: f64,
-            speed: VLong,
+            speed: VarLong,
         }
         pub struct PacketWorldBorderSize {
             diameter: f64,
         }
         pub struct PacketWorldBorderWarningDelay {
-            warning_time: VInt,
+            warning_time: VarInt,
         }
         pub struct PacketWorldBorderWarningReach {
-            warning_blocks: VInt,
+            warning_blocks: VarInt,
         }
         pub struct PacketPing {
             id: i32,
@@ -1390,7 +1390,7 @@ pub mod play {
             fade_out: i32,
         }
         pub struct PacketSimulationDistance {
-            distance: VInt,
+            distance: VarInt,
         }
         pub enum Params<'a> {
             SpawnEntity(PacketSpawnEntity),
@@ -1507,52 +1507,52 @@ pub mod play {
     pub mod serverbound {
         use crate::test::*;
         pub struct PacketTeleportConfirm {
-            teleport_id: VInt,
+            teleport_id: VarInt,
         }
         pub struct PacketQueryBlockNbt {
-            transaction_id: VInt,
+            transaction_id: VarInt,
             location: Position,
         }
         pub struct PacketSetDifficulty {
             new_difficulty: u8,
         }
         pub struct PacketEditBook<'a> {
-            hand: VInt,
+            hand: VarInt,
             pages: VarStringArray<'a>,
             title: Option<VarString<'a>>,
         }
         pub struct PacketQueryEntityNbt {
-            transaction_id: VInt,
-            entity_id: VInt,
+            transaction_id: VarInt,
+            entity_id: VarInt,
         }
         pub struct PacketPickItem {
-            slot: VInt,
+            slot: VarInt,
         }
         pub struct PacketNameItem<'a> {
             name: VarString<'a>,
         }
         pub struct PacketSelectTrade {
-            slot: VInt,
+            slot: VarInt,
         }
         pub struct PacketSetBeaconEffect {
-            primary_effect: VInt,
-            secondary_effect: VInt,
+            primary_effect: VarInt,
+            secondary_effect: VarInt,
         }
         pub struct PacketUpdateCommandBlock<'a> {
             location: Position,
             command: VarString<'a>,
-            mode: VInt,
+            mode: VarInt,
             flags: u8,
         }
         pub struct PacketUpdateCommandBlockMinecart<'a> {
-            entity_id: VInt,
+            entity_id: VarInt,
             command: VarString<'a>,
             track_output: bool,
         }
         pub struct PacketUpdateStructureBlock<'a> {
             location: Position,
-            action: VInt,
-            mode: VInt,
+            action: VarInt,
+            mode: VarInt,
             name: VarString<'a>,
             offset_x: i8,
             offset_y: i8,
@@ -1560,30 +1560,30 @@ pub mod play {
             size_x: i8,
             size_y: i8,
             size_z: i8,
-            mirror: VInt,
-            rotation: VInt,
+            mirror: VarInt,
+            rotation: VarInt,
             metadata: VarString<'a>,
             integrity: f32,
-            seed: VLong,
+            seed: VarLong,
             flags: u8,
         }
         pub struct PacketTabComplete<'a> {
-            transaction_id: VInt,
+            transaction_id: VarInt,
             text: VarString<'a>,
         }
         pub struct PacketChat<'a> {
             message: VarString<'a>,
         }
         pub struct PacketClientCommand {
-            action_id: VInt,
+            action_id: VarInt,
         }
         pub struct PacketSettings<'a> {
             locale: VarString<'a>,
             view_distance: i8,
-            chat_flags: VInt,
+            chat_flags: VarInt,
             chat_colors: bool,
             skin_parts: u8,
-            main_hand: VInt,
+            main_hand: VarInt,
             enable_text_filtering: bool,
             enable_server_listing: bool,
         }
@@ -1597,10 +1597,10 @@ pub mod play {
         }
         pub struct PacketWindowClick {
             window_id: u8,
-            state_id: VInt,
+            state_id: VarInt,
             slot: i16,
             mouse_button: i8,
-            mode: VInt,
+            mode: VarInt,
             changed_slots: VarArray<ChangedSlot>,
             cursor_item: Slot,
         }
@@ -1624,13 +1624,13 @@ pub mod play {
             Default,
         }
         pub enum UseEntityHand {
-            UseEntityHand0(VInt),
-            UseEntityHand2(VInt),
+            UseEntityHand0(VarInt),
+            UseEntityHand2(VarInt),
             Default,
         }
         pub struct PacketUseEntity {
-            target: VInt,
-            mouse: VInt,
+            target: VarInt,
+            mouse: VarInt,
             x: X,
             y: UseEntityY,
             z: Z,
@@ -1639,7 +1639,7 @@ pub mod play {
         }
         pub struct PacketGenerateStructure {
             location: Position,
-            levels: VInt,
+            levels: VarInt,
             keep_jigsaws: bool,
         }
         pub struct PacketKeepAlive {
@@ -1690,14 +1690,14 @@ pub mod play {
             flags: i8,
         }
         pub struct PacketBlockDig {
-            status: VInt,
+            status: VarInt,
             location: Position,
             face: i8,
         }
         pub struct PacketEntityAction {
-            entity_id: VInt,
-            action_id: VInt,
-            jump_boost: VInt,
+            entity_id: VarInt,
+            action_id: VarInt,
+            jump_boost: VarInt,
         }
         pub struct PacketSteerVehicle {
             sideways: f32,
@@ -1708,12 +1708,12 @@ pub mod play {
             recipe_id: VarString<'a>,
         }
         pub struct PacketRecipeBook {
-            book_id: VInt,
+            book_id: VarInt,
             book_open: bool,
             filter_active: bool,
         }
         pub struct PacketResourcePackReceive {
-            result: VInt,
+            result: VarInt,
         }
         pub struct PacketHeldItemSlot {
             slot_id: i16,
@@ -1738,22 +1738,22 @@ pub mod play {
             text4: VarString<'a>,
         }
         pub struct PacketArmAnimation {
-            hand: VInt,
+            hand: VarInt,
         }
         pub struct PacketSpectate {
             target: Uuid,
         }
         pub struct PacketBlockPlace {
-            hand: VInt,
+            hand: VarInt,
             location: Position,
-            direction: VInt,
+            direction: VarInt,
             cursor_x: f32,
             cursor_y: f32,
             cursor_z: f32,
             inside_block: bool,
         }
         pub struct PacketUseItem {
-            hand: VInt,
+            hand: VarInt,
         }
         pub enum TabId<'a> {
             TabId0(VarString<'a>),
@@ -1761,7 +1761,7 @@ pub mod play {
             Default,
         }
         pub struct PacketAdvancementTab<'a> {
-            action: VInt,
+            action: VarInt,
             tab_id: TabId<'a>,
         }
         pub struct PacketPong {
