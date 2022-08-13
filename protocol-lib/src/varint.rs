@@ -1,4 +1,4 @@
-use std::io::Write;
+use std::{io::Write, str::FromStr, fmt::Display};
 
 use cookie_factory::{GenResult, WriteContext};
 use nom::IResult;
@@ -266,5 +266,19 @@ impl<T: PrimInt + From<u8>> PrimInt for VInt<T> {
 
     fn pow(self, exp: u32) -> Self {
         Self(T::pow(self.0, exp))
+    }
+}
+
+impl<T: PrimInt + From<u8> + FromStr> FromStr for VInt<T> {
+    type Err = T::Err;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        T::from_str(s).map(Self)
+    }
+}
+
+impl<T: PrimInt + From<u8> + Display> Display for VInt<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
     }
 }

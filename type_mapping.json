@@ -41,7 +41,7 @@
     "regex": [
         ["PrefixedString<'a, VarInt>", "VarString<'a>"],
         ["PrefixedBuffer<'a, VarInt>", "VarBuffer<'a>"],
-        ["PrefixedArray<(.*), VarInt>", "VarArray<\\1>"],
+        ["(?V1)PrefixedArray<(([a-zA-Z]*<(?1)*>)|[^<>]+), VarInt>", "VarArray<\\1>"],
         ["VarArray<VarString<'a>>", "VarStringArray<'a>"],
         ["toClient", "clientbound"],
         ["toServer", "serverbound"],

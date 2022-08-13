@@ -1,7 +1,7 @@
 use std::{
     io::{Cursor, Write},
     marker::PhantomData,
-    ops::Deref,
+    ops::Deref, fmt::Display,
 };
 
 use cookie_factory::{GenError, GenResult, WriteContext};
@@ -13,7 +13,7 @@ use nom::{
     sequence::preceded,
     IResult,
 };
-use num_traits::PrimInt;
+use num_traits::{PrimInt, NumCast, Signed, Unsigned};
 use protocol_derive::SerializeFn;
 
 pub use super::varint::VInt;
@@ -76,9 +76,9 @@ impl<'a> Packet<'a> for Bool {
     }
 }
 pub struct PrefixedBuffer<'a, T>(pub &'a [u8], pub PhantomData<T>);
-impl<'t: 'a, 'a, T: Packet<'t> + PrimInt + TryFrom<usize>> Packet<'t> for PrefixedBuffer<'a, T> {
+impl<'t: 'a, 'a, T: Packet<'t> + PrimInt> Packet<'t> for PrefixedBuffer<'a, T> {
     fn serialize<W: Write>(&self, w: WriteContext<W>) -> GenResult<W> {
-        let length = T::try_from(self.0.len()).map_err(|_| GenError::CustomError(0))?;
+        let length = <T as NumCast>::from(self.0.len()).ok_or_else(|| GenError::CustomError(0))?;
         let w = length.serialize(w)?;
         cookie_factory::combinator::slice(self.0)(w)
     }
@@ -98,7 +98,7 @@ impl<'a, T> Deref for PrefixedBuffer<'a, T> {
     }
 }
 pub struct PrefixedString<'a, T>(pub &'a str, pub PhantomData<T>);
-impl<'t: 'a, 'a, T: Packet<'t> + PrimInt + TryFrom<usize>> Packet<'t> for PrefixedString<'a, T> {
+impl<'t: 'a, 'a, T: Packet<'t> + PrimInt> Packet<'t> for PrefixedString<'a, T> {
     fn serialize<W: Write>(&self, w: WriteContext<W>) -> GenResult<W> {
         PrefixedBuffer(self.0.as_bytes(), PhantomData::<T>).serialize(w)
     }
@@ -112,12 +112,17 @@ impl<'t: 'a, 'a, T: Packet<'t> + PrimInt + TryFrom<usize>> Packet<'t> for Prefix
         )(input)
     }
 }
+impl<'a, T> Display for PrefixedString<'a, T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
 pub struct PrefixedArray<T, U>(pub Vec<T>, pub PhantomData<U>);
-impl<'t, T: Packet<'t>, U: Packet<'t> + PrimInt + TryFrom<usize>> Packet<'t>
+impl<'t, T: Packet<'t>, U: Packet<'t> + PrimInt> Packet<'t>
     for PrefixedArray<T, U>
 {
     fn serialize<W: Write>(&self, w: WriteContext<W>) -> GenResult<W> {
-        let length = U::try_from(self.0.len()).map_err(|_| GenError::CustomError(0))?;
+        let length = <U as NumCast>::from(self.0.len()).ok_or_else(|| GenError::CustomError(0))?;
         let mut w = length.serialize(w)?;
         for i in &self.0 {
             w = i.serialize(w)?;
@@ -217,6 +222,52 @@ impl<'t> Packet<'t> for OptionalNbt {
             map(tag([0x00]), |_| Self(None)),
             map(Nbt::deserialize, |x| Self(Some(x))),
         ))(input)
+    }
+}
+
+impl<'t> Packet<'t> for bool {
+    fn serialize<W: Write>(&self, w: WriteContext<W>) -> GenResult<W> {
+        if *self { 1u8 } else { 0 }.serialize(w)
+    }
+
+    fn deserialize(input: &'t [u8]) -> IResult<&'t [u8], Self> {
+        map_res(u8::deserialize, |x| match x { 0 => Ok(false), 1 => Ok(true), _ => Err(nom::error::ErrorKind::Alt) })(input)
+    }
+}
+
+pub fn parse_bits_signed<T: PrimInt + Signed>(len: usize) -> impl Fn((&[u8], usize)) -> nom::IResult<(&[u8], usize), T> {
+    move |input| {
+        nom::combinator::map(nom::bits::complete::take(len), parse_signed_be(len))(input)
+    }
+}
+pub fn parse_bits_unsigned<T: PrimInt + Unsigned>(len: usize) -> impl Fn((&[u8], usize)) -> nom::IResult<(&[u8], usize), T> {
+    move |input| {
+        nom::combinator::map(nom::bits::complete::take(len), parse_unsigned_be(len))(input)
+    }
+}
+
+pub fn parse_signed_be<T: PrimInt + Signed>(len: usize) -> impl Fn(u64) -> T {
+    move |mut val: u64| {
+        let mut accum = T::zero();
+        for _ in 0..len {
+            accum = accum.unsigned_shl(1);
+            accum = accum | T::from::<u8>((val & 1) as u8).unwrap();
+            val >>= 1;
+        }
+        accum = accum.unsigned_shl(64 - len as u32).signed_shr(64 - len as u32); // sign extend
+        accum.to_le()
+    }
+}
+
+pub fn parse_unsigned_be<T: PrimInt + Unsigned>(len: usize) -> impl Fn(u64) -> T {
+    move |mut val: u64| {
+        let mut accum = T::zero();
+        for _ in 0..len {
+            accum = accum.unsigned_shl(1);
+            accum = accum | T::from::<u8>((val & 1) as u8).unwrap();
+            val >>= 1;
+        }
+        accum.to_le()
     }
 }
 

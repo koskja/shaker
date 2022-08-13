@@ -2,7 +2,8 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 import json
 import re
-from typing import Any, Callable, Dict, List, Set, Union
+import regex
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
 from sympy import Integer, public
 
@@ -100,11 +101,11 @@ def camelcased(func):
 
 class IType(ABC):
     @abstractmethod
-    def emit_ser(self, val) -> str:
+    def emit_ser(self, val: str) -> str:
         pass
 
     @abstractmethod
-    def emit_de(self) -> str:
+    def emit_de(self, previous: List[str]) -> str:
         pass
 
     @abstractmethod
@@ -115,9 +116,15 @@ class IType(ABC):
     def name(self) -> str:
         pass
 
+    def ty_name(self) -> str:
+        return self.name().replace('<', '::<', 1)
+
     @abstractmethod
     def has_lifetime(self) -> bool:
         pass
+
+    def discriminant_level(self) -> Integer:
+        return 0
 
 
 class ITypeConstructor(ABC):
@@ -151,26 +158,56 @@ class DelayedContructor(ITypeConstructor):
         return self.inner.ctor(ctx, name, json.loads(Template(self.params).emit(params)))
 
 class Container(IType):
-    struct_name = "INVALID"
-    fields = []
+    struct_name: str = ""
+    fields: List[Tuple[str, IType]] = []
 
     def __init__(self, name, fields) -> None:
         self.struct_name = name
         self.fields = fields
 
-    def emit_de(self) -> str:
-        fields = "".join(
-            map(lambda a: f"let (input, {a[0]}) = {a[1].emit_de()};\n", self.fields)
-        )
-        return (
-            fields
-            + "Ok((input, Self { "
-            + "".join(map(lambda a: f"{a[0]}, ", self.fields))
-            + " }))"
-        )
+    def emit_de(self, previous: List[Tuple[str, IType]]) -> str:
+        if self.discriminant_level() == 0:
+            return f'{self.ty_name()}::deserialize'
+        else:
+            return self.true_de(previous)
+    
+    def emit_ser(self, val) -> str:
+        if self.discriminant_level() == 0:
+            return f'let w = {self.ty_name()}::serialize(&{val}, w)?;'
+        else:
+            return self.true_ser(val)
 
-    def emit_ser(self) -> str:
-        pass
+    def true_de(self, previous) -> str:
+        if max([a[1].discriminant_level() for a in self.fields] or [0]) == 0:
+            return self.native_de()
+        last = previous[-1][0]
+        field_varname = lambda x: f'{last}_{x}'
+        field_de = lambda ty, varname: ty.emit_de(previous + [(varname, ty)])
+        fields = [(lambda x: f"let (input, {x}) = ({field_de(a[1], x)})(input)?;\n")(field_varname(a[0])) for a in self.fields]
+        return (
+            "|input| {" +
+            "".join(fields)
+            + f"Ok((input, {self.struct_name} {{ "
+            + "".join([f"{a[0]}: {field_varname(a[0])}, " for a in self.fields])
+            + " })) }"
+        )
+    def native_de(self) -> str:
+        fields = ''.join([(f"{a[1].emit_de(['']) or '|_| todo!()'}, ") for a in self.fields])
+        fields_names = ', '.join([a[0] for a in self.fields])
+        return f"""
+        nom::combinator::map(
+            nom::sequence::tuple((
+                {fields or '|i| Ok((i, ())),'}
+            )),
+            |{'_' if not fields_names else '('+fields_names+',)'}| {self.struct_name} {{ {fields_names} }}
+        )
+        """
+
+    def true_ser(self, val) -> str:
+        o = ''
+        for name, ty in self.fields:
+            o += ty.emit_ser(f'{val}.{name}') + '\n'
+        return o
 
     def emit_extra(self) -> str:
         lifetime = ""
@@ -180,6 +217,7 @@ class Container(IType):
             f"pub struct {self.struct_name}{lifetime} {{\n"
             + "".join(map(lambda a: f"{a[0]}: {a[1].name()}, \n", self.fields))
             + "}\n"
+            + (make_impl(self, de=Container.true_de, ser=Container.true_ser) if self.discriminant_level() == 0 else '')
         )
 
     def name(self) -> str:
@@ -187,6 +225,12 @@ class Container(IType):
 
     def has_lifetime(self) -> bool:
         return any(map(lambda a: a[1].has_lifetime(), self.fields))
+    
+    def discriminant_level(self) -> Integer:
+        return max(max([a[1].discriminant_level() for a in self.fields] or [0]) - 1, 0)
+    
+    def get_field_ty(self, name: str) -> Optional[IType]:
+        return next(iter([a[1] for a in self.fields if a[0] == name] or [None]))
 
     @camelcased
     def construct(ctx: Context, name: str, params: Any) -> "Container":
@@ -198,7 +242,7 @@ class Container(IType):
             fields.append([make_snakecase(item["name"]), ty])
         return Container(name, fields)
 
-class Mapper(IType):
+class Mapper(IType): # TODO: make this not suck - somehow skip intermediate str
     ty_name = ""
     match_ty = None
     arms = {}
@@ -210,22 +254,45 @@ class Mapper(IType):
         super().__init__()
 
     def emit_extra(self) -> str:
-        return ""
+        return ''
 
-    def emit_de(self) -> str:
-        a = f"""let branch_{self.ty_name} = {self.match_ty.emit_de()};\n
-                let {self.ty_name} = match branch_{self.ty_name} {{\n"""
-        a += "".join(
+    def emit_de(self, previous) -> str:
+        arms = ''.join(
             map(
-                lambda x: f'x if str::parse("{x[0]}").unwrap() == x => "{x[1]}", \n',
-                self.arms.items(),
+                lambda x: f'\"{x[0]}\" => \"{x[1]}\",\n'
+                , self.arms.items()
             )
         )
-        a += "}"
-        return a
+        if len(self.arms) == 0:
+            return '|x| Ok((x, ""))'
+        x = f"""
+        let (input, x) = ({self.match_ty.emit_de(previous)})(input)?;
+        let x = format!("{{x}}");
+        let val = match &x[..] {{
+            {arms}
+            _ => return Err(nom::Err::Error(nom::error::Error::new(input, nom::error::ErrorKind::Verify))),
+        }};
+        Ok((input, val))
+        """
+        return f'|input| {{ {x} }}'
 
     def emit_ser(self, val) -> str:
-        return super().emit_ser(val)
+        arms = ''.join(
+            map(
+                lambda x: f'\"{x[1]}\" => \"{x[0]}\",\n'
+                , self.arms.items()
+            )
+        )
+        if len(self.arms) == 0:
+            return ''
+        return f""" 
+        let tag = match &{val}[..] {{
+            {arms}
+            }};
+        let tag2 = str::parse(tag).unwrap();
+        {self.match_ty.emit_ser('tag2')}
+        """
+        
 
     def name(self) -> str:
         return "&'static str"
@@ -235,14 +302,14 @@ class Mapper(IType):
 
     @camelcased
     def construct(ctx: Context, name: str, params: Context) -> "Mapper":
-        match_ty = ctx.types[params["type"]].name()
+        match_ty = ctx.types[params["type"]]
         return Mapper(name, match_ty, params["mappings"])
 
 
 class Switch(IType):
     def __init__(self, name, compare_to, fields, default) -> None:
         self._name = name
-        self.compare_to = compare_to
+        self.compare_to: str = compare_to
         self.fields = fields
         self.default = default
         super().__init__()
@@ -257,29 +324,56 @@ class Switch(IType):
                 lambda x: f"{x[0]}"
                 + (
                     ""
-                    if isinstance(x[1], NativeType) and x[1].void
+                    if isinstance(x[1], NativeType) and x[1].void and False #TODO
                     else f"({x[1].name()})"
                 )
                 + ", \n",
-                self.fields.items(),
+                self.fields.values(),
             )
         )
         a += 'Default' + ('' if isinstance(self.default, NativeType)
-        and self.default.void else f'({self.default.name()})') + ', \n'
+        and False and self.default.void else f'({self.default.name()})') + ', \n' #TODO
         a += "}\n"
         return a
 
-    def emit_de(self) -> str:
-        return super().emit_de()
+    def emit_de(self, previous: List[Tuple[str, IType]]) -> str:
+        compare_path = [make_snakecase(a) if a != '..' else a for a in self.compare_to.split('/')]
+        prev = [a for a in previous if not isinstance(a[1], Switch)]
+        separator = '_'
+        for seg in compare_path:
+            if seg == '..':
+                prev = prev[:-1]
+            else:
+                seg_ty = prev[-1][1].get_field_ty(seg)
+                prev += [(prev[-1][0]+separator+seg, seg_ty)]
+                if seg_ty.discriminant_level() == 0:
+                    separator = '.'
+        compare_to = prev[-1][0]
+        m = f'match &format!("{{}}", {compare_to})[..] {{\n'
+        arms = ''.join(
+            [f'"{a[0]}" => nom::combinator::map({a[1][1].emit_de(previous+[(previous[-1][0], a[1][1])]) or "()"}, {self.ty_name()}::{a[1][0]})(input),\n' for a in self.fields.items()]
+        )
+        return f'|input| {{ {m}{arms} _ => nom::combinator::map({self.default.emit_de(previous+[(previous[-1][0], self.default)])}, {self.ty_name()}::Default)(input)}} }}'
 
     def emit_ser(self, val) -> str:
-        return super().emit_ser(val)
+        arms = ''.join(map(
+            lambda x: f"{self.ty_name()}::{x[1][0]}(val) => {{ {x[1][1].emit_ser('val')} w}}, \n",
+            self.fields.items()
+        ))
+        x = f"""
+        let w = match &{val} {{ {arms} {self.ty_name()}::Default(val) =>  {self.default.ty_name()}::serialize(val, w)? }};
+        """
+        return x
 
     def name(self) -> str:
         return self._name + ("<'a>" if self.has_lifetime() else "")
 
     def has_lifetime(self) -> bool:
-        return any(map(lambda x: x.has_lifetime(), self.fields.values())) | self.default.has_lifetime()
+        return any(map(lambda x: x[1].has_lifetime(), self.fields.values())) | self.default.has_lifetime()
+
+    def discriminant_level(self) -> Integer:
+        levels = [a[1][1].discriminant_level() for a in self.fields.items()] or [0]
+        return max(max(levels) - 1, self.compare_to.count('..') + 1)
 
     @camelcased
     def construct(ctx: Context, name: str, params: Any) -> IType:
@@ -288,10 +382,10 @@ class Switch(IType):
         # breakpoint()
         fields = dict(
             map(
-                lambda x: (lambda y: (
+                lambda x: (x[0], (lambda y: (
                     make_camelcase(y),
                     ctx.parse_type(x[1], y, force_name=True),
-                ))(ctx.make_unique(x[0], name, None)),
+                ))(ctx.make_unique(x[0], name, None))),
                 params["fields"].items(),
             )
         )
@@ -339,22 +433,34 @@ class Bitfield(IType):
             )
         )
         a += "}\n"
-        return a
+        return a + make_impl(self, Bitfield.true_de, Bitfield.true_ser)
 
-    def emit_de(self) -> str:
-        return super().emit_de()
+    def emit_de(self, previous) -> str:
+        return f'{self.ty_name()}::deserialize'
+
+    def true_de(self, previous) -> str:
+        name_list = ''.join([a['name']+', ' for a in self.fields])
+        parse_list = ''.join([f"{'parse_bits_signed' if a['signed'] else 'parse_bits_unsigned'}({a['size']}), " for a in self.fields])
+        return f"nom::bits::<_, _, nom::error::Error<(&[u8], usize)>, _, _>(nom::combinator::map(nom::sequence::tuple(({parse_list})), |({name_list})| {self.name()} {{ {name_list} }}))"
 
     def emit_ser(self, val) -> str:
-        return super().emit_ser(val)
+        return f'let w = {self.ty_name()}::serialize(&{val}, w)?;'
+    
+    def true_ser(self, val) -> str:
+        return ''
 
     def has_lifetime(self) -> bool:
         return False
+    
+    def get_field_ty(self, name: str) -> Optional[IType]:
+        return next(iter([NativeType(x['ty']) for x in self.fields if x['name'] == name] or [None]))
 
     @camelcased
     def construct(ctx: Context, name: str, params: Any) -> IType:
         params = deepcopy(params)
         for x in params:
             x['name'] = make_snakecase(x['name'])
+            x['ty'] = Bitfield.nearest_type(x['size'], x['signed'])
         return Bitfield(name, params)
 
 
@@ -367,11 +473,10 @@ class EntityMetadataLoop(IType):
     def emit_extra(self) -> str:
         return ""
 
-    def emit_de(self) -> str:
-        return super().emit_de()
-
+    def emit_de(self, previous) -> str:
+        return ''
     def emit_ser(self, val) -> str:
-        return super().emit_ser(val)
+        return ''
 
     def name(self) -> str:
         return f"Vec<{self.item.name()}>"
@@ -395,11 +500,11 @@ class TopbitTerminated(IType):
     def emit_extra(self) -> str:
         return ""
 
-    def emit_de(self) -> str:
-        return super().emit_de()
+    def emit_de(self, previous) -> str:
+        return ''
 
     def emit_ser(self, val) -> str:
-        return super().emit_ser(val)
+        return ''
 
     def name(self) -> str:
         return f"std::collections::HashMap<{self.key.name()}, {self.item.name()}>"
@@ -426,11 +531,11 @@ class ExternallyTaggedArray(IType):
     def emit_extra(self) -> str:
         return ""
 
-    def emit_de(self) -> str:
-        return super().emit_de()
+    def emit_de(self, previous) -> str:
+        return ''
 
     def emit_ser(self, val) -> str:
-        return super().emit_ser(val)
+        return ''
 
     def name(self) -> str:
         return f"Vec<{self.item.name()}>"
@@ -454,11 +559,11 @@ class TyAlias(IType):
     def emit_extra(self) -> str:
         return f'type {self.n} = {self.d.name()};'
 
-    def emit_de(self) -> str:
-        return super().emit_de()
+    def emit_de(self, previous) -> str:
+        return ''
 
     def emit_ser(self, val) -> str:
-        return super().emit_ser(val)
+        return self.d.emit_ser(val)
 
     def name(self) -> str:
         return self.n
@@ -474,11 +579,11 @@ class NativeType(IType):
         self._name = name
         super().__init__()
 
-    def emit_de(self) -> str:
-        return f"{self._name}::deserialize(input)?"
+    def emit_de(self, previous) -> str:
+        return f"{self.ty_name()}::deserialize"
 
     def emit_ser(self, val) -> str:
-        return f"{self._name}::serialize({val})(w)"
+        return f"let w = {self.ty_name()}::serialize(&{val}, w)?;"
 
     def emit_extra(self) -> str:
         return ""
@@ -500,7 +605,7 @@ class ConstructorList(ITypeConstructor):
     def ctor(self, ctx: Context, name: str, params: Any) -> IType:
         try:
             return self.a.ctor(ctx, name, params)
-        except:
+        except ValueError:
             return self.b.ctor(ctx, name, params)
 
 class Template(ITypeConstructor):
@@ -552,6 +657,22 @@ def parse_external(s: str) -> NativeType | Template:
     else:
         return Template(s)
 
+def make_impl(ty: IType, de: Optional[Callable[[IType, List[str]], str]] = None, ser: Optional[Callable[[IType, str], str]] = None) -> str:
+    de = de or ty.emit_de
+    ser = ser or ty.emit_ser
+    impl = f"impl<'t: 'a, 'a> protocol_lib::Packet<'t>" if ty.has_lifetime() else f"impl<'t> protocol_lib::Packet<'t>"
+    return f"""
+{impl} for {ty.name()} {{\n
+    fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {{\n
+        {ser(ty, 'self')}\n
+        Ok(w)
+    }}\n
+\n
+    fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {{\n
+        ({de(ty, [('self', ty)])})(input)\n
+    }}\n
+}}\n
+    """
 
 def getVer(version: str):
     with open("/home/koskja/shaker/minecraft-data/data/dataPaths.json") as f:
@@ -614,7 +735,7 @@ for i, j in protocol.items():
 
 for [a, b] in external_mapping['regex']:
     while True:
-        n = re.sub(a, b, o, flags=re.RegexFlag.MULTILINE)
+        n = regex.sub(a, b, o, flags=regex.MULTILINE)
         if o == n:
             break
         o = n
