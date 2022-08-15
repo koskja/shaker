@@ -1,7 +1,7 @@
 
 use nom::{combinator::map, sequence::tuple};
 #[allow(unused_imports)]
-use protocol_lib::types::*;
+use protocol_lib::{types::*, Packet};
 type VarInt = VInt<i32>;
 type VarLong = VInt<i64>;
 type VarString<'a> = PrefixedString<'a, VarInt>;
@@ -35,30 +35,12 @@ impl<'t> protocol_lib::Packet<'t> for Position {
     }
 }
 
+#[derive(protocol_lib::Packet)]
 pub struct RTrue {
     item_id: VarInt,
     item_count: i8,
     nbt_data: OptionalNbt,
 }
-
-impl<'t> protocol_lib::Packet<'t> for RTrue {
-    fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        let w = VarInt::serialize(&self.item_id, w)?;
-        let w = i8::serialize(&self.item_count, w)?;
-        let w = OptionalNbt::serialize(&self.nbt_data, w)?;
-
-        Ok(w)
-    }
-
-    fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-        (map(tuple((VarInt::deserialize, i8::deserialize, OptionalNbt::deserialize)), |(item_id, item_count, nbt_data)| RTrue {
-            item_id,
-            item_count,
-            nbt_data,
-        }))(input)
-    }
-}
-
 pub enum Ident0 {
     RFalse,
     RTrue(RTrue),
@@ -74,8 +56,6 @@ impl Ident0 {
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        use protocol_lib::Packet;
-
         let w = match &self {
             Ident0::RFalse => w,
             Ident0::RTrue(val) => RTrue::serialize(&val, w)?,
@@ -117,65 +97,22 @@ impl<'t> protocol_lib::Packet<'t> for Slot {
     }
 }
 
+#[derive(protocol_lib::Packet)]
 pub struct Data2 {
     block_state: VarInt,
 }
-
-impl<'t> protocol_lib::Packet<'t> for Data2 {
-    fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        let w = VarInt::serialize(&self.block_state, w)?;
-
-        Ok(w)
-    }
-
-    fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-        (map(tuple((VarInt::deserialize,)), |(block_state,)| Data2 { block_state }))(input)
-    }
-}
-
+#[derive(protocol_lib::Packet)]
 pub struct Data3 {
     block_state: VarInt,
 }
-
-impl<'t> protocol_lib::Packet<'t> for Data3 {
-    fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        let w = VarInt::serialize(&self.block_state, w)?;
-
-        Ok(w)
-    }
-
-    fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-        (map(tuple((VarInt::deserialize,)), |(block_state,)| Data3 { block_state }))(input)
-    }
-}
-
+#[derive(protocol_lib::Packet)]
 pub struct Data14 {
     red: f32,
     green: f32,
     blue: f32,
     scale: f32,
 }
-
-impl<'t> protocol_lib::Packet<'t> for Data14 {
-    fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        let w = f32::serialize(&self.red, w)?;
-        let w = f32::serialize(&self.green, w)?;
-        let w = f32::serialize(&self.blue, w)?;
-        let w = f32::serialize(&self.scale, w)?;
-
-        Ok(w)
-    }
-
-    fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-        (map(tuple((f32::deserialize, f32::deserialize, f32::deserialize, f32::deserialize)), |(red, green, blue, scale)| Data14 {
-            red,
-            green,
-            blue,
-            scale,
-        }))(input)
-    }
-}
-
+#[derive(protocol_lib::Packet)]
 pub struct Data15 {
     from_red: f32,
     from_green: f32,
@@ -185,76 +122,14 @@ pub struct Data15 {
     to_green: f32,
     to_blue: f32,
 }
-
-impl<'t> protocol_lib::Packet<'t> for Data15 {
-    fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        let w = f32::serialize(&self.from_red, w)?;
-        let w = f32::serialize(&self.from_green, w)?;
-        let w = f32::serialize(&self.from_blue, w)?;
-        let w = f32::serialize(&self.scale, w)?;
-        let w = f32::serialize(&self.to_red, w)?;
-        let w = f32::serialize(&self.to_green, w)?;
-        let w = f32::serialize(&self.to_blue, w)?;
-
-        Ok(w)
-    }
-
-    fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-        (map(
-            tuple((
-                f32::deserialize,
-                f32::deserialize,
-                f32::deserialize,
-                f32::deserialize,
-                f32::deserialize,
-                f32::deserialize,
-                f32::deserialize,
-            )),
-            |(from_red, from_green, from_blue, scale, to_red, to_green, to_blue)| Data15 {
-                from_red,
-                from_green,
-                from_blue,
-                scale,
-                to_red,
-                to_green,
-                to_blue,
-            },
-        ))(input)
-    }
-}
-
+#[derive(protocol_lib::Packet)]
 pub struct Data24 {
     block_state: VarInt,
 }
-
-impl<'t> protocol_lib::Packet<'t> for Data24 {
-    fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        let w = VarInt::serialize(&self.block_state, w)?;
-
-        Ok(w)
-    }
-
-    fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-        (map(tuple((VarInt::deserialize,)), |(block_state,)| Data24 { block_state }))(input)
-    }
-}
-
+#[derive(protocol_lib::Packet)]
 pub struct Data35 {
     item: Slot,
 }
-
-impl<'t> protocol_lib::Packet<'t> for Data35 {
-    fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        let w = Slot::serialize(&self.item, w)?;
-
-        Ok(w)
-    }
-
-    fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-        (map(tuple((Slot::deserialize,)), |(item,)| Data35 { item }))(input)
-    }
-}
-
 pub enum Destination {
     Block(Position),
     Entity(VarInt),
@@ -270,8 +145,6 @@ impl Destination {
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        use protocol_lib::Packet;
-
         let w = match &self {
             Destination::Block(val) => Position::serialize(&val, w)?,
             Destination::Entity(val) => VarInt::serialize(&val, w)?,
@@ -346,8 +219,6 @@ impl<'a> Data<'a> {
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        use protocol_lib::Packet;
-
         let w = match &self {
             Data::Data2(val) => Data2::serialize(&val, w)?,
             Data::Data3(val) => Data3::serialize(&val, w)?,
@@ -399,70 +270,23 @@ impl<'t: 'a, 'a> protocol_lib::Packet<'t> for Particle<'a> {
     }
 }
 
+#[derive(protocol_lib::Packet)]
 pub struct Ident1 {
     key: u8,
     r_type: VarInt,
 }
-
-impl<'t> protocol_lib::Packet<'t> for Ident1 {
-    fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        let w = u8::serialize(&self.key, w)?;
-        let w = VarInt::serialize(&self.r_type, w)?;
-
-        Ok(w)
-    }
-
-    fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-        (map(tuple((u8::deserialize, VarInt::deserialize)), |(key, r_type)| Ident1 { key, r_type }))(input)
-    }
-}
-
+#[derive(protocol_lib::Packet)]
 pub struct Value8 {
     pitch: f32,
     yaw: f32,
     roll: f32,
 }
-
-impl<'t> protocol_lib::Packet<'t> for Value8 {
-    fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        let w = f32::serialize(&self.pitch, w)?;
-        let w = f32::serialize(&self.yaw, w)?;
-        let w = f32::serialize(&self.roll, w)?;
-
-        Ok(w)
-    }
-
-    fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-        (map(tuple((f32::deserialize, f32::deserialize, f32::deserialize)), |(pitch, yaw, roll)| Value8 { pitch, yaw, roll }))(input)
-    }
-}
-
+#[derive(protocol_lib::Packet)]
 pub struct Value16 {
     villager_type: VarInt,
     villager_profession: VarInt,
     level: VarInt,
 }
-
-impl<'t> protocol_lib::Packet<'t> for Value16 {
-    fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        let w = VarInt::serialize(&self.villager_type, w)?;
-        let w = VarInt::serialize(&self.villager_profession, w)?;
-        let w = VarInt::serialize(&self.level, w)?;
-
-        Ok(w)
-    }
-
-    fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-        (map(tuple((VarInt::deserialize, VarInt::deserialize, VarInt::deserialize)), |(villager_type, villager_profession, level)| {
-            Value16 {
-                villager_type,
-                villager_profession,
-                level,
-            }
-        }))(input)
-    }
-}
-
 pub enum EntityMetadata<'a> {
     Value0(i8),
     Value1(VarInt),
@@ -512,8 +336,6 @@ impl<'a> EntityMetadata<'a> {
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        use protocol_lib::Packet;
-
         let w = match &self {
             EntityMetadata::Value0(val) => i8::serialize(&val, w)?,
             EntityMetadata::Value1(val) => VarInt::serialize(&val, w)?,
@@ -593,6 +415,7 @@ impl<'t: 'a, 'a> protocol_lib::Packet<'t> for EntityMetadataWrapper<'a> {
     }
 }
 
+#[derive(protocol_lib::Packet)]
 pub struct MinecraftSmeltingFormat<'a> {
     group: VarString<'a>,
     ingredient: VarArray<Slot>,
@@ -600,74 +423,11 @@ pub struct MinecraftSmeltingFormat<'a> {
     experience: f32,
     cook_time: VarInt,
 }
-
-impl<'t: 'a, 'a> protocol_lib::Packet<'t> for MinecraftSmeltingFormat<'a> {
-    fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        let w = PrefixedString::<'a, VarInt>::serialize(&self.group, w)?;
-
-        let w = PrefixedArray::<Slot, VarInt>::len(&self.ingredient).serialize(w)?;
-
-        let mut w = w;
-        let items = self.ingredient.0.iter();
-        for i in items {
-            w = Slot::serialize(&i, w)?
-        }
-
-        let w = Slot::serialize(&self.result, w)?;
-        let w = f32::serialize(&self.experience, w)?;
-        let w = VarInt::serialize(&self.cook_time, w)?;
-
-        Ok(w)
-    }
-
-    fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-        (map(
-            tuple((
-                PrefixedString::<'a, VarInt>::deserialize,
-                PrefixedArray::<Slot, VarInt>::deserialize,
-                Slot::deserialize,
-                f32::deserialize,
-                VarInt::deserialize,
-            )),
-            |(group, ingredient, result, experience, cook_time)| MinecraftSmeltingFormat {
-                group,
-                ingredient,
-                result,
-                experience,
-                cook_time,
-            },
-        ))(input)
-    }
-}
-
+#[derive(protocol_lib::Packet)]
 pub struct Tag<'a> {
     tag_name: VarString<'a>,
     entries: VarArray<VarInt>,
 }
-
-impl<'t: 'a, 'a> protocol_lib::Packet<'t> for Tag<'a> {
-    fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        let w = PrefixedString::<'a, VarInt>::serialize(&self.tag_name, w)?;
-
-        let w = PrefixedArray::<VarInt, VarInt>::len(&self.entries).serialize(w)?;
-
-        let mut w = w;
-        let items = self.entries.0.iter();
-        for i in items {
-            w = VarInt::serialize(&i, w)?
-        }
-
-        Ok(w)
-    }
-
-    fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-        (map(
-            tuple((PrefixedString::<'a, VarInt>::deserialize, PrefixedArray::<VarInt, VarInt>::deserialize)),
-            |(tag_name, entries)| Tag { tag_name, entries },
-        ))(input)
-    }
-}
-
 pub struct Ident5 {
     x: u8,
     z: u8,
@@ -685,31 +445,13 @@ impl<'t> protocol_lib::Packet<'t> for Ident5 {
     }
 }
 
+#[derive(protocol_lib::Packet)]
 pub struct ChunkBlockEntity {
     ident5: Ident5,
     y: i16,
     r_type: VarInt,
     nbt_data: OptionalNbt,
 }
-
-impl<'t> protocol_lib::Packet<'t> for ChunkBlockEntity {
-    fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        let w = Ident5::serialize(&self.ident5, w)?;
-        let w = i16::serialize(&self.y, w)?;
-        let w = VarInt::serialize(&self.r_type, w)?;
-        let w = OptionalNbt::serialize(&self.nbt_data, w)?;
-
-        Ok(w)
-    }
-
-    fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-        (map(
-            tuple((Ident5::deserialize, i16::deserialize, VarInt::deserialize, OptionalNbt::deserialize)),
-            |(ident5, y, r_type, nbt_data)| ChunkBlockEntity { ident5, y, r_type, nbt_data },
-        ))(input)
-    }
-}
-
 pub struct Flags {
     unused: u8,
     has_custom_suggestions: u8,
@@ -761,8 +503,6 @@ impl RedirectNode {
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        use protocol_lib::Packet;
-
         let w = match &self {
             RedirectNode::RedirectNode1(val) => VarInt::serialize(&val, w)?,
             RedirectNode::Default => w,
@@ -771,22 +511,10 @@ impl RedirectNode {
         Ok(w)
     }
 }
+#[derive(protocol_lib::Packet)]
 pub struct ExtraNodeData1<'a> {
     name: VarString<'a>,
 }
-
-impl<'t: 'a, 'a> protocol_lib::Packet<'t> for ExtraNodeData1<'a> {
-    fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        let w = PrefixedString::<'a, VarInt>::serialize(&self.name, w)?;
-
-        Ok(w)
-    }
-
-    fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-        (map(tuple((PrefixedString::<'a, VarInt>::deserialize,)), |(name,)| ExtraNodeData1 { name }))(input)
-    }
-}
-
 pub struct FloatFlags {
     unused: u8,
     max_present: u8,
@@ -821,8 +549,6 @@ impl Min {
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        use protocol_lib::Packet;
-
         let w = match &self {
             Min::Min1(val) => f32::serialize(&val, w)?,
             Min::Default => w,
@@ -844,8 +570,6 @@ impl Max {
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        use protocol_lib::Packet;
-
         let w = match &self {
             Max::Max1(val) => f32::serialize(&val, w)?,
             Max::Default => w,
@@ -926,8 +650,6 @@ impl DoubleMin {
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        use protocol_lib::Packet;
-
         let w = match &self {
             DoubleMin::DoubleMin1(val) => f64::serialize(&val, w)?,
             DoubleMin::Default => w,
@@ -949,8 +671,6 @@ impl DoubleMax {
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        use protocol_lib::Packet;
-
         let w = match &self {
             DoubleMax::DoubleMax1(val) => f64::serialize(&val, w)?,
             DoubleMax::Default => w,
@@ -1031,8 +751,6 @@ impl IntegerMin {
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        use protocol_lib::Packet;
-
         let w = match &self {
             IntegerMin::IntegerMin1(val) => i32::serialize(&val, w)?,
             IntegerMin::Default => w,
@@ -1054,8 +772,6 @@ impl IntegerMax {
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        use protocol_lib::Packet;
-
         let w = match &self {
             IntegerMax::IntegerMax1(val) => i32::serialize(&val, w)?,
             IntegerMax::Default => w,
@@ -1136,8 +852,6 @@ impl LongMin {
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        use protocol_lib::Packet;
-
         let w = match &self {
             LongMin::LongMin1(val) => i64::serialize(&val, w)?,
             LongMin::Default => w,
@@ -1159,8 +873,6 @@ impl LongMax {
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        use protocol_lib::Packet;
-
         let w = match &self {
             LongMax::LongMax1(val) => i64::serialize(&val, w)?,
             LongMax::Default => w,
@@ -1252,54 +964,18 @@ impl<'t> protocol_lib::Packet<'t> for ScoreHolder {
     }
 }
 
+#[derive(protocol_lib::Packet)]
 pub struct Range {
     allow_decimals: bool,
 }
-
-impl<'t> protocol_lib::Packet<'t> for Range {
-    fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        let w = bool::serialize(&self.allow_decimals, w)?;
-
-        Ok(w)
-    }
-
-    fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-        (map(tuple((bool::deserialize,)), |(allow_decimals,)| Range { allow_decimals }))(input)
-    }
-}
-
+#[derive(protocol_lib::Packet)]
 pub struct ResourceOrTag<'a> {
     registry: VarString<'a>,
 }
-
-impl<'t: 'a, 'a> protocol_lib::Packet<'t> for ResourceOrTag<'a> {
-    fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        let w = PrefixedString::<'a, VarInt>::serialize(&self.registry, w)?;
-
-        Ok(w)
-    }
-
-    fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-        (map(tuple((PrefixedString::<'a, VarInt>::deserialize,)), |(registry,)| ResourceOrTag { registry }))(input)
-    }
-}
-
+#[derive(protocol_lib::Packet)]
 pub struct Resource<'a> {
     registry: VarString<'a>,
 }
-
-impl<'t: 'a, 'a> protocol_lib::Packet<'t> for Resource<'a> {
-    fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        let w = PrefixedString::<'a, VarInt>::serialize(&self.registry, w)?;
-
-        Ok(w)
-    }
-
-    fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-        (map(tuple((PrefixedString::<'a, VarInt>::deserialize,)), |(registry,)| Resource { registry }))(input)
-    }
-}
-
 pub enum Properties<'a> {
     Bool,
     Float(Float),
@@ -1405,8 +1081,6 @@ impl<'a> Properties<'a> {
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        use protocol_lib::Packet;
-
         let w = match &self {
             Properties::Bool => w,
             Properties::Float(val) => Float::serialize(&val, w)?,
@@ -1485,8 +1159,6 @@ impl<'a> SuggestionType<'a> {
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        use protocol_lib::Packet;
-
         let w = match &self {
             SuggestionType::SuggestionType1(val) => PrefixedString::<'a, VarInt>::serialize(&val, w)?,
             SuggestionType::Default => w,
@@ -1518,8 +1190,6 @@ impl<'a> ExtraNodeData<'a> {
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        use protocol_lib::Packet;
-
         let w = match &self {
             ExtraNodeData::ExtraNodeData0 => w,
             ExtraNodeData::ExtraNodeData1(val) => ExtraNodeData1::serialize(&val, w)?,
@@ -1675,6 +1345,7 @@ pub mod handshaking {
     pub mod clientbound {
         use crate::test::*;
         use nom::{combinator::map, sequence::tuple};
+        use protocol_lib::Packet;
         pub enum Params {
             Default,
         }
@@ -1686,8 +1357,6 @@ pub mod handshaking {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     Params::Default => w,
                 };
@@ -1695,12 +1364,12 @@ pub mod handshaking {
                 Ok(w)
             }
         }
-        pub struct Packet {
+        pub struct ToClient {
             name: &'static str,
             params: Params,
         }
 
-        impl<'t> protocol_lib::Packet<'t> for Packet {
+        impl<'t> protocol_lib::Packet<'t> for ToClient {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let w = Params::serialize(&self.params, w)?;
 
@@ -1713,7 +1382,7 @@ pub mod handshaking {
                     let (input, self_params) = (|input| match &format!("{}", self_name)[..] {
                         _ => Ok((input, Params::Default)),
                     })(input)?;
-                    Ok((input, Packet { name: self_name, params: self_params }))
+                    Ok((input, ToClient { name: self_name, params: self_params }))
                 })(input)
             }
         }
@@ -1721,52 +1390,18 @@ pub mod handshaking {
     pub mod serverbound {
         use crate::test::*;
         use nom::{combinator::map, sequence::tuple};
+        use protocol_lib::Packet;
+        #[derive(protocol_lib::Packet)]
         pub struct PacketSetProtocol<'a> {
             protocol_version: VarInt,
             server_host: VarString<'a>,
             server_port: u16,
             next_state: VarInt,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketSetProtocol<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.protocol_version, w)?;
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.server_host, w)?;
-                let w = u16::serialize(&self.server_port, w)?;
-                let w = VarInt::serialize(&self.next_state, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((VarInt::deserialize, PrefixedString::<'a, VarInt>::deserialize, u16::deserialize, VarInt::deserialize)),
-                    |(protocol_version, server_host, server_port, next_state)| PacketSetProtocol {
-                        protocol_version,
-                        server_host,
-                        server_port,
-                        next_state,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketLegacyServerListPing {
             payload: u8,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketLegacyServerListPing {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = u8::serialize(&self.payload, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((u8::deserialize,)), |(payload,)| PacketLegacyServerListPing { payload }))(input)
-            }
-        }
-
         pub enum Params<'a> {
             SetProtocol(PacketSetProtocol<'a>),
             LegacyServerListPing(PacketLegacyServerListPing),
@@ -1782,8 +1417,6 @@ pub mod handshaking {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     Params::SetProtocol(val) => PacketSetProtocol::serialize(&val, w)?,
                     Params::LegacyServerListPing(val) => PacketLegacyServerListPing::serialize(&val, w)?,
@@ -1793,12 +1426,12 @@ pub mod handshaking {
                 Ok(w)
             }
         }
-        pub struct Packet<'a> {
+        pub struct ToServer<'a> {
             name: &'static str,
             params: Params<'a>,
         }
 
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for Packet<'a> {
+        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for ToServer<'a> {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let tag = match &self.name[..] {
                     "set_protocol" => "0x00",
@@ -1832,7 +1465,7 @@ pub mod handshaking {
                         "legacy_server_list_ping" => map(PacketLegacyServerListPing::deserialize, Params::LegacyServerListPing)(input),
                         _ => Ok((input, Params::Default)),
                     })(input)?;
-                    Ok((input, Packet { name: self_name, params: self_params }))
+                    Ok((input, ToServer { name: self_name, params: self_params }))
                 })(input)
             }
         }
@@ -1842,38 +1475,15 @@ pub mod status {
     pub mod clientbound {
         use crate::test::*;
         use nom::{combinator::map, sequence::tuple};
+        use protocol_lib::Packet;
+        #[derive(protocol_lib::Packet)]
         pub struct PacketServerInfo<'a> {
             response: VarString<'a>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketServerInfo<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.response, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((PrefixedString::<'a, VarInt>::deserialize,)), |(response,)| PacketServerInfo { response }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketPing {
             time: i64,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketPing {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = i64::serialize(&self.time, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((i64::deserialize,)), |(time,)| PacketPing { time }))(input)
-            }
-        }
-
         pub enum Params<'a> {
             ServerInfo(PacketServerInfo<'a>),
             Ping(PacketPing),
@@ -1889,8 +1499,6 @@ pub mod status {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     Params::ServerInfo(val) => PacketServerInfo::serialize(&val, w)?,
                     Params::Ping(val) => PacketPing::serialize(&val, w)?,
@@ -1900,12 +1508,12 @@ pub mod status {
                 Ok(w)
             }
         }
-        pub struct Packet<'a> {
+        pub struct ToClient<'a> {
             name: &'static str,
             params: Params<'a>,
         }
 
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for Packet<'a> {
+        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for ToClient<'a> {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let tag = match &self.name[..] {
                     "server_info" => "0x00",
@@ -1939,7 +1547,7 @@ pub mod status {
                         "ping" => map(PacketPing::deserialize, Params::Ping)(input),
                         _ => Ok((input, Params::Default)),
                     })(input)?;
-                    Ok((input, Packet { name: self_name, params: self_params }))
+                    Ok((input, ToClient { name: self_name, params: self_params }))
                 })(input)
             }
         }
@@ -1947,34 +1555,13 @@ pub mod status {
     pub mod serverbound {
         use crate::test::*;
         use nom::{combinator::map, sequence::tuple};
+        use protocol_lib::Packet;
+        #[derive(protocol_lib::Packet)]
         pub struct PacketPingStart {}
-
-        impl<'t> protocol_lib::Packet<'t> for PacketPingStart {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((|i| Ok((i, ())),)), |_| PacketPingStart {}))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketPing {
             time: i64,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketPing {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = i64::serialize(&self.time, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((i64::deserialize,)), |(time,)| PacketPing { time }))(input)
-            }
-        }
-
         pub enum Params {
             PingStart(PacketPingStart),
             Ping(PacketPing),
@@ -1990,8 +1577,6 @@ pub mod status {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     Params::PingStart(val) => PacketPingStart::serialize(&val, w)?,
                     Params::Ping(val) => PacketPing::serialize(&val, w)?,
@@ -2001,12 +1586,12 @@ pub mod status {
                 Ok(w)
             }
         }
-        pub struct Packet {
+        pub struct ToServer {
             name: &'static str,
             params: Params,
         }
 
-        impl<'t> protocol_lib::Packet<'t> for Packet {
+        impl<'t> protocol_lib::Packet<'t> for ToServer {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let tag = match &self.name[..] {
                     "ping_start" => "0x00",
@@ -2040,7 +1625,7 @@ pub mod status {
                         "ping" => map(PacketPing::deserialize, Params::Ping)(input),
                         _ => Ok((input, Params::Default)),
                     })(input)?;
-                    Ok((input, Packet { name: self_name, params: self_params }))
+                    Ok((input, ToServer { name: self_name, params: self_params }))
                 })(input)
             }
         }
@@ -2050,109 +1635,32 @@ pub mod login {
     pub mod clientbound {
         use crate::test::*;
         use nom::{combinator::map, sequence::tuple};
+        use protocol_lib::Packet;
+        #[derive(protocol_lib::Packet)]
         pub struct PacketDisconnect<'a> {
             reason: VarString<'a>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketDisconnect<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.reason, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((PrefixedString::<'a, VarInt>::deserialize,)), |(reason,)| PacketDisconnect { reason }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketEncryptionBegin<'a> {
             server_id: VarString<'a>,
             public_key: VarBuffer<'a>,
             verify_token: VarBuffer<'a>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketEncryptionBegin<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.server_id, w)?;
-                let w = PrefixedBuffer::<'a, VarInt>::serialize(&self.public_key, w)?;
-                let w = PrefixedBuffer::<'a, VarInt>::serialize(&self.verify_token, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((
-                        PrefixedString::<'a, VarInt>::deserialize,
-                        PrefixedBuffer::<'a, VarInt>::deserialize,
-                        PrefixedBuffer::<'a, VarInt>::deserialize,
-                    )),
-                    |(server_id, public_key, verify_token)| PacketEncryptionBegin { server_id, public_key, verify_token },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketSuccess<'a> {
             uuid: Uuid,
             username: VarString<'a>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketSuccess<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = Uuid::serialize(&self.uuid, w)?;
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.username, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((Uuid::deserialize, PrefixedString::<'a, VarInt>::deserialize)), |(uuid, username)| PacketSuccess {
-                    uuid,
-                    username,
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketCompress {
             threshold: VarInt,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketCompress {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.threshold, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize,)), |(threshold,)| PacketCompress { threshold }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketLoginPluginRequest<'a> {
             message_id: VarInt,
             channel: VarString<'a>,
             data: RestBuffer<'a>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketLoginPluginRequest<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.message_id, w)?;
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.channel, w)?;
-                let w = RestBuffer::serialize(&self.data, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((VarInt::deserialize, PrefixedString::<'a, VarInt>::deserialize, RestBuffer::deserialize)),
-                    |(message_id, channel, data)| PacketLoginPluginRequest { message_id, channel, data },
-                ))(input)
-            }
-        }
-
         pub enum Params<'a> {
             Disconnect(PacketDisconnect<'a>),
             EncryptionBegin(PacketEncryptionBegin<'a>),
@@ -2174,8 +1682,6 @@ pub mod login {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     Params::Disconnect(val) => PacketDisconnect::serialize(&val, w)?,
                     Params::EncryptionBegin(val) => PacketEncryptionBegin::serialize(&val, w)?,
@@ -2188,12 +1694,12 @@ pub mod login {
                 Ok(w)
             }
         }
-        pub struct Packet<'a> {
+        pub struct ToClient<'a> {
             name: &'static str,
             params: Params<'a>,
         }
 
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for Packet<'a> {
+        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for ToClient<'a> {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let tag = match &self.name[..] {
                     "disconnect" => "0x00",
@@ -2236,7 +1742,7 @@ pub mod login {
                         "login_plugin_request" => map(PacketLoginPluginRequest::deserialize, Params::LoginPluginRequest)(input),
                         _ => Ok((input, Params::Default)),
                     })(input)?;
-                    Ok((input, Packet { name: self_name, params: self_params }))
+                    Ok((input, ToClient { name: self_name, params: self_params }))
                 })(input)
             }
         }
@@ -2244,64 +1750,21 @@ pub mod login {
     pub mod serverbound {
         use crate::test::*;
         use nom::{combinator::map, sequence::tuple};
+        use protocol_lib::Packet;
+        #[derive(protocol_lib::Packet)]
         pub struct PacketLoginStart<'a> {
             username: VarString<'a>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketLoginStart<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.username, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((PrefixedString::<'a, VarInt>::deserialize,)), |(username,)| PacketLoginStart { username }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketEncryptionBegin<'a> {
             shared_secret: VarBuffer<'a>,
             verify_token: VarBuffer<'a>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketEncryptionBegin<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedBuffer::<'a, VarInt>::serialize(&self.shared_secret, w)?;
-                let w = PrefixedBuffer::<'a, VarInt>::serialize(&self.verify_token, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((PrefixedBuffer::<'a, VarInt>::deserialize, PrefixedBuffer::<'a, VarInt>::deserialize)),
-                    |(shared_secret, verify_token)| PacketEncryptionBegin { shared_secret, verify_token },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketLoginPluginResponse<'a> {
             message_id: VarInt,
             data: Option<RestBuffer<'a>>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketLoginPluginResponse<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.message_id, w)?;
-                let w = Option::<RestBuffer>::serialize(&self.data, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize, Option::<RestBuffer>::deserialize)), |(message_id, data)| PacketLoginPluginResponse {
-                    message_id,
-                    data,
-                }))(input)
-            }
-        }
-
         pub enum Params<'a> {
             LoginStart(PacketLoginStart<'a>),
             EncryptionBegin(PacketEncryptionBegin<'a>),
@@ -2319,8 +1782,6 @@ pub mod login {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     Params::LoginStart(val) => PacketLoginStart::serialize(&val, w)?,
                     Params::EncryptionBegin(val) => PacketEncryptionBegin::serialize(&val, w)?,
@@ -2331,12 +1792,12 @@ pub mod login {
                 Ok(w)
             }
         }
-        pub struct Packet<'a> {
+        pub struct ToServer<'a> {
             name: &'static str,
             params: Params<'a>,
         }
 
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for Packet<'a> {
+        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for ToServer<'a> {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let tag = match &self.name[..] {
                     "login_start" => "0x00",
@@ -2373,7 +1834,7 @@ pub mod login {
                         "login_plugin_response" => map(PacketLoginPluginResponse::deserialize, Params::LoginPluginResponse)(input),
                         _ => Ok((input, Params::Default)),
                     })(input)?;
-                    Ok((input, Packet { name: self_name, params: self_params }))
+                    Ok((input, ToServer { name: self_name, params: self_params }))
                 })(input)
             }
         }
@@ -2383,6 +1844,8 @@ pub mod play {
     pub mod clientbound {
         use crate::test::*;
         use nom::{combinator::map, sequence::tuple};
+        use protocol_lib::Packet;
+        #[derive(protocol_lib::Packet)]
         pub struct PacketSpawnEntity {
             entity_id: VarInt,
             object_uuid: Uuid,
@@ -2397,59 +1860,7 @@ pub mod play {
             velocity_y: i16,
             velocity_z: i16,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketSpawnEntity {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.entity_id, w)?;
-                let w = Uuid::serialize(&self.object_uuid, w)?;
-                let w = VarInt::serialize(&self.r_type, w)?;
-                let w = f64::serialize(&self.x, w)?;
-                let w = f64::serialize(&self.y, w)?;
-                let w = f64::serialize(&self.z, w)?;
-                let w = i8::serialize(&self.pitch, w)?;
-                let w = i8::serialize(&self.yaw, w)?;
-                let w = i32::serialize(&self.object_data, w)?;
-                let w = i16::serialize(&self.velocity_x, w)?;
-                let w = i16::serialize(&self.velocity_y, w)?;
-                let w = i16::serialize(&self.velocity_z, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((
-                        VarInt::deserialize,
-                        Uuid::deserialize,
-                        VarInt::deserialize,
-                        f64::deserialize,
-                        f64::deserialize,
-                        f64::deserialize,
-                        i8::deserialize,
-                        i8::deserialize,
-                        i32::deserialize,
-                        i16::deserialize,
-                        i16::deserialize,
-                        i16::deserialize,
-                    )),
-                    |(entity_id, object_uuid, r_type, x, y, z, pitch, yaw, object_data, velocity_x, velocity_y, velocity_z)| PacketSpawnEntity {
-                        entity_id,
-                        object_uuid,
-                        r_type,
-                        x,
-                        y,
-                        z,
-                        pitch,
-                        yaw,
-                        object_data,
-                        velocity_x,
-                        velocity_y,
-                        velocity_z,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketSpawnEntityExperienceOrb {
             entity_id: VarInt,
             x: f64,
@@ -2457,26 +1868,7 @@ pub mod play {
             z: f64,
             count: i16,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketSpawnEntityExperienceOrb {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.entity_id, w)?;
-                let w = f64::serialize(&self.x, w)?;
-                let w = f64::serialize(&self.y, w)?;
-                let w = f64::serialize(&self.z, w)?;
-                let w = i16::serialize(&self.count, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((VarInt::deserialize, f64::deserialize, f64::deserialize, f64::deserialize, i16::deserialize)),
-                    |(entity_id, x, y, z, count)| PacketSpawnEntityExperienceOrb { entity_id, x, y, z, count },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketSpawnEntityLiving {
             entity_id: VarInt,
             entity_uuid: Uuid,
@@ -2491,59 +1883,7 @@ pub mod play {
             velocity_y: i16,
             velocity_z: i16,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketSpawnEntityLiving {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.entity_id, w)?;
-                let w = Uuid::serialize(&self.entity_uuid, w)?;
-                let w = VarInt::serialize(&self.r_type, w)?;
-                let w = f64::serialize(&self.x, w)?;
-                let w = f64::serialize(&self.y, w)?;
-                let w = f64::serialize(&self.z, w)?;
-                let w = i8::serialize(&self.yaw, w)?;
-                let w = i8::serialize(&self.pitch, w)?;
-                let w = i8::serialize(&self.head_pitch, w)?;
-                let w = i16::serialize(&self.velocity_x, w)?;
-                let w = i16::serialize(&self.velocity_y, w)?;
-                let w = i16::serialize(&self.velocity_z, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((
-                        VarInt::deserialize,
-                        Uuid::deserialize,
-                        VarInt::deserialize,
-                        f64::deserialize,
-                        f64::deserialize,
-                        f64::deserialize,
-                        i8::deserialize,
-                        i8::deserialize,
-                        i8::deserialize,
-                        i16::deserialize,
-                        i16::deserialize,
-                        i16::deserialize,
-                    )),
-                    |(entity_id, entity_uuid, r_type, x, y, z, yaw, pitch, head_pitch, velocity_x, velocity_y, velocity_z)| PacketSpawnEntityLiving {
-                        entity_id,
-                        entity_uuid,
-                        r_type,
-                        x,
-                        y,
-                        z,
-                        yaw,
-                        pitch,
-                        head_pitch,
-                        velocity_x,
-                        velocity_y,
-                        velocity_z,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketSpawnEntityPainting {
             entity_id: VarInt,
             entity_uuid: Uuid,
@@ -2551,32 +1891,7 @@ pub mod play {
             location: Position,
             direction: u8,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketSpawnEntityPainting {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.entity_id, w)?;
-                let w = Uuid::serialize(&self.entity_uuid, w)?;
-                let w = VarInt::serialize(&self.title, w)?;
-                let w = Position::serialize(&self.location, w)?;
-                let w = u8::serialize(&self.direction, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((VarInt::deserialize, Uuid::deserialize, VarInt::deserialize, Position::deserialize, u8::deserialize)),
-                    |(entity_id, entity_uuid, title, location, direction)| PacketSpawnEntityPainting {
-                        entity_id,
-                        entity_uuid,
-                        title,
-                        location,
-                        direction,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketNamedEntitySpawn {
             entity_id: VarInt,
             player_uuid: Uuid,
@@ -2586,106 +1901,21 @@ pub mod play {
             yaw: i8,
             pitch: i8,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketNamedEntitySpawn {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.entity_id, w)?;
-                let w = Uuid::serialize(&self.player_uuid, w)?;
-                let w = f64::serialize(&self.x, w)?;
-                let w = f64::serialize(&self.y, w)?;
-                let w = f64::serialize(&self.z, w)?;
-                let w = i8::serialize(&self.yaw, w)?;
-                let w = i8::serialize(&self.pitch, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((
-                        VarInt::deserialize,
-                        Uuid::deserialize,
-                        f64::deserialize,
-                        f64::deserialize,
-                        f64::deserialize,
-                        i8::deserialize,
-                        i8::deserialize,
-                    )),
-                    |(entity_id, player_uuid, x, y, z, yaw, pitch)| PacketNamedEntitySpawn {
-                        entity_id,
-                        player_uuid,
-                        x,
-                        y,
-                        z,
-                        yaw,
-                        pitch,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketAnimation {
             entity_id: VarInt,
             animation: u8,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketAnimation {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.entity_id, w)?;
-                let w = u8::serialize(&self.animation, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize, u8::deserialize)), |(entity_id, animation)| PacketAnimation { entity_id, animation }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct StatisticsEntry {
             category_id: VarInt,
             statistic_id: VarInt,
             value: VarInt,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for StatisticsEntry {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.category_id, w)?;
-                let w = VarInt::serialize(&self.statistic_id, w)?;
-                let w = VarInt::serialize(&self.value, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize, VarInt::deserialize, VarInt::deserialize)), |(category_id, statistic_id, value)| {
-                    StatisticsEntry { category_id, statistic_id, value }
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketStatistics {
             entries: VarArray<StatisticsEntry>,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketStatistics {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedArray::<StatisticsEntry, VarInt>::len(&self.entries).serialize(w)?;
-
-                let mut w = w;
-                let items = self.entries.0.iter();
-                for i in items {
-                    w = StatisticsEntry::serialize(&i, w)?
-                }
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((PrefixedArray::<StatisticsEntry, VarInt>::deserialize,)), |(entries,)| PacketStatistics { entries }))(input)
-            }
-        }
-
         pub struct Ident8Flags {
             unused: u32,
             hidden: u8,
@@ -2729,8 +1959,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     BackgroundTexture::BackgroundTexture1(val) => PrefixedString::<'a, VarInt>::serialize(&val, w)?,
                     BackgroundTexture::Default => w,
@@ -2794,297 +2022,64 @@ pub mod play {
             }
         }
 
+        #[derive(protocol_lib::Packet)]
         pub struct CriteriaItem<'a> {
             key: VarString<'a>,
             value: Void,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for CriteriaItem<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.key, w)?;
-                let w = Void::serialize(&self.value, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((PrefixedString::<'a, VarInt>::deserialize, Void::deserialize)), |(key, value)| CriteriaItem { key, value }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct AdvancementMappingItemValue<'a> {
             parent_id: Option<VarString<'a>>,
             display_data: Option<Ident8<'a>>,
             criteria: VarArray<CriteriaItem<'a>>,
             requirements: VarArray<VarStringArray<'a>>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for AdvancementMappingItemValue<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = Option::<VarString<'a>>::serialize(&self.parent_id, w)?;
-                let w = Option::<Ident8>::serialize(&self.display_data, w)?;
-
-                let w = PrefixedArray::<CriteriaItem, VarInt>::len(&self.criteria).serialize(w)?;
-
-                let mut w = w;
-                let items = self.criteria.0.iter();
-                for i in items {
-                    w = CriteriaItem::serialize(&i, w)?
-                }
-
-                let w = PrefixedArray::<VarStringArray<'a>, VarInt>::len(&self.requirements).serialize(w)?;
-
-                let mut w = w;
-                let items = self.requirements.0.iter();
-                for i in items {
-                    w = {
-                        let w = PrefixedArray::<VarString<'a>, VarInt>::len(&i).serialize(w)?;
-
-                        let mut w = w;
-                        let items = i.0.iter();
-                        for i in items {
-                            w = PrefixedString::<'a, VarInt>::serialize(&i, w)?
-                        }
-                        w
-                    }
-                }
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((
-                        Option::<VarString<'a>>::deserialize,
-                        Option::<Ident8>::deserialize,
-                        PrefixedArray::<CriteriaItem<'a>, VarInt>::deserialize,
-                        PrefixedArray::<VarStringArray<'a>, VarInt>::deserialize,
-                    )),
-                    |(parent_id, display_data, criteria, requirements)| AdvancementMappingItemValue {
-                        parent_id,
-                        display_data,
-                        criteria,
-                        requirements,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct AdvancementMappingItem<'a> {
             key: VarString<'a>,
             value: AdvancementMappingItemValue<'a>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for AdvancementMappingItem<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.key, w)?;
-                let w = AdvancementMappingItemValue::serialize(&self.value, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((PrefixedString::<'a, VarInt>::deserialize, AdvancementMappingItemValue::deserialize)), |(key, value)| {
-                    AdvancementMappingItem { key, value }
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct ProgressMappingItemValueItem<'a> {
             criterion_identifier: VarString<'a>,
             criterion_progress: Option<i64>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for ProgressMappingItemValueItem<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.criterion_identifier, w)?;
-                let w = Option::<i64>::serialize(&self.criterion_progress, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((PrefixedString::<'a, VarInt>::deserialize, Option::<i64>::deserialize)),
-                    |(criterion_identifier, criterion_progress)| ProgressMappingItemValueItem {
-                        criterion_identifier,
-                        criterion_progress,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct ProgressMappingItem<'a> {
             key: VarString<'a>,
             value: VarArray<ProgressMappingItemValueItem<'a>>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for ProgressMappingItem<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.key, w)?;
-
-                let w = PrefixedArray::<ProgressMappingItemValueItem, VarInt>::len(&self.value).serialize(w)?;
-
-                let mut w = w;
-                let items = self.value.0.iter();
-                for i in items {
-                    w = ProgressMappingItemValueItem::serialize(&i, w)?
-                }
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((PrefixedString::<'a, VarInt>::deserialize, PrefixedArray::<ProgressMappingItemValueItem<'a>, VarInt>::deserialize)),
-                    |(key, value)| ProgressMappingItem { key, value },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketAdvancements<'a> {
             reset: bool,
             advancement_mapping: VarArray<AdvancementMappingItem<'a>>,
             identifiers: VarStringArray<'a>,
             progress_mapping: VarArray<ProgressMappingItem<'a>>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketAdvancements<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = bool::serialize(&self.reset, w)?;
-
-                let w = PrefixedArray::<AdvancementMappingItem, VarInt>::len(&self.advancement_mapping).serialize(w)?;
-
-                let mut w = w;
-                let items = self.advancement_mapping.0.iter();
-                for i in items {
-                    w = AdvancementMappingItem::serialize(&i, w)?
-                }
-
-                let w = PrefixedArray::<VarString<'a>, VarInt>::len(&self.identifiers).serialize(w)?;
-
-                let mut w = w;
-                let items = self.identifiers.0.iter();
-                for i in items {
-                    w = PrefixedString::<'a, VarInt>::serialize(&i, w)?
-                }
-
-                let w = PrefixedArray::<ProgressMappingItem, VarInt>::len(&self.progress_mapping).serialize(w)?;
-
-                let mut w = w;
-                let items = self.progress_mapping.0.iter();
-                for i in items {
-                    w = ProgressMappingItem::serialize(&i, w)?
-                }
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((
-                        bool::deserialize,
-                        PrefixedArray::<AdvancementMappingItem<'a>, VarInt>::deserialize,
-                        PrefixedArray::<VarString<'a>, VarInt>::deserialize,
-                        PrefixedArray::<ProgressMappingItem<'a>, VarInt>::deserialize,
-                    )),
-                    |(reset, advancement_mapping, identifiers, progress_mapping)| PacketAdvancements {
-                        reset,
-                        advancement_mapping,
-                        identifiers,
-                        progress_mapping,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketBlockBreakAnimation {
             entity_id: VarInt,
             location: Position,
             destroy_stage: i8,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketBlockBreakAnimation {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.entity_id, w)?;
-                let w = Position::serialize(&self.location, w)?;
-                let w = i8::serialize(&self.destroy_stage, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize, Position::deserialize, i8::deserialize)), |(entity_id, location, destroy_stage)| {
-                    PacketBlockBreakAnimation { entity_id, location, destroy_stage }
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketTileEntityData {
             location: Position,
             action: VarInt,
             nbt_data: OptionalNbt,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketTileEntityData {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = Position::serialize(&self.location, w)?;
-                let w = VarInt::serialize(&self.action, w)?;
-                let w = OptionalNbt::serialize(&self.nbt_data, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((Position::deserialize, VarInt::deserialize, OptionalNbt::deserialize)), |(location, action, nbt_data)| {
-                    PacketTileEntityData { location, action, nbt_data }
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketBlockAction {
             location: Position,
             byte1: u8,
             byte2: u8,
             block_id: VarInt,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketBlockAction {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = Position::serialize(&self.location, w)?;
-                let w = u8::serialize(&self.byte1, w)?;
-                let w = u8::serialize(&self.byte2, w)?;
-                let w = VarInt::serialize(&self.block_id, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((Position::deserialize, u8::deserialize, u8::deserialize, VarInt::deserialize)),
-                    |(location, byte1, byte2, block_id)| PacketBlockAction { location, byte1, byte2, block_id },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketBlockChange {
             location: Position,
             r_type: VarInt,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketBlockChange {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = Position::serialize(&self.location, w)?;
-                let w = VarInt::serialize(&self.r_type, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((Position::deserialize, VarInt::deserialize)), |(location, r_type)| PacketBlockChange { location, r_type }))(input)
-            }
-        }
-
         pub enum BossBarTitle<'a> {
             BossBarTitle0(VarString<'a>),
             BossBarTitle3(VarString<'a>),
@@ -3100,8 +2095,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     BossBarTitle::BossBarTitle0(val) => PrefixedString::<'a, VarInt>::serialize(&val, w)?,
                     BossBarTitle::BossBarTitle3(val) => PrefixedString::<'a, VarInt>::serialize(&val, w)?,
@@ -3126,8 +2119,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     Health::Health0(val) => f32::serialize(&val, w)?,
                     Health::Health2(val) => f32::serialize(&val, w)?,
@@ -3152,8 +2143,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     Color::Color0(val) => VarInt::serialize(&val, w)?,
                     Color::Color4(val) => VarInt::serialize(&val, w)?,
@@ -3178,8 +2167,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     Dividers::Dividers0(val) => VarInt::serialize(&val, w)?,
                     Dividers::Dividers4(val) => VarInt::serialize(&val, w)?,
@@ -3204,8 +2191,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     BossBarFlags::BossBarFlags0(val) => u8::serialize(&val, w)?,
                     BossBarFlags::BossBarFlags5(val) => u8::serialize(&val, w)?,
@@ -3283,112 +2268,28 @@ pub mod play {
             }
         }
 
+        #[derive(protocol_lib::Packet)]
         pub struct PacketDifficulty {
             difficulty: u8,
             difficulty_locked: bool,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketDifficulty {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = u8::serialize(&self.difficulty, w)?;
-                let w = bool::serialize(&self.difficulty_locked, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((u8::deserialize, bool::deserialize)), |(difficulty, difficulty_locked)| PacketDifficulty {
-                    difficulty,
-                    difficulty_locked,
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct Matche<'a> {
             r_match: VarString<'a>,
             tooltip: Option<VarString<'a>>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for Matche<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.r_match, w)?;
-                let w = Option::<VarString<'a>>::serialize(&self.tooltip, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((PrefixedString::<'a, VarInt>::deserialize, Option::<VarString<'a>>::deserialize)), |(r_match, tooltip)| Matche {
-                    r_match,
-                    tooltip,
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketTabComplete<'a> {
             transaction_id: VarInt,
             start: VarInt,
             length: VarInt,
             matches: VarArray<Matche<'a>>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketTabComplete<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.transaction_id, w)?;
-                let w = VarInt::serialize(&self.start, w)?;
-                let w = VarInt::serialize(&self.length, w)?;
-
-                let w = PrefixedArray::<Matche, VarInt>::len(&self.matches).serialize(w)?;
-
-                let mut w = w;
-                let items = self.matches.0.iter();
-                for i in items {
-                    w = Matche::serialize(&i, w)?
-                }
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((VarInt::deserialize, VarInt::deserialize, VarInt::deserialize, PrefixedArray::<Matche<'a>, VarInt>::deserialize)),
-                    |(transaction_id, start, length, matches)| PacketTabComplete {
-                        transaction_id,
-                        start,
-                        length,
-                        matches,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketDeclareCommands<'a> {
             nodes: VarArray<CommandNode<'a>>,
             root_index: VarInt,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketDeclareCommands<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedArray::<CommandNode, VarInt>::len(&self.nodes).serialize(w)?;
-
-                let mut w = w;
-                let items = self.nodes.0.iter();
-                for i in items {
-                    w = CommandNode::serialize(&i, w)?
-                }
-
-                let w = VarInt::serialize(&self.root_index, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((PrefixedArray::<CommandNode<'a>, VarInt>::deserialize, VarInt::deserialize)), |(nodes, root_index)| {
-                    PacketDeclareCommands { nodes, root_index }
-                }))(input)
-            }
-        }
-
         pub enum FacePlayerEntityId {
             True(VarInt),
             Default,
@@ -3402,8 +2303,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     FacePlayerEntityId::True(val) => VarInt::serialize(&val, w)?,
                     FacePlayerEntityId::Default => w,
@@ -3425,8 +2324,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     EntityFeetEyes::True(val) => PrefixedString::<'a, VarInt>::serialize(&val, w)?,
                     EntityFeetEyes::Default => w,
@@ -3489,49 +2386,17 @@ pub mod play {
             }
         }
 
+        #[derive(protocol_lib::Packet)]
         pub struct PacketNbtQueryResponse {
             transaction_id: VarInt,
             nbt: OptionalNbt,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketNbtQueryResponse {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.transaction_id, w)?;
-                let w = OptionalNbt::serialize(&self.nbt, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize, OptionalNbt::deserialize)), |(transaction_id, nbt)| PacketNbtQueryResponse {
-                    transaction_id,
-                    nbt,
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketChat<'a> {
             message: VarString<'a>,
             position: i8,
             sender: Uuid,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketChat<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.message, w)?;
-                let w = i8::serialize(&self.position, w)?;
-                let w = Uuid::serialize(&self.sender, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((PrefixedString::<'a, VarInt>::deserialize, i8::deserialize, Uuid::deserialize)), |(message, position, sender)| {
-                    PacketChat { message, position, sender }
-                }))(input)
-            }
-        }
-
         pub struct ChunkCoordinates {
             x: i32,
             z: i32,
@@ -3561,212 +2426,53 @@ pub mod play {
             }
         }
 
+        #[derive(protocol_lib::Packet)]
         pub struct PacketMultiBlockChange {
             chunk_coordinates: ChunkCoordinates,
             not_trust_edges: bool,
             records: VarArray<VarLong>,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketMultiBlockChange {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = ChunkCoordinates::serialize(&self.chunk_coordinates, w)?;
-                let w = bool::serialize(&self.not_trust_edges, w)?;
-
-                let w = PrefixedArray::<VarLong, VarInt>::len(&self.records).serialize(w)?;
-
-                let mut w = w;
-                let items = self.records.0.iter();
-                for i in items {
-                    w = VarLong::serialize(&i, w)?
-                }
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((ChunkCoordinates::deserialize, bool::deserialize, PrefixedArray::<VarLong, VarInt>::deserialize)),
-                    |(chunk_coordinates, not_trust_edges, records)| PacketMultiBlockChange {
-                        chunk_coordinates,
-                        not_trust_edges,
-                        records,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketCloseWindow {
             window_id: u8,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketCloseWindow {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = u8::serialize(&self.window_id, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((u8::deserialize,)), |(window_id,)| PacketCloseWindow { window_id }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketOpenWindow<'a> {
             window_id: VarInt,
             inventory_type: VarInt,
             window_title: VarString<'a>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketOpenWindow<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.window_id, w)?;
-                let w = VarInt::serialize(&self.inventory_type, w)?;
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.window_title, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((VarInt::deserialize, VarInt::deserialize, PrefixedString::<'a, VarInt>::deserialize)),
-                    |(window_id, inventory_type, window_title)| PacketOpenWindow {
-                        window_id,
-                        inventory_type,
-                        window_title,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketWindowItems {
             window_id: u8,
             state_id: VarInt,
             items: VarArray<Slot>,
             carried_item: Slot,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketWindowItems {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = u8::serialize(&self.window_id, w)?;
-                let w = VarInt::serialize(&self.state_id, w)?;
-
-                let w = PrefixedArray::<Slot, VarInt>::len(&self.items).serialize(w)?;
-
-                let mut w = w;
-                let items = self.items.0.iter();
-                for i in items {
-                    w = Slot::serialize(&i, w)?
-                }
-
-                let w = Slot::serialize(&self.carried_item, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((u8::deserialize, VarInt::deserialize, PrefixedArray::<Slot, VarInt>::deserialize, Slot::deserialize)),
-                    |(window_id, state_id, items, carried_item)| PacketWindowItems {
-                        window_id,
-                        state_id,
-                        items,
-                        carried_item,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketCraftProgressBar {
             window_id: u8,
             property: i16,
             value: i16,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketCraftProgressBar {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = u8::serialize(&self.window_id, w)?;
-                let w = i16::serialize(&self.property, w)?;
-                let w = i16::serialize(&self.value, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((u8::deserialize, i16::deserialize, i16::deserialize)), |(window_id, property, value)| PacketCraftProgressBar {
-                    window_id,
-                    property,
-                    value,
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketSetSlot {
             window_id: i8,
             state_id: VarInt,
             slot: i16,
             item: Slot,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketSetSlot {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = i8::serialize(&self.window_id, w)?;
-                let w = VarInt::serialize(&self.state_id, w)?;
-                let w = i16::serialize(&self.slot, w)?;
-                let w = Slot::serialize(&self.item, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((i8::deserialize, VarInt::deserialize, i16::deserialize, Slot::deserialize)),
-                    |(window_id, state_id, slot, item)| PacketSetSlot { window_id, state_id, slot, item },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketSetCooldown {
             item_id: VarInt,
             cooldown_ticks: VarInt,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketSetCooldown {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.item_id, w)?;
-                let w = VarInt::serialize(&self.cooldown_ticks, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize, VarInt::deserialize)), |(item_id, cooldown_ticks)| PacketSetCooldown {
-                    item_id,
-                    cooldown_ticks,
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketCustomPayload<'a> {
             channel: VarString<'a>,
             data: RestBuffer<'a>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketCustomPayload<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.channel, w)?;
-                let w = RestBuffer::serialize(&self.data, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((PrefixedString::<'a, VarInt>::deserialize, RestBuffer::deserialize)), |(channel, data)| PacketCustomPayload {
-                    channel,
-                    data,
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketNamedSoundEffect<'a> {
             sound_name: VarString<'a>,
             sound_category: VarInt,
@@ -3776,98 +2482,22 @@ pub mod play {
             volume: f32,
             pitch: f32,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketNamedSoundEffect<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.sound_name, w)?;
-                let w = VarInt::serialize(&self.sound_category, w)?;
-                let w = i32::serialize(&self.x, w)?;
-                let w = i32::serialize(&self.y, w)?;
-                let w = i32::serialize(&self.z, w)?;
-                let w = f32::serialize(&self.volume, w)?;
-                let w = f32::serialize(&self.pitch, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((
-                        PrefixedString::<'a, VarInt>::deserialize,
-                        VarInt::deserialize,
-                        i32::deserialize,
-                        i32::deserialize,
-                        i32::deserialize,
-                        f32::deserialize,
-                        f32::deserialize,
-                    )),
-                    |(sound_name, sound_category, x, y, z, volume, pitch)| PacketNamedSoundEffect {
-                        sound_name,
-                        sound_category,
-                        x,
-                        y,
-                        z,
-                        volume,
-                        pitch,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketKickDisconnect<'a> {
             reason: VarString<'a>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketKickDisconnect<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.reason, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((PrefixedString::<'a, VarInt>::deserialize,)), |(reason,)| PacketKickDisconnect { reason }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketEntityStatus {
             entity_id: i32,
             entity_status: i8,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketEntityStatus {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = i32::serialize(&self.entity_id, w)?;
-                let w = i8::serialize(&self.entity_status, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((i32::deserialize, i8::deserialize)), |(entity_id, entity_status)| PacketEntityStatus { entity_id, entity_status }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct AffectedBlockOffset {
             x: i8,
             y: i8,
             z: i8,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for AffectedBlockOffset {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = i8::serialize(&self.x, w)?;
-                let w = i8::serialize(&self.y, w)?;
-                let w = i8::serialize(&self.z, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((i8::deserialize, i8::deserialize, i8::deserialize)), |(x, y, z)| AffectedBlockOffset { x, y, z }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketExplosion {
             x: f32,
             y: f32,
@@ -3878,129 +2508,27 @@ pub mod play {
             player_motion_y: f32,
             player_motion_z: f32,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketExplosion {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = f32::serialize(&self.x, w)?;
-                let w = f32::serialize(&self.y, w)?;
-                let w = f32::serialize(&self.z, w)?;
-                let w = f32::serialize(&self.radius, w)?;
-
-                let w = PrefixedArray::<AffectedBlockOffset, VarInt>::len(&self.affected_block_offsets).serialize(w)?;
-
-                let mut w = w;
-                let items = self.affected_block_offsets.0.iter();
-                for i in items {
-                    w = AffectedBlockOffset::serialize(&i, w)?
-                }
-
-                let w = f32::serialize(&self.player_motion_x, w)?;
-                let w = f32::serialize(&self.player_motion_y, w)?;
-                let w = f32::serialize(&self.player_motion_z, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((
-                        f32::deserialize,
-                        f32::deserialize,
-                        f32::deserialize,
-                        f32::deserialize,
-                        PrefixedArray::<AffectedBlockOffset, VarInt>::deserialize,
-                        f32::deserialize,
-                        f32::deserialize,
-                        f32::deserialize,
-                    )),
-                    |(x, y, z, radius, affected_block_offsets, player_motion_x, player_motion_y, player_motion_z)| PacketExplosion {
-                        x,
-                        y,
-                        z,
-                        radius,
-                        affected_block_offsets,
-                        player_motion_x,
-                        player_motion_y,
-                        player_motion_z,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketUnloadChunk {
             chunk_x: i32,
             chunk_z: i32,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketUnloadChunk {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = i32::serialize(&self.chunk_x, w)?;
-                let w = i32::serialize(&self.chunk_z, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((i32::deserialize, i32::deserialize)), |(chunk_x, chunk_z)| PacketUnloadChunk { chunk_x, chunk_z }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketGameStateChange {
             reason: u8,
             game_mode: f32,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketGameStateChange {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = u8::serialize(&self.reason, w)?;
-                let w = f32::serialize(&self.game_mode, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((u8::deserialize, f32::deserialize)), |(reason, game_mode)| PacketGameStateChange { reason, game_mode }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketOpenHorseWindow {
             window_id: u8,
             nb_slots: VarInt,
             entity_id: i32,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketOpenHorseWindow {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = u8::serialize(&self.window_id, w)?;
-                let w = VarInt::serialize(&self.nb_slots, w)?;
-                let w = i32::serialize(&self.entity_id, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((u8::deserialize, VarInt::deserialize, i32::deserialize)), |(window_id, nb_slots, entity_id)| {
-                    PacketOpenHorseWindow { window_id, nb_slots, entity_id }
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketKeepAlive {
             keep_alive_id: i64,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketKeepAlive {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = i64::serialize(&self.keep_alive_id, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((i64::deserialize,)), |(keep_alive_id,)| PacketKeepAlive { keep_alive_id }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketMapChunk<'a> {
             x: i32,
             z: i32,
@@ -4015,210 +2543,29 @@ pub mod play {
             sky_light: VarArray<VarArray<u8>>,
             block_light: VarArray<VarArray<u8>>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketMapChunk<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = i32::serialize(&self.x, w)?;
-                let w = i32::serialize(&self.z, w)?;
-                let w = Nbt::serialize(&self.heightmaps, w)?;
-                let w = PrefixedBuffer::<'a, VarInt>::serialize(&self.chunk_data, w)?;
-
-                let w = PrefixedArray::<ChunkBlockEntity, VarInt>::len(&self.block_entities).serialize(w)?;
-
-                let mut w = w;
-                let items = self.block_entities.0.iter();
-                for i in items {
-                    w = ChunkBlockEntity::serialize(&i, w)?
-                }
-
-                let w = bool::serialize(&self.trust_edges, w)?;
-
-                let w = PrefixedArray::<i64, VarInt>::len(&self.sky_light_mask).serialize(w)?;
-
-                let mut w = w;
-                let items = self.sky_light_mask.0.iter();
-                for i in items {
-                    w = i64::serialize(&i, w)?
-                }
-
-                let w = PrefixedArray::<i64, VarInt>::len(&self.block_light_mask).serialize(w)?;
-
-                let mut w = w;
-                let items = self.block_light_mask.0.iter();
-                for i in items {
-                    w = i64::serialize(&i, w)?
-                }
-
-                let w = PrefixedArray::<i64, VarInt>::len(&self.empty_sky_light_mask).serialize(w)?;
-
-                let mut w = w;
-                let items = self.empty_sky_light_mask.0.iter();
-                for i in items {
-                    w = i64::serialize(&i, w)?
-                }
-
-                let w = PrefixedArray::<i64, VarInt>::len(&self.empty_block_light_mask).serialize(w)?;
-
-                let mut w = w;
-                let items = self.empty_block_light_mask.0.iter();
-                for i in items {
-                    w = i64::serialize(&i, w)?
-                }
-
-                let w = PrefixedArray::<VarArray<u8>, VarInt>::len(&self.sky_light).serialize(w)?;
-
-                let mut w = w;
-                let items = self.sky_light.0.iter();
-                for i in items {
-                    w = {
-                        let w = PrefixedArray::<u8, VarInt>::len(&i).serialize(w)?;
-
-                        let mut w = w;
-                        let items = i.0.iter();
-                        for i in items {
-                            w = u8::serialize(&i, w)?
-                        }
-                        w
-                    }
-                }
-
-                let w = PrefixedArray::<VarArray<u8>, VarInt>::len(&self.block_light).serialize(w)?;
-
-                let mut w = w;
-                let items = self.block_light.0.iter();
-                for i in items {
-                    w = {
-                        let w = PrefixedArray::<u8, VarInt>::len(&i).serialize(w)?;
-
-                        let mut w = w;
-                        let items = i.0.iter();
-                        for i in items {
-                            w = u8::serialize(&i, w)?
-                        }
-                        w
-                    }
-                }
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((
-                        i32::deserialize,
-                        i32::deserialize,
-                        Nbt::deserialize,
-                        PrefixedBuffer::<'a, VarInt>::deserialize,
-                        PrefixedArray::<ChunkBlockEntity, VarInt>::deserialize,
-                        bool::deserialize,
-                        PrefixedArray::<i64, VarInt>::deserialize,
-                        PrefixedArray::<i64, VarInt>::deserialize,
-                        PrefixedArray::<i64, VarInt>::deserialize,
-                        PrefixedArray::<i64, VarInt>::deserialize,
-                        PrefixedArray::<VarArray<u8>, VarInt>::deserialize,
-                        PrefixedArray::<VarArray<u8>, VarInt>::deserialize,
-                    )),
-                    |(x, z, heightmaps, chunk_data, block_entities, trust_edges, sky_light_mask, block_light_mask, empty_sky_light_mask, empty_block_light_mask, sky_light, block_light)| {
-                        PacketMapChunk {
-                            x,
-                            z,
-                            heightmaps,
-                            chunk_data,
-                            block_entities,
-                            trust_edges,
-                            sky_light_mask,
-                            block_light_mask,
-                            empty_sky_light_mask,
-                            empty_block_light_mask,
-                            sky_light,
-                            block_light,
-                        }
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketWorldEvent {
             effect_id: i32,
             location: Position,
             data: i32,
             global: bool,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketWorldEvent {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = i32::serialize(&self.effect_id, w)?;
-                let w = Position::serialize(&self.location, w)?;
-                let w = i32::serialize(&self.data, w)?;
-                let w = bool::serialize(&self.global, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((i32::deserialize, Position::deserialize, i32::deserialize, bool::deserialize)),
-                    |(effect_id, location, data, global)| PacketWorldEvent { effect_id, location, data, global },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct WorldParticlesData2 {
             block_state: VarInt,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for WorldParticlesData2 {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.block_state, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize,)), |(block_state,)| WorldParticlesData2 { block_state }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct WorldParticlesData3 {
             block_state: VarInt,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for WorldParticlesData3 {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.block_state, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize,)), |(block_state,)| WorldParticlesData3 { block_state }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct WorldParticlesData14 {
             red: f32,
             green: f32,
             blue: f32,
             scale: f32,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for WorldParticlesData14 {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = f32::serialize(&self.red, w)?;
-                let w = f32::serialize(&self.green, w)?;
-                let w = f32::serialize(&self.blue, w)?;
-                let w = f32::serialize(&self.scale, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((f32::deserialize, f32::deserialize, f32::deserialize, f32::deserialize)), |(red, green, blue, scale)| {
-                    WorldParticlesData14 { red, green, blue, scale }
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct WorldParticlesData15 {
             from_red: f32,
             from_green: f32,
@@ -4228,76 +2575,14 @@ pub mod play {
             to_green: f32,
             to_blue: f32,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for WorldParticlesData15 {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = f32::serialize(&self.from_red, w)?;
-                let w = f32::serialize(&self.from_green, w)?;
-                let w = f32::serialize(&self.from_blue, w)?;
-                let w = f32::serialize(&self.scale, w)?;
-                let w = f32::serialize(&self.to_red, w)?;
-                let w = f32::serialize(&self.to_green, w)?;
-                let w = f32::serialize(&self.to_blue, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((
-                        f32::deserialize,
-                        f32::deserialize,
-                        f32::deserialize,
-                        f32::deserialize,
-                        f32::deserialize,
-                        f32::deserialize,
-                        f32::deserialize,
-                    )),
-                    |(from_red, from_green, from_blue, scale, to_red, to_green, to_blue)| WorldParticlesData15 {
-                        from_red,
-                        from_green,
-                        from_blue,
-                        scale,
-                        to_red,
-                        to_green,
-                        to_blue,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct WorldParticlesData24 {
             block_state: VarInt,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for WorldParticlesData24 {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.block_state, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize,)), |(block_state,)| WorldParticlesData24 { block_state }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct WorldParticlesData35 {
             item: Slot,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for WorldParticlesData35 {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = Slot::serialize(&self.item, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((Slot::deserialize,)), |(item,)| WorldParticlesData35 { item }))(input)
-            }
-        }
-
         pub enum WorldParticlesData36Destination {
             MinecraftBlock(Position),
             Entity(VarInt),
@@ -4313,8 +2598,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     WorldParticlesData36Destination::MinecraftBlock(val) => Position::serialize(&val, w)?,
                     WorldParticlesData36Destination::Entity(val) => VarInt::serialize(&val, w)?,
@@ -4389,8 +2672,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     WorldParticlesData::WorldParticlesData2(val) => WorldParticlesData2::serialize(&val, w)?,
                     WorldParticlesData::WorldParticlesData3(val) => WorldParticlesData3::serialize(&val, w)?,
@@ -4478,6 +2759,7 @@ pub mod play {
             }
         }
 
+        #[derive(protocol_lib::Packet)]
         pub struct PacketUpdateLight {
             chunk_x: VarInt,
             chunk_z: VarInt,
@@ -4489,110 +2771,7 @@ pub mod play {
             sky_light: VarArray<VarArray<u8>>,
             block_light: VarArray<VarArray<u8>>,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketUpdateLight {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.chunk_x, w)?;
-                let w = VarInt::serialize(&self.chunk_z, w)?;
-                let w = bool::serialize(&self.trust_edges, w)?;
-
-                let w = PrefixedArray::<i64, VarInt>::len(&self.sky_light_mask).serialize(w)?;
-
-                let mut w = w;
-                let items = self.sky_light_mask.0.iter();
-                for i in items {
-                    w = i64::serialize(&i, w)?
-                }
-
-                let w = PrefixedArray::<i64, VarInt>::len(&self.block_light_mask).serialize(w)?;
-
-                let mut w = w;
-                let items = self.block_light_mask.0.iter();
-                for i in items {
-                    w = i64::serialize(&i, w)?
-                }
-
-                let w = PrefixedArray::<i64, VarInt>::len(&self.empty_sky_light_mask).serialize(w)?;
-
-                let mut w = w;
-                let items = self.empty_sky_light_mask.0.iter();
-                for i in items {
-                    w = i64::serialize(&i, w)?
-                }
-
-                let w = PrefixedArray::<i64, VarInt>::len(&self.empty_block_light_mask).serialize(w)?;
-
-                let mut w = w;
-                let items = self.empty_block_light_mask.0.iter();
-                for i in items {
-                    w = i64::serialize(&i, w)?
-                }
-
-                let w = PrefixedArray::<VarArray<u8>, VarInt>::len(&self.sky_light).serialize(w)?;
-
-                let mut w = w;
-                let items = self.sky_light.0.iter();
-                for i in items {
-                    w = {
-                        let w = PrefixedArray::<u8, VarInt>::len(&i).serialize(w)?;
-
-                        let mut w = w;
-                        let items = i.0.iter();
-                        for i in items {
-                            w = u8::serialize(&i, w)?
-                        }
-                        w
-                    }
-                }
-
-                let w = PrefixedArray::<VarArray<u8>, VarInt>::len(&self.block_light).serialize(w)?;
-
-                let mut w = w;
-                let items = self.block_light.0.iter();
-                for i in items {
-                    w = {
-                        let w = PrefixedArray::<u8, VarInt>::len(&i).serialize(w)?;
-
-                        let mut w = w;
-                        let items = i.0.iter();
-                        for i in items {
-                            w = u8::serialize(&i, w)?
-                        }
-                        w
-                    }
-                }
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((
-                        VarInt::deserialize,
-                        VarInt::deserialize,
-                        bool::deserialize,
-                        PrefixedArray::<i64, VarInt>::deserialize,
-                        PrefixedArray::<i64, VarInt>::deserialize,
-                        PrefixedArray::<i64, VarInt>::deserialize,
-                        PrefixedArray::<i64, VarInt>::deserialize,
-                        PrefixedArray::<VarArray<u8>, VarInt>::deserialize,
-                        PrefixedArray::<VarArray<u8>, VarInt>::deserialize,
-                    )),
-                    |(chunk_x, chunk_z, trust_edges, sky_light_mask, block_light_mask, empty_sky_light_mask, empty_block_light_mask, sky_light, block_light)| PacketUpdateLight {
-                        chunk_x,
-                        chunk_z,
-                        trust_edges,
-                        sky_light_mask,
-                        block_light_mask,
-                        empty_sky_light_mask,
-                        empty_block_light_mask,
-                        sky_light,
-                        block_light,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketLogin<'a> {
             entity_id: i32,
             is_hardcore: bool,
@@ -4611,96 +2790,7 @@ pub mod play {
             is_debug: bool,
             is_flat: bool,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketLogin<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = i32::serialize(&self.entity_id, w)?;
-                let w = bool::serialize(&self.is_hardcore, w)?;
-                let w = u8::serialize(&self.game_mode, w)?;
-                let w = i8::serialize(&self.previous_game_mode, w)?;
-
-                let w = PrefixedArray::<VarString<'a>, VarInt>::len(&self.world_names).serialize(w)?;
-
-                let mut w = w;
-                let items = self.world_names.0.iter();
-                for i in items {
-                    w = PrefixedString::<'a, VarInt>::serialize(&i, w)?
-                }
-
-                let w = Nbt::serialize(&self.dimension_codec, w)?;
-                let w = Nbt::serialize(&self.dimension, w)?;
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.world_name, w)?;
-                let w = i64::serialize(&self.hashed_seed, w)?;
-                let w = VarInt::serialize(&self.max_players, w)?;
-                let w = VarInt::serialize(&self.view_distance, w)?;
-                let w = VarInt::serialize(&self.simulation_distance, w)?;
-                let w = bool::serialize(&self.reduced_debug_info, w)?;
-                let w = bool::serialize(&self.enable_respawn_screen, w)?;
-                let w = bool::serialize(&self.is_debug, w)?;
-                let w = bool::serialize(&self.is_flat, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((
-                        i32::deserialize,
-                        bool::deserialize,
-                        u8::deserialize,
-                        i8::deserialize,
-                        PrefixedArray::<VarString<'a>, VarInt>::deserialize,
-                        Nbt::deserialize,
-                        Nbt::deserialize,
-                        PrefixedString::<'a, VarInt>::deserialize,
-                        i64::deserialize,
-                        VarInt::deserialize,
-                        VarInt::deserialize,
-                        VarInt::deserialize,
-                        bool::deserialize,
-                        bool::deserialize,
-                        bool::deserialize,
-                        bool::deserialize,
-                    )),
-                    |(
-                        entity_id,
-                        is_hardcore,
-                        game_mode,
-                        previous_game_mode,
-                        world_names,
-                        dimension_codec,
-                        dimension,
-                        world_name,
-                        hashed_seed,
-                        max_players,
-                        view_distance,
-                        simulation_distance,
-                        reduced_debug_info,
-                        enable_respawn_screen,
-                        is_debug,
-                        is_flat,
-                    )| PacketLogin {
-                        entity_id,
-                        is_hardcore,
-                        game_mode,
-                        previous_game_mode,
-                        world_names,
-                        dimension_codec,
-                        dimension,
-                        world_name,
-                        hashed_seed,
-                        max_players,
-                        view_distance,
-                        simulation_distance,
-                        reduced_debug_info,
-                        enable_respawn_screen,
-                        is_debug,
-                        is_flat,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct Ident11<'a> {
             r_type: VarInt,
             x: i8,
@@ -4708,32 +2798,6 @@ pub mod play {
             direction: u8,
             display_name: Option<VarString<'a>>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for Ident11<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.r_type, w)?;
-                let w = i8::serialize(&self.x, w)?;
-                let w = i8::serialize(&self.z, w)?;
-                let w = u8::serialize(&self.direction, w)?;
-                let w = Option::<VarString<'a>>::serialize(&self.display_name, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((VarInt::deserialize, i8::deserialize, i8::deserialize, u8::deserialize, Option::<VarString<'a>>::deserialize)),
-                    |(r_type, x, z, direction, display_name)| Ident11 {
-                        r_type,
-                        x,
-                        z,
-                        direction,
-                        display_name,
-                    },
-                ))(input)
-            }
-        }
-
         pub enum Rows {
             Rows0,
             Default(u8),
@@ -4747,8 +2811,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     Rows::Rows0 => w,
                     Rows::Default(val) => u8::serialize(val, w)?,
@@ -4770,8 +2832,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     MapX::MapX0 => w,
                     MapX::Default(val) => u8::serialize(val, w)?,
@@ -4793,8 +2853,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     MapY::MapY0 => w,
                     MapY::Default(val) => u8::serialize(val, w)?,
@@ -4816,8 +2874,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     MapData::MapData0 => w,
                     MapData::Default(val) => PrefixedBuffer::<'a, VarInt>::serialize(val, w)?,
@@ -4894,6 +2950,7 @@ pub mod play {
             }
         }
 
+        #[derive(protocol_lib::Packet)]
         pub struct Trade {
             input_item1: Slot,
             output_item: Slot,
@@ -4906,53 +2963,7 @@ pub mod play {
             price_multiplier: f32,
             demand: i32,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for Trade {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = Slot::serialize(&self.input_item1, w)?;
-                let w = Slot::serialize(&self.output_item, w)?;
-                let w = Option::<Slot>::serialize(&self.input_item2, w)?;
-                let w = bool::serialize(&self.trade_disabled, w)?;
-                let w = i32::serialize(&self.nb_trade_uses, w)?;
-                let w = i32::serialize(&self.maximum_nb_trade_uses, w)?;
-                let w = i32::serialize(&self.xp, w)?;
-                let w = i32::serialize(&self.special_price, w)?;
-                let w = f32::serialize(&self.price_multiplier, w)?;
-                let w = i32::serialize(&self.demand, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((
-                        Slot::deserialize,
-                        Slot::deserialize,
-                        Option::<Slot>::deserialize,
-                        bool::deserialize,
-                        i32::deserialize,
-                        i32::deserialize,
-                        i32::deserialize,
-                        i32::deserialize,
-                        f32::deserialize,
-                        i32::deserialize,
-                    )),
-                    |(input_item1, output_item, input_item2, trade_disabled, nb_trade_uses, maximum_nb_trade_uses, xp, special_price, price_multiplier, demand)| Trade {
-                        input_item1,
-                        output_item,
-                        input_item2,
-                        trade_disabled,
-                        nb_trade_uses,
-                        maximum_nb_trade_uses,
-                        xp,
-                        special_price,
-                        price_multiplier,
-                        demand,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketTradeList {
             window_id: VarInt,
             trades: PrefixedArray<Trade, u8>,
@@ -4961,49 +2972,7 @@ pub mod play {
             is_regular_villager: bool,
             can_restock: bool,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketTradeList {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.window_id, w)?;
-
-                let w = PrefixedArray::<Trade, u8>::len(&self.trades).serialize(w)?;
-
-                let mut w = w;
-                let items = self.trades.0.iter();
-                for i in items {
-                    w = Trade::serialize(&i, w)?
-                }
-
-                let w = VarInt::serialize(&self.villager_level, w)?;
-                let w = VarInt::serialize(&self.experience, w)?;
-                let w = bool::serialize(&self.is_regular_villager, w)?;
-                let w = bool::serialize(&self.can_restock, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((
-                        VarInt::deserialize,
-                        PrefixedArray::<Trade, u8>::deserialize,
-                        VarInt::deserialize,
-                        VarInt::deserialize,
-                        bool::deserialize,
-                        bool::deserialize,
-                    )),
-                    |(window_id, trades, villager_level, experience, is_regular_villager, can_restock)| PacketTradeList {
-                        window_id,
-                        trades,
-                        villager_level,
-                        experience,
-                        is_regular_villager,
-                        can_restock,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketRelEntityMove {
             entity_id: VarInt,
             d_x: i16,
@@ -5011,26 +2980,7 @@ pub mod play {
             d_z: i16,
             on_ground: bool,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketRelEntityMove {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.entity_id, w)?;
-                let w = i16::serialize(&self.d_x, w)?;
-                let w = i16::serialize(&self.d_y, w)?;
-                let w = i16::serialize(&self.d_z, w)?;
-                let w = bool::serialize(&self.on_ground, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((VarInt::deserialize, i16::deserialize, i16::deserialize, i16::deserialize, bool::deserialize)),
-                    |(entity_id, d_x, d_y, d_z, on_ground)| PacketRelEntityMove { entity_id, d_x, d_y, d_z, on_ground },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketEntityMoveLook {
             entity_id: VarInt,
             d_x: i16,
@@ -5040,69 +2990,14 @@ pub mod play {
             pitch: i8,
             on_ground: bool,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketEntityMoveLook {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.entity_id, w)?;
-                let w = i16::serialize(&self.d_x, w)?;
-                let w = i16::serialize(&self.d_y, w)?;
-                let w = i16::serialize(&self.d_z, w)?;
-                let w = i8::serialize(&self.yaw, w)?;
-                let w = i8::serialize(&self.pitch, w)?;
-                let w = bool::serialize(&self.on_ground, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((
-                        VarInt::deserialize,
-                        i16::deserialize,
-                        i16::deserialize,
-                        i16::deserialize,
-                        i8::deserialize,
-                        i8::deserialize,
-                        bool::deserialize,
-                    )),
-                    |(entity_id, d_x, d_y, d_z, yaw, pitch, on_ground)| PacketEntityMoveLook {
-                        entity_id,
-                        d_x,
-                        d_y,
-                        d_z,
-                        yaw,
-                        pitch,
-                        on_ground,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketEntityLook {
             entity_id: VarInt,
             yaw: i8,
             pitch: i8,
             on_ground: bool,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketEntityLook {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.entity_id, w)?;
-                let w = i8::serialize(&self.yaw, w)?;
-                let w = i8::serialize(&self.pitch, w)?;
-                let w = bool::serialize(&self.on_ground, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((VarInt::deserialize, i8::deserialize, i8::deserialize, bool::deserialize)),
-                    |(entity_id, yaw, pitch, on_ground)| PacketEntityLook { entity_id, yaw, pitch, on_ground },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketVehicleMove {
             x: f64,
             y: f64,
@@ -5110,156 +3005,38 @@ pub mod play {
             yaw: f32,
             pitch: f32,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketVehicleMove {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = f64::serialize(&self.x, w)?;
-                let w = f64::serialize(&self.y, w)?;
-                let w = f64::serialize(&self.z, w)?;
-                let w = f32::serialize(&self.yaw, w)?;
-                let w = f32::serialize(&self.pitch, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((f64::deserialize, f64::deserialize, f64::deserialize, f32::deserialize, f32::deserialize)),
-                    |(x, y, z, yaw, pitch)| PacketVehicleMove { x, y, z, yaw, pitch },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketOpenBook {
             hand: VarInt,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketOpenBook {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.hand, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize,)), |(hand,)| PacketOpenBook { hand }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketOpenSignEntity {
             location: Position,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketOpenSignEntity {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = Position::serialize(&self.location, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((Position::deserialize,)), |(location,)| PacketOpenSignEntity { location }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketCraftRecipeResponse<'a> {
             window_id: i8,
             recipe: VarString<'a>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketCraftRecipeResponse<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = i8::serialize(&self.window_id, w)?;
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.recipe, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((i8::deserialize, PrefixedString::<'a, VarInt>::deserialize)), |(window_id, recipe)| PacketCraftRecipeResponse {
-                    window_id,
-                    recipe,
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketAbilities {
             flags: i8,
             flying_speed: f32,
             walking_speed: f32,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketAbilities {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = i8::serialize(&self.flags, w)?;
-                let w = f32::serialize(&self.flying_speed, w)?;
-                let w = f32::serialize(&self.walking_speed, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((i8::deserialize, f32::deserialize, f32::deserialize)), |(flags, flying_speed, walking_speed)| PacketAbilities {
-                    flags,
-                    flying_speed,
-                    walking_speed,
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketEndCombatEvent {
             duration: VarInt,
             entity_id: i32,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketEndCombatEvent {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.duration, w)?;
-                let w = i32::serialize(&self.entity_id, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize, i32::deserialize)), |(duration, entity_id)| PacketEndCombatEvent { duration, entity_id }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketEnterCombatEvent {}
-
-        impl<'t> protocol_lib::Packet<'t> for PacketEnterCombatEvent {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((|i| Ok((i, ())),)), |_| PacketEnterCombatEvent {}))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketDeathCombatEvent<'a> {
             player_id: VarInt,
             entity_id: i32,
             message: VarString<'a>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketDeathCombatEvent<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.player_id, w)?;
-                let w = i32::serialize(&self.entity_id, w)?;
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.message, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((VarInt::deserialize, i32::deserialize, PrefixedString::<'a, VarInt>::deserialize)),
-                    |(player_id, entity_id, message)| PacketDeathCombatEvent { player_id, entity_id, message },
-                ))(input)
-            }
-        }
-
         pub enum PlayerInfoDataItemName<'a> {
             PlayerInfoDataItemName0(VarString<'a>),
             Default,
@@ -5273,8 +3050,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     PlayerInfoDataItemName::PlayerInfoDataItemName0(val) => PrefixedString::<'a, VarInt>::serialize(&val, w)?,
                     PlayerInfoDataItemName::Default => w,
@@ -5283,33 +3058,12 @@ pub mod play {
                 Ok(w)
             }
         }
+        #[derive(protocol_lib::Packet)]
         pub struct PlayerInfoDataItemProperties0<'a> {
             name: VarString<'a>,
             value: VarString<'a>,
             signature: Option<VarString<'a>>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PlayerInfoDataItemProperties0<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.name, w)?;
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.value, w)?;
-                let w = Option::<VarString<'a>>::serialize(&self.signature, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((
-                        PrefixedString::<'a, VarInt>::deserialize,
-                        PrefixedString::<'a, VarInt>::deserialize,
-                        Option::<VarString<'a>>::deserialize,
-                    )),
-                    |(name, value, signature)| PlayerInfoDataItemProperties0 { name, value, signature },
-                ))(input)
-            }
-        }
-
         pub enum PlayerInfoDataItemProperties<'a> {
             PlayerInfoDataItemProperties0(PrefixedArray<PlayerInfoDataItemProperties0<'a>, VarInt>),
             Default,
@@ -5323,8 +3077,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     PlayerInfoDataItemProperties::PlayerInfoDataItemProperties0(val) => {
                         let w = PrefixedArray::<PlayerInfoDataItemProperties0, VarInt>::len(&val).serialize(w)?;
@@ -5357,8 +3109,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     Gamemode::Gamemode0(val) => VarInt::serialize(&val, w)?,
                     Gamemode::Gamemode1(val) => VarInt::serialize(&val, w)?,
@@ -5383,8 +3133,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     Ping::Ping0(val) => VarInt::serialize(&val, w)?,
                     Ping::Ping2(val) => VarInt::serialize(&val, w)?,
@@ -5409,8 +3157,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     PlayerInfoDataItemDisplayName::PlayerInfoDataItemDisplayName0(val) => Option::<VarString<'a>>::serialize(&val, w)?,
                     PlayerInfoDataItemDisplayName::PlayerInfoDataItemDisplayName3(val) => Option::<VarString<'a>>::serialize(&val, w)?,
@@ -5514,6 +3260,7 @@ pub mod play {
             }
         }
 
+        #[derive(protocol_lib::Packet)]
         pub struct PacketPosition {
             x: f64,
             y: f64,
@@ -5524,47 +3271,6 @@ pub mod play {
             teleport_id: VarInt,
             dismount_vehicle: bool,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketPosition {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = f64::serialize(&self.x, w)?;
-                let w = f64::serialize(&self.y, w)?;
-                let w = f64::serialize(&self.z, w)?;
-                let w = f32::serialize(&self.yaw, w)?;
-                let w = f32::serialize(&self.pitch, w)?;
-                let w = i8::serialize(&self.flags, w)?;
-                let w = VarInt::serialize(&self.teleport_id, w)?;
-                let w = bool::serialize(&self.dismount_vehicle, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((
-                        f64::deserialize,
-                        f64::deserialize,
-                        f64::deserialize,
-                        f32::deserialize,
-                        f32::deserialize,
-                        i8::deserialize,
-                        VarInt::deserialize,
-                        bool::deserialize,
-                    )),
-                    |(x, y, z, yaw, pitch, flags, teleport_id, dismount_vehicle)| PacketPosition {
-                        x,
-                        y,
-                        z,
-                        yaw,
-                        pitch,
-                        flags,
-                        teleport_id,
-                        dismount_vehicle,
-                    },
-                ))(input)
-            }
-        }
-
         pub enum Recipes2<'a> {
             Recipes20(VarStringArray<'a>),
             Default,
@@ -5578,8 +3284,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     Recipes2::Recipes20(val) => {
                         let w = PrefixedArray::<VarString<'a>, VarInt>::len(&val).serialize(w)?;
@@ -5672,79 +3376,23 @@ pub mod play {
             }
         }
 
+        #[derive(protocol_lib::Packet)]
         pub struct PacketEntityDestroy {
             entity_ids: VarArray<VarInt>,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketEntityDestroy {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedArray::<VarInt, VarInt>::len(&self.entity_ids).serialize(w)?;
-
-                let mut w = w;
-                let items = self.entity_ids.0.iter();
-                for i in items {
-                    w = VarInt::serialize(&i, w)?
-                }
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((PrefixedArray::<VarInt, VarInt>::deserialize,)), |(entity_ids,)| PacketEntityDestroy { entity_ids }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketRemoveEntityEffect {
             entity_id: VarInt,
             effect_id: i8,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketRemoveEntityEffect {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.entity_id, w)?;
-                let w = i8::serialize(&self.effect_id, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize, i8::deserialize)), |(entity_id, effect_id)| PacketRemoveEntityEffect {
-                    entity_id,
-                    effect_id,
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketResourcePackSend<'a> {
             url: VarString<'a>,
             hash: VarString<'a>,
             forced: bool,
             prompt_message: Option<VarString<'a>>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketResourcePackSend<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.url, w)?;
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.hash, w)?;
-                let w = bool::serialize(&self.forced, w)?;
-                let w = Option::<VarString<'a>>::serialize(&self.prompt_message, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((
-                        PrefixedString::<'a, VarInt>::deserialize,
-                        PrefixedString::<'a, VarInt>::deserialize,
-                        bool::deserialize,
-                        Option::<VarString<'a>>::deserialize,
-                    )),
-                    |(url, hash, forced, prompt_message)| PacketResourcePackSend { url, hash, forced, prompt_message },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketRespawn<'a> {
             dimension: Nbt,
             world_name: VarString<'a>,
@@ -5755,327 +3403,65 @@ pub mod play {
             is_flat: bool,
             copy_metadata: bool,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketRespawn<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = Nbt::serialize(&self.dimension, w)?;
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.world_name, w)?;
-                let w = i64::serialize(&self.hashed_seed, w)?;
-                let w = u8::serialize(&self.gamemode, w)?;
-                let w = u8::serialize(&self.previous_gamemode, w)?;
-                let w = bool::serialize(&self.is_debug, w)?;
-                let w = bool::serialize(&self.is_flat, w)?;
-                let w = bool::serialize(&self.copy_metadata, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((
-                        Nbt::deserialize,
-                        PrefixedString::<'a, VarInt>::deserialize,
-                        i64::deserialize,
-                        u8::deserialize,
-                        u8::deserialize,
-                        bool::deserialize,
-                        bool::deserialize,
-                        bool::deserialize,
-                    )),
-                    |(dimension, world_name, hashed_seed, gamemode, previous_gamemode, is_debug, is_flat, copy_metadata)| PacketRespawn {
-                        dimension,
-                        world_name,
-                        hashed_seed,
-                        gamemode,
-                        previous_gamemode,
-                        is_debug,
-                        is_flat,
-                        copy_metadata,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketEntityHeadRotation {
             entity_id: VarInt,
             head_yaw: i8,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketEntityHeadRotation {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.entity_id, w)?;
-                let w = i8::serialize(&self.head_yaw, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize, i8::deserialize)), |(entity_id, head_yaw)| PacketEntityHeadRotation { entity_id, head_yaw }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketCamera {
             camera_id: VarInt,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketCamera {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.camera_id, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize,)), |(camera_id,)| PacketCamera { camera_id }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketHeldItemSlot {
             slot: i8,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketHeldItemSlot {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = i8::serialize(&self.slot, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((i8::deserialize,)), |(slot,)| PacketHeldItemSlot { slot }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketUpdateViewPosition {
             chunk_x: VarInt,
             chunk_z: VarInt,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketUpdateViewPosition {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.chunk_x, w)?;
-                let w = VarInt::serialize(&self.chunk_z, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize, VarInt::deserialize)), |(chunk_x, chunk_z)| PacketUpdateViewPosition { chunk_x, chunk_z }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketUpdateViewDistance {
             view_distance: VarInt,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketUpdateViewDistance {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.view_distance, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize,)), |(view_distance,)| PacketUpdateViewDistance { view_distance }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketScoreboardDisplayObjective<'a> {
             position: i8,
             name: VarString<'a>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketScoreboardDisplayObjective<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = i8::serialize(&self.position, w)?;
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.name, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((i8::deserialize, PrefixedString::<'a, VarInt>::deserialize)), |(position, name)| {
-                    PacketScoreboardDisplayObjective { position, name }
-                }))(input)
-            }
-        }
-
         pub struct PacketEntityMetadata<'a> {
             entity_id: VarInt,
             metadata: Vec<EntityMetadata<'a>>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketEntityMetadata<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.entity_id, w)?;
-
-                let mut w = w;
-                for (index, item) in self.metadata.iter().enumerate() {
-                    w = u8::serialize(&if index == self.metadata.len() - 1 { 255 } else { index as u8 }, w)?;
-                    w = str::parse::<VarInt>(item.discriminant()).unwrap().serialize(w)?;
-                    w = EntityMetadata::serialize(&item, w)?
-                }
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((VarInt::deserialize, |mut input| {
-                        let mut accum = vec![];
-                        loop {
-                            let (i, item) = EntityMetadataWrapper::deserialize(input)?;
-                            input = i;
-                            let index = item.key;
-                            accum.push(item.value);
-                            if index == 0xFF {
-                                break;
-                            }
-                        }
-                        Ok((input, accum))
-                    })),
-                    |(entity_id, metadata)| PacketEntityMetadata { entity_id, metadata },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketAttachEntity {
             entity_id: i32,
             vehicle_id: i32,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketAttachEntity {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = i32::serialize(&self.entity_id, w)?;
-                let w = i32::serialize(&self.vehicle_id, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((i32::deserialize, i32::deserialize)), |(entity_id, vehicle_id)| PacketAttachEntity { entity_id, vehicle_id }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketEntityVelocity {
             entity_id: VarInt,
             velocity_x: i16,
             velocity_y: i16,
             velocity_z: i16,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketEntityVelocity {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.entity_id, w)?;
-                let w = i16::serialize(&self.velocity_x, w)?;
-                let w = i16::serialize(&self.velocity_y, w)?;
-                let w = i16::serialize(&self.velocity_z, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((VarInt::deserialize, i16::deserialize, i16::deserialize, i16::deserialize)),
-                    |(entity_id, velocity_x, velocity_y, velocity_z)| PacketEntityVelocity {
-                        entity_id,
-                        velocity_x,
-                        velocity_y,
-                        velocity_z,
-                    },
-                ))(input)
-            }
-        }
-
         pub struct PacketEntityEquipment {
             entity_id: VarInt,
             equipments: std::collections::HashMap<i8, Slot>,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketEntityEquipment {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.entity_id, w)?;
-
-                let mut w = w;
-                for (i, (k, v)) in self.equipments.iter().enumerate() {
-                    let k = if i == self.equipments.len() - 1 { *k | (1i8 << 7) } else { *k };
-                    let ww = i8::serialize(&k, w)?;
-                    w = v.serialize(ww)?;
-                }
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((VarInt::deserialize, |mut input| {
-                        let mut val = std::collections::HashMap::new();
-                        loop {
-                            let (i, (k_, v)) = tuple((i8::deserialize, Slot::deserialize))(input)?;
-                            input = i;
-                            let k = k_ & 0x7F;
-                            val.insert(k, v);
-                            if k != k_ {
-                                break;
-                            }
-                        }
-                        Ok((input, val))
-                    })),
-                    |(entity_id, equipments)| PacketEntityEquipment { entity_id, equipments },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketExperience {
             experience_bar: f32,
             level: VarInt,
             total_experience: VarInt,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketExperience {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = f32::serialize(&self.experience_bar, w)?;
-                let w = VarInt::serialize(&self.level, w)?;
-                let w = VarInt::serialize(&self.total_experience, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((f32::deserialize, VarInt::deserialize, VarInt::deserialize)), |(experience_bar, level, total_experience)| {
-                    PacketExperience {
-                        experience_bar,
-                        level,
-                        total_experience,
-                    }
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketUpdateHealth {
             health: f32,
             food: VarInt,
             food_saturation: f32,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketUpdateHealth {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = f32::serialize(&self.health, w)?;
-                let w = VarInt::serialize(&self.food, w)?;
-                let w = f32::serialize(&self.food_saturation, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((f32::deserialize, VarInt::deserialize, f32::deserialize)), |(health, food, food_saturation)| PacketUpdateHealth {
-                    health,
-                    food,
-                    food_saturation,
-                }))(input)
-            }
-        }
-
         pub enum DisplayText<'a> {
             DisplayText0(VarString<'a>),
             DisplayText2(VarString<'a>),
@@ -6091,8 +3477,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     DisplayText::DisplayText0(val) => PrefixedString::<'a, VarInt>::serialize(&val, w)?,
                     DisplayText::DisplayText2(val) => PrefixedString::<'a, VarInt>::serialize(&val, w)?,
@@ -6117,8 +3501,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     ScoreboardObjectiveType::ScoreboardObjectiveType0(val) => VarInt::serialize(&val, w)?,
                     ScoreboardObjectiveType::ScoreboardObjectiveType2(val) => VarInt::serialize(&val, w)?,
@@ -6172,33 +3554,11 @@ pub mod play {
             }
         }
 
+        #[derive(protocol_lib::Packet)]
         pub struct PacketSetPassengers {
             entity_id: VarInt,
             passengers: VarArray<VarInt>,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketSetPassengers {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.entity_id, w)?;
-
-                let w = PrefixedArray::<VarInt, VarInt>::len(&self.passengers).serialize(w)?;
-
-                let mut w = w;
-                let items = self.passengers.0.iter();
-                for i in items {
-                    w = VarInt::serialize(&i, w)?
-                }
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize, PrefixedArray::<VarInt, VarInt>::deserialize)), |(entity_id, passengers)| {
-                    PacketSetPassengers { entity_id, passengers }
-                }))(input)
-            }
-        }
-
         pub enum TeamsName<'a> {
             TeamsName0(VarString<'a>),
             TeamsName2(VarString<'a>),
@@ -6214,8 +3574,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     TeamsName::TeamsName0(val) => PrefixedString::<'a, VarInt>::serialize(&val, w)?,
                     TeamsName::TeamsName2(val) => PrefixedString::<'a, VarInt>::serialize(&val, w)?,
@@ -6240,8 +3598,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     FriendlyFire::FriendlyFire0(val) => i8::serialize(&val, w)?,
                     FriendlyFire::FriendlyFire2(val) => i8::serialize(&val, w)?,
@@ -6266,8 +3622,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     NameTagVisibility::NameTagVisibility0(val) => PrefixedString::<'a, VarInt>::serialize(&val, w)?,
                     NameTagVisibility::NameTagVisibility2(val) => PrefixedString::<'a, VarInt>::serialize(&val, w)?,
@@ -6292,8 +3646,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     CollisionRule::CollisionRule0(val) => PrefixedString::<'a, VarInt>::serialize(&val, w)?,
                     CollisionRule::CollisionRule2(val) => PrefixedString::<'a, VarInt>::serialize(&val, w)?,
@@ -6318,8 +3670,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     Formatting::Formatting0(val) => VarInt::serialize(&val, w)?,
                     Formatting::Formatting2(val) => VarInt::serialize(&val, w)?,
@@ -6344,8 +3694,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     Prefix::Prefix0(val) => PrefixedString::<'a, VarInt>::serialize(&val, w)?,
                     Prefix::Prefix2(val) => PrefixedString::<'a, VarInt>::serialize(&val, w)?,
@@ -6370,8 +3718,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     Suffix::Suffix0(val) => PrefixedString::<'a, VarInt>::serialize(&val, w)?,
                     Suffix::Suffix2(val) => PrefixedString::<'a, VarInt>::serialize(&val, w)?,
@@ -6398,8 +3744,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     Players::Players0(val) => {
                         let w = PrefixedArray::<VarString<'a>, VarInt>::len(&val).serialize(w)?;
@@ -6543,8 +3887,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     ScoreboardScoreValue::ScoreboardScoreValue1 => w,
                     ScoreboardScoreValue::Default(val) => VarInt::serialize(val, w)?,
@@ -6592,42 +3934,17 @@ pub mod play {
             }
         }
 
+        #[derive(protocol_lib::Packet)]
         pub struct PacketSpawnPosition {
             location: Position,
             angle: f32,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketSpawnPosition {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = Position::serialize(&self.location, w)?;
-                let w = f32::serialize(&self.angle, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((Position::deserialize, f32::deserialize)), |(location, angle)| PacketSpawnPosition { location, angle }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketUpdateTime {
             age: i64,
             time: i64,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketUpdateTime {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = i64::serialize(&self.age, w)?;
-                let w = i64::serialize(&self.time, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((i64::deserialize, i64::deserialize)), |(age, time)| PacketUpdateTime { age, time }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketEntitySoundEffect {
             sound_id: VarInt,
             sound_category: VarInt,
@@ -6635,32 +3952,6 @@ pub mod play {
             volume: f32,
             pitch: f32,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketEntitySoundEffect {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.sound_id, w)?;
-                let w = VarInt::serialize(&self.sound_category, w)?;
-                let w = VarInt::serialize(&self.entity_id, w)?;
-                let w = f32::serialize(&self.volume, w)?;
-                let w = f32::serialize(&self.pitch, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((VarInt::deserialize, VarInt::deserialize, VarInt::deserialize, f32::deserialize, f32::deserialize)),
-                    |(sound_id, sound_category, entity_id, volume, pitch)| PacketEntitySoundEffect {
-                        sound_id,
-                        sound_category,
-                        entity_id,
-                        volume,
-                        pitch,
-                    },
-                ))(input)
-            }
-        }
-
         pub enum Source {
             Source3(VarInt),
             Source1(VarInt),
@@ -6676,8 +3967,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     Source::Source3(val) => VarInt::serialize(&val, w)?,
                     Source::Source1(val) => VarInt::serialize(&val, w)?,
@@ -6702,8 +3991,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     Sound::Sound3(val) => PrefixedString::<'a, VarInt>::serialize(&val, w)?,
                     Sound::Sound2(val) => PrefixedString::<'a, VarInt>::serialize(&val, w)?,
@@ -6753,6 +4040,7 @@ pub mod play {
             }
         }
 
+        #[derive(protocol_lib::Packet)]
         pub struct PacketSoundEffect {
             sound_id: VarInt,
             sound_category: VarInt,
@@ -6762,91 +4050,18 @@ pub mod play {
             volume: f32,
             pitch: f32,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketSoundEffect {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.sound_id, w)?;
-                let w = VarInt::serialize(&self.sound_category, w)?;
-                let w = i32::serialize(&self.x, w)?;
-                let w = i32::serialize(&self.y, w)?;
-                let w = i32::serialize(&self.z, w)?;
-                let w = f32::serialize(&self.volume, w)?;
-                let w = f32::serialize(&self.pitch, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((
-                        VarInt::deserialize,
-                        VarInt::deserialize,
-                        i32::deserialize,
-                        i32::deserialize,
-                        i32::deserialize,
-                        f32::deserialize,
-                        f32::deserialize,
-                    )),
-                    |(sound_id, sound_category, x, y, z, volume, pitch)| PacketSoundEffect {
-                        sound_id,
-                        sound_category,
-                        x,
-                        y,
-                        z,
-                        volume,
-                        pitch,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketPlayerlistHeader<'a> {
             header: VarString<'a>,
             footer: VarString<'a>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketPlayerlistHeader<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.header, w)?;
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.footer, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((PrefixedString::<'a, VarInt>::deserialize, PrefixedString::<'a, VarInt>::deserialize)), |(header, footer)| {
-                    PacketPlayerlistHeader { header, footer }
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketCollect {
             collected_entity_id: VarInt,
             collector_entity_id: VarInt,
             pickup_item_count: VarInt,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketCollect {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.collected_entity_id, w)?;
-                let w = VarInt::serialize(&self.collector_entity_id, w)?;
-                let w = VarInt::serialize(&self.pickup_item_count, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((VarInt::deserialize, VarInt::deserialize, VarInt::deserialize)),
-                    |(collected_entity_id, collector_entity_id, pickup_item_count)| PacketCollect {
-                        collected_entity_id,
-                        collector_entity_id,
-                        pickup_item_count,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketEntityTeleport {
             entity_id: VarInt,
             x: f64,
@@ -6856,126 +4071,24 @@ pub mod play {
             pitch: i8,
             on_ground: bool,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketEntityTeleport {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.entity_id, w)?;
-                let w = f64::serialize(&self.x, w)?;
-                let w = f64::serialize(&self.y, w)?;
-                let w = f64::serialize(&self.z, w)?;
-                let w = i8::serialize(&self.yaw, w)?;
-                let w = i8::serialize(&self.pitch, w)?;
-                let w = bool::serialize(&self.on_ground, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((
-                        VarInt::deserialize,
-                        f64::deserialize,
-                        f64::deserialize,
-                        f64::deserialize,
-                        i8::deserialize,
-                        i8::deserialize,
-                        bool::deserialize,
-                    )),
-                    |(entity_id, x, y, z, yaw, pitch, on_ground)| PacketEntityTeleport {
-                        entity_id,
-                        x,
-                        y,
-                        z,
-                        yaw,
-                        pitch,
-                        on_ground,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct Modifier {
             uuid: Uuid,
             amount: f64,
             operation: i8,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for Modifier {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = Uuid::serialize(&self.uuid, w)?;
-                let w = f64::serialize(&self.amount, w)?;
-                let w = i8::serialize(&self.operation, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((Uuid::deserialize, f64::deserialize, i8::deserialize)), |(uuid, amount, operation)| Modifier {
-                    uuid,
-                    amount,
-                    operation,
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct EntityUpdateAttrsProperty<'a> {
             key: VarString<'a>,
             value: f64,
             modifiers: VarArray<Modifier>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for EntityUpdateAttrsProperty<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.key, w)?;
-                let w = f64::serialize(&self.value, w)?;
-
-                let w = PrefixedArray::<Modifier, VarInt>::len(&self.modifiers).serialize(w)?;
-
-                let mut w = w;
-                let items = self.modifiers.0.iter();
-                for i in items {
-                    w = Modifier::serialize(&i, w)?
-                }
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((PrefixedString::<'a, VarInt>::deserialize, f64::deserialize, PrefixedArray::<Modifier, VarInt>::deserialize)),
-                    |(key, value, modifiers)| EntityUpdateAttrsProperty { key, value, modifiers },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketEntityUpdateAttributes<'a> {
             entity_id: VarInt,
             properties: VarArray<EntityUpdateAttrsProperty<'a>>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketEntityUpdateAttributes<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.entity_id, w)?;
-
-                let w = PrefixedArray::<EntityUpdateAttrsProperty, VarInt>::len(&self.properties).serialize(w)?;
-
-                let mut w = w;
-                let items = self.properties.0.iter();
-                for i in items {
-                    w = EntityUpdateAttrsProperty::serialize(&i, w)?
-                }
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((VarInt::deserialize, PrefixedArray::<EntityUpdateAttrsProperty<'a>, VarInt>::deserialize)),
-                    |(entity_id, properties)| PacketEntityUpdateAttributes { entity_id, properties },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketEntityEffect {
             entity_id: VarInt,
             effect_id: i8,
@@ -6983,88 +4096,16 @@ pub mod play {
             duration: VarInt,
             hide_particles: i8,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketEntityEffect {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.entity_id, w)?;
-                let w = i8::serialize(&self.effect_id, w)?;
-                let w = i8::serialize(&self.amplifier, w)?;
-                let w = VarInt::serialize(&self.duration, w)?;
-                let w = i8::serialize(&self.hide_particles, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((VarInt::deserialize, i8::deserialize, i8::deserialize, VarInt::deserialize, i8::deserialize)),
-                    |(entity_id, effect_id, amplifier, duration, hide_particles)| PacketEntityEffect {
-                        entity_id,
-                        effect_id,
-                        amplifier,
-                        duration,
-                        hide_particles,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketSelectAdvancementTab<'a> {
             id: Option<VarString<'a>>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketSelectAdvancementTab<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = Option::<VarString<'a>>::serialize(&self.id, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((Option::<VarString<'a>>::deserialize,)), |(id,)| PacketSelectAdvancementTab { id }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct CraftingShapeless<'a> {
             group: VarString<'a>,
             ingredients: VarArray<VarArray<Slot>>,
             result: Slot,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for CraftingShapeless<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.group, w)?;
-
-                let w = PrefixedArray::<VarArray<Slot>, VarInt>::len(&self.ingredients).serialize(w)?;
-
-                let mut w = w;
-                let items = self.ingredients.0.iter();
-                for i in items {
-                    w = {
-                        let w = PrefixedArray::<Slot, VarInt>::len(&i).serialize(w)?;
-
-                        let mut w = w;
-                        let items = i.0.iter();
-                        for i in items {
-                            w = Slot::serialize(&i, w)?
-                        }
-                        w
-                    }
-                }
-
-                let w = Slot::serialize(&self.result, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((PrefixedString::<'a, VarInt>::deserialize, PrefixedArray::<VarArray<Slot>, VarInt>::deserialize, Slot::deserialize)),
-                    |(group, ingredients, result)| CraftingShapeless { group, ingredients, result },
-                ))(input)
-            }
-        }
-
         pub struct CraftingShaped<'a> {
             width: VarInt,
             height: VarInt,
@@ -7138,74 +4179,18 @@ pub mod play {
             }
         }
 
+        #[derive(protocol_lib::Packet)]
         pub struct Stonecutting<'a> {
             group: VarString<'a>,
             ingredient: VarArray<Slot>,
             result: Slot,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for Stonecutting<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.group, w)?;
-
-                let w = PrefixedArray::<Slot, VarInt>::len(&self.ingredient).serialize(w)?;
-
-                let mut w = w;
-                let items = self.ingredient.0.iter();
-                for i in items {
-                    w = Slot::serialize(&i, w)?
-                }
-
-                let w = Slot::serialize(&self.result, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((PrefixedString::<'a, VarInt>::deserialize, PrefixedArray::<Slot, VarInt>::deserialize, Slot::deserialize)),
-                    |(group, ingredient, result)| Stonecutting { group, ingredient, result },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct Smithing {
             base: VarArray<Slot>,
             addition: VarArray<Slot>,
             result: Slot,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for Smithing {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedArray::<Slot, VarInt>::len(&self.base).serialize(w)?;
-
-                let mut w = w;
-                let items = self.base.0.iter();
-                for i in items {
-                    w = Slot::serialize(&i, w)?
-                }
-
-                let w = PrefixedArray::<Slot, VarInt>::len(&self.addition).serialize(w)?;
-
-                let mut w = w;
-                let items = self.addition.0.iter();
-                for i in items {
-                    w = Slot::serialize(&i, w)?
-                }
-
-                let w = Slot::serialize(&self.result, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((PrefixedArray::<Slot, VarInt>::deserialize, PrefixedArray::<Slot, VarInt>::deserialize, Slot::deserialize)),
-                    |(base, addition, result)| Smithing { base, addition, result },
-                ))(input)
-            }
-        }
-
         pub enum RecipeData<'a> {
             CraftingShapeless(CraftingShapeless<'a>),
             CraftingShaped(CraftingShaped<'a>),
@@ -7261,8 +4246,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     RecipeData::CraftingShapeless(val) => CraftingShapeless::serialize(&val, w)?,
                     RecipeData::CraftingShaped(val) => CraftingShaped::serialize(&val, w)?,
@@ -7348,102 +4331,26 @@ pub mod play {
             }
         }
 
+        #[derive(protocol_lib::Packet)]
         pub struct PacketDeclareRecipes<'a> {
             recipes: VarArray<RecipesItem<'a>>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketDeclareRecipes<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedArray::<RecipesItem, VarInt>::len(&self.recipes).serialize(w)?;
-
-                let mut w = w;
-                let items = self.recipes.0.iter();
-                for i in items {
-                    w = RecipesItem::serialize(&i, w)?
-                }
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((PrefixedArray::<RecipesItem<'a>, VarInt>::deserialize,)), |(recipes,)| PacketDeclareRecipes { recipes }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct TagsTag<'a> {
             tag_type: VarString<'a>,
             tags: VarArray<Tag<'a>>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for TagsTag<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.tag_type, w)?;
-
-                let w = PrefixedArray::<Tag, VarInt>::len(&self.tags).serialize(w)?;
-
-                let mut w = w;
-                let items = self.tags.0.iter();
-                for i in items {
-                    w = Tag::serialize(&i, w)?
-                }
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((PrefixedString::<'a, VarInt>::deserialize, PrefixedArray::<Tag<'a>, VarInt>::deserialize)), |(tag_type, tags)| {
-                    TagsTag { tag_type, tags }
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketTags<'a> {
             tags: VarArray<TagsTag<'a>>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketTags<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedArray::<TagsTag, VarInt>::len(&self.tags).serialize(w)?;
-
-                let mut w = w;
-                let items = self.tags.0.iter();
-                for i in items {
-                    w = TagsTag::serialize(&i, w)?
-                }
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((PrefixedArray::<TagsTag<'a>, VarInt>::deserialize,)), |(tags,)| PacketTags { tags }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketAcknowledgePlayerDigging {
             location: Position,
             block: VarInt,
             status: VarInt,
             successful: bool,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketAcknowledgePlayerDigging {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = Position::serialize(&self.location, w)?;
-                let w = VarInt::serialize(&self.block, w)?;
-                let w = VarInt::serialize(&self.status, w)?;
-                let w = bool::serialize(&self.successful, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((Position::deserialize, VarInt::deserialize, VarInt::deserialize, bool::deserialize)),
-                    |(location, block, status, successful)| PacketAcknowledgePlayerDigging { location, block, status, successful },
-                ))(input)
-            }
-        }
-
         pub enum SculkVibrationSignalDestination {
             Block(Position),
             EntityId(VarInt),
@@ -7459,8 +4366,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     SculkVibrationSignalDestination::Block(val) => Position::serialize(&val, w)?,
                     SculkVibrationSignalDestination::EntityId(val) => VarInt::serialize(&val, w)?,
@@ -7510,22 +4415,11 @@ pub mod play {
             }
         }
 
+        #[derive(protocol_lib::Packet)]
         pub struct PacketClearTitles {
             reset: bool,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketClearTitles {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = bool::serialize(&self.reset, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((bool::deserialize,)), |(reset,)| PacketClearTitles { reset }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketInitializeWorldBorder {
             x: f64,
             z: f64,
@@ -7536,239 +4430,55 @@ pub mod play {
             warning_blocks: VarInt,
             warning_time: VarInt,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketInitializeWorldBorder {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = f64::serialize(&self.x, w)?;
-                let w = f64::serialize(&self.z, w)?;
-                let w = f64::serialize(&self.old_diameter, w)?;
-                let w = f64::serialize(&self.new_diameter, w)?;
-                let w = VarLong::serialize(&self.speed, w)?;
-                let w = VarInt::serialize(&self.portal_teleport_boundary, w)?;
-                let w = VarInt::serialize(&self.warning_blocks, w)?;
-                let w = VarInt::serialize(&self.warning_time, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((
-                        f64::deserialize,
-                        f64::deserialize,
-                        f64::deserialize,
-                        f64::deserialize,
-                        VarLong::deserialize,
-                        VarInt::deserialize,
-                        VarInt::deserialize,
-                        VarInt::deserialize,
-                    )),
-                    |(x, z, old_diameter, new_diameter, speed, portal_teleport_boundary, warning_blocks, warning_time)| PacketInitializeWorldBorder {
-                        x,
-                        z,
-                        old_diameter,
-                        new_diameter,
-                        speed,
-                        portal_teleport_boundary,
-                        warning_blocks,
-                        warning_time,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketActionBar<'a> {
             text: VarString<'a>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketActionBar<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.text, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((PrefixedString::<'a, VarInt>::deserialize,)), |(text,)| PacketActionBar { text }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketWorldBorderCenter {
             x: f64,
             z: f64,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketWorldBorderCenter {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = f64::serialize(&self.x, w)?;
-                let w = f64::serialize(&self.z, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((f64::deserialize, f64::deserialize)), |(x, z)| PacketWorldBorderCenter { x, z }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketWorldBorderLerpSize {
             old_diameter: f64,
             new_diameter: f64,
             speed: VarLong,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketWorldBorderLerpSize {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = f64::serialize(&self.old_diameter, w)?;
-                let w = f64::serialize(&self.new_diameter, w)?;
-                let w = VarLong::serialize(&self.speed, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((f64::deserialize, f64::deserialize, VarLong::deserialize)), |(old_diameter, new_diameter, speed)| {
-                    PacketWorldBorderLerpSize { old_diameter, new_diameter, speed }
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketWorldBorderSize {
             diameter: f64,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketWorldBorderSize {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = f64::serialize(&self.diameter, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((f64::deserialize,)), |(diameter,)| PacketWorldBorderSize { diameter }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketWorldBorderWarningDelay {
             warning_time: VarInt,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketWorldBorderWarningDelay {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.warning_time, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize,)), |(warning_time,)| PacketWorldBorderWarningDelay { warning_time }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketWorldBorderWarningReach {
             warning_blocks: VarInt,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketWorldBorderWarningReach {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.warning_blocks, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize,)), |(warning_blocks,)| PacketWorldBorderWarningReach { warning_blocks }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketPing {
             id: i32,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketPing {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = i32::serialize(&self.id, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((i32::deserialize,)), |(id,)| PacketPing { id }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketSetTitleSubtitle<'a> {
             text: VarString<'a>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketSetTitleSubtitle<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.text, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((PrefixedString::<'a, VarInt>::deserialize,)), |(text,)| PacketSetTitleSubtitle { text }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketSetTitleText<'a> {
             text: VarString<'a>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketSetTitleText<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.text, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((PrefixedString::<'a, VarInt>::deserialize,)), |(text,)| PacketSetTitleText { text }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketSetTitleTime {
             fade_in: i32,
             stay: i32,
             fade_out: i32,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketSetTitleTime {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = i32::serialize(&self.fade_in, w)?;
-                let w = i32::serialize(&self.stay, w)?;
-                let w = i32::serialize(&self.fade_out, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((i32::deserialize, i32::deserialize, i32::deserialize)), |(fade_in, stay, fade_out)| PacketSetTitleTime {
-                    fade_in,
-                    stay,
-                    fade_out,
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketSimulationDistance {
             distance: VarInt,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketSimulationDistance {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.distance, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize,)), |(distance,)| PacketSimulationDistance { distance }))(input)
-            }
-        }
-
         pub enum Params<'a> {
             SpawnEntity(PacketSpawnEntity),
             SpawnEntityExperienceOrb(PacketSpawnEntityExperienceOrb),
@@ -7988,8 +4698,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     Params::SpawnEntity(val) => PacketSpawnEntity::serialize(&val, w)?,
                     Params::SpawnEntityExperienceOrb(val) => PacketSpawnEntityExperienceOrb::serialize(&val, w)?,
@@ -8057,10 +4765,32 @@ pub mod play {
                     Params::UpdateViewPosition(val) => PacketUpdateViewPosition::serialize(&val, w)?,
                     Params::UpdateViewDistance(val) => PacketUpdateViewDistance::serialize(&val, w)?,
                     Params::ScoreboardDisplayObjective(val) => PacketScoreboardDisplayObjective::serialize(&val, w)?,
-                    Params::EntityMetadata(val) => PacketEntityMetadata::serialize(&val, w)?,
+                    Params::EntityMetadata(val) => {
+                        let w = VarInt::serialize(&val.entity_id, w)?;
+
+                        let mut w = w;
+                        for (index, item) in val.metadata.iter().enumerate() {
+                            w = u8::serialize(&if index == val.metadata.len() - 1 { 255 } else { index as u8 }, w)?;
+                            w = str::parse::<VarInt>(item.discriminant()).unwrap().serialize(w)?;
+                            w = EntityMetadata::serialize(&item, w)?
+                        }
+
+                        w
+                    }
                     Params::AttachEntity(val) => PacketAttachEntity::serialize(&val, w)?,
                     Params::EntityVelocity(val) => PacketEntityVelocity::serialize(&val, w)?,
-                    Params::EntityEquipment(val) => PacketEntityEquipment::serialize(&val, w)?,
+                    Params::EntityEquipment(val) => {
+                        let w = VarInt::serialize(&val.entity_id, w)?;
+
+                        let mut w = w;
+                        for (i, (k, v)) in val.equipments.iter().enumerate() {
+                            let k = if i == val.equipments.len() - 1 { *k | (1i8 << 7) } else { *k };
+                            let ww = i8::serialize(&k, w)?;
+                            w = v.serialize(ww)?;
+                        }
+
+                        w
+                    }
                     Params::Experience(val) => PacketExperience::serialize(&val, w)?,
                     Params::UpdateHealth(val) => PacketUpdateHealth::serialize(&val, w)?,
                     Params::ScoreboardObjective(val) => PacketScoreboardObjective::serialize(&val, w)?,
@@ -8101,581 +4831,70 @@ pub mod play {
                 Ok(w)
             }
         }
-        pub struct Packet<'a> {
+        pub struct ToClient<'a> {
             name: &'static str,
             params: Params<'a>,
-        }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for Packet<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let tag = match &self.name[..] {
-                    "spawn_entity" => "0x00",
-                    "spawn_entity_experience_orb" => "0x01",
-                    "spawn_entity_living" => "0x02",
-                    "spawn_entity_painting" => "0x03",
-                    "named_entity_spawn" => "0x04",
-                    "sculk_vibration_signal" => "0x05",
-                    "animation" => "0x06",
-                    "statistics" => "0x07",
-                    "acknowledge_player_digging" => "0x08",
-                    "block_break_animation" => "0x09",
-                    "tile_entity_data" => "0x0a",
-                    "block_action" => "0x0b",
-                    "block_change" => "0x0c",
-                    "boss_bar" => "0x0d",
-                    "difficulty" => "0x0e",
-                    "chat" => "0x0f",
-                    "clear_titles" => "0x10",
-                    "tab_complete" => "0x11",
-                    "declare_commands" => "0x12",
-                    "close_window" => "0x13",
-                    "window_items" => "0x14",
-                    "craft_progress_bar" => "0x15",
-                    "set_slot" => "0x16",
-                    "set_cooldown" => "0x17",
-                    "custom_payload" => "0x18",
-                    "named_sound_effect" => "0x19",
-                    "kick_disconnect" => "0x1a",
-                    "entity_status" => "0x1b",
-                    "explosion" => "0x1c",
-                    "unload_chunk" => "0x1d",
-                    "game_state_change" => "0x1e",
-                    "open_horse_window" => "0x1f",
-                    "initialize_world_border" => "0x20",
-                    "keep_alive" => "0x21",
-                    "map_chunk" => "0x22",
-                    "world_event" => "0x23",
-                    "world_particles" => "0x24",
-                    "update_light" => "0x25",
-                    "login" => "0x26",
-                    "map" => "0x27",
-                    "trade_list" => "0x28",
-                    "rel_entity_move" => "0x29",
-                    "entity_move_look" => "0x2a",
-                    "entity_look" => "0x2b",
-                    "vehicle_move" => "0x2c",
-                    "open_book" => "0x2d",
-                    "open_window" => "0x2e",
-                    "open_sign_entity" => "0x2f",
-                    "ping" => "0x30",
-                    "craft_recipe_response" => "0x31",
-                    "abilities" => "0x32",
-                    "end_combat_event" => "0x33",
-                    "enter_combat_event" => "0x34",
-                    "death_combat_event" => "0x35",
-                    "player_info" => "0x36",
-                    "face_player" => "0x37",
-                    "position" => "0x38",
-                    "unlock_recipes" => "0x39",
-                    "entity_destroy" => "0x3a",
-                    "remove_entity_effect" => "0x3b",
-                    "resource_pack_send" => "0x3c",
-                    "respawn" => "0x3d",
-                    "entity_head_rotation" => "0x3e",
-                    "multi_block_change" => "0x3f",
-                    "select_advancement_tab" => "0x40",
-                    "action_bar" => "0x41",
-                    "world_border_center" => "0x42",
-                    "world_border_lerp_size" => "0x43",
-                    "world_border_size" => "0x44",
-                    "world_border_warning_delay" => "0x45",
-                    "world_border_warning_reach" => "0x46",
-                    "camera" => "0x47",
-                    "held_item_slot" => "0x48",
-                    "update_view_position" => "0x49",
-                    "update_view_distance" => "0x4a",
-                    "spawn_position" => "0x4b",
-                    "scoreboard_display_objective" => "0x4c",
-                    "entity_metadata" => "0x4d",
-                    "attach_entity" => "0x4e",
-                    "entity_velocity" => "0x4f",
-                    "entity_equipment" => "0x50",
-                    "experience" => "0x51",
-                    "update_health" => "0x52",
-                    "scoreboard_objective" => "0x53",
-                    "set_passengers" => "0x54",
-                    "teams" => "0x55",
-                    "scoreboard_score" => "0x56",
-                    "simulation_distance" => "0x57",
-                    "set_title_subtitle" => "0x58",
-                    "update_time" => "0x59",
-                    "set_title_text" => "0x5a",
-                    "set_title_time" => "0x5b",
-                    "entity_sound_effect" => "0x5c",
-                    "sound_effect" => "0x5d",
-                    "stop_sound" => "0x5e",
-                    "playerlist_header" => "0x5f",
-                    "nbt_query_response" => "0x60",
-                    "collect" => "0x61",
-                    "entity_teleport" => "0x62",
-                    "advancements" => "0x63",
-                    "entity_update_attributes" => "0x64",
-                    "entity_effect" => "0x65",
-                    "declare_recipes" => "0x66",
-                    "tags" => "0x67",
-
-                    _ => panic!("invalid value"),
-                };
-                let tag2 = str::parse(tag).unwrap();
-                let w = VarInt::serialize(&tag2, w)?;
-
-                let w = Params::serialize(&self.params, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (|input| {
-                    let (input, self_name) = (|input| {
-                        let (input, x) = (VarInt::deserialize)(input)?;
-                        let x = format!("{x}");
-                        let val = match &x[..] {
-                            "0x00" => "spawn_entity",
-                            "0x01" => "spawn_entity_experience_orb",
-                            "0x02" => "spawn_entity_living",
-                            "0x03" => "spawn_entity_painting",
-                            "0x04" => "named_entity_spawn",
-                            "0x05" => "sculk_vibration_signal",
-                            "0x06" => "animation",
-                            "0x07" => "statistics",
-                            "0x08" => "acknowledge_player_digging",
-                            "0x09" => "block_break_animation",
-                            "0x0a" => "tile_entity_data",
-                            "0x0b" => "block_action",
-                            "0x0c" => "block_change",
-                            "0x0d" => "boss_bar",
-                            "0x0e" => "difficulty",
-                            "0x0f" => "chat",
-                            "0x10" => "clear_titles",
-                            "0x11" => "tab_complete",
-                            "0x12" => "declare_commands",
-                            "0x13" => "close_window",
-                            "0x14" => "window_items",
-                            "0x15" => "craft_progress_bar",
-                            "0x16" => "set_slot",
-                            "0x17" => "set_cooldown",
-                            "0x18" => "custom_payload",
-                            "0x19" => "named_sound_effect",
-                            "0x1a" => "kick_disconnect",
-                            "0x1b" => "entity_status",
-                            "0x1c" => "explosion",
-                            "0x1d" => "unload_chunk",
-                            "0x1e" => "game_state_change",
-                            "0x1f" => "open_horse_window",
-                            "0x20" => "initialize_world_border",
-                            "0x21" => "keep_alive",
-                            "0x22" => "map_chunk",
-                            "0x23" => "world_event",
-                            "0x24" => "world_particles",
-                            "0x25" => "update_light",
-                            "0x26" => "login",
-                            "0x27" => "map",
-                            "0x28" => "trade_list",
-                            "0x29" => "rel_entity_move",
-                            "0x2a" => "entity_move_look",
-                            "0x2b" => "entity_look",
-                            "0x2c" => "vehicle_move",
-                            "0x2d" => "open_book",
-                            "0x2e" => "open_window",
-                            "0x2f" => "open_sign_entity",
-                            "0x30" => "ping",
-                            "0x31" => "craft_recipe_response",
-                            "0x32" => "abilities",
-                            "0x33" => "end_combat_event",
-                            "0x34" => "enter_combat_event",
-                            "0x35" => "death_combat_event",
-                            "0x36" => "player_info",
-                            "0x37" => "face_player",
-                            "0x38" => "position",
-                            "0x39" => "unlock_recipes",
-                            "0x3a" => "entity_destroy",
-                            "0x3b" => "remove_entity_effect",
-                            "0x3c" => "resource_pack_send",
-                            "0x3d" => "respawn",
-                            "0x3e" => "entity_head_rotation",
-                            "0x3f" => "multi_block_change",
-                            "0x40" => "select_advancement_tab",
-                            "0x41" => "action_bar",
-                            "0x42" => "world_border_center",
-                            "0x43" => "world_border_lerp_size",
-                            "0x44" => "world_border_size",
-                            "0x45" => "world_border_warning_delay",
-                            "0x46" => "world_border_warning_reach",
-                            "0x47" => "camera",
-                            "0x48" => "held_item_slot",
-                            "0x49" => "update_view_position",
-                            "0x4a" => "update_view_distance",
-                            "0x4b" => "spawn_position",
-                            "0x4c" => "scoreboard_display_objective",
-                            "0x4d" => "entity_metadata",
-                            "0x4e" => "attach_entity",
-                            "0x4f" => "entity_velocity",
-                            "0x50" => "entity_equipment",
-                            "0x51" => "experience",
-                            "0x52" => "update_health",
-                            "0x53" => "scoreboard_objective",
-                            "0x54" => "set_passengers",
-                            "0x55" => "teams",
-                            "0x56" => "scoreboard_score",
-                            "0x57" => "simulation_distance",
-                            "0x58" => "set_title_subtitle",
-                            "0x59" => "update_time",
-                            "0x5a" => "set_title_text",
-                            "0x5b" => "set_title_time",
-                            "0x5c" => "entity_sound_effect",
-                            "0x5d" => "sound_effect",
-                            "0x5e" => "stop_sound",
-                            "0x5f" => "playerlist_header",
-                            "0x60" => "nbt_query_response",
-                            "0x61" => "collect",
-                            "0x62" => "entity_teleport",
-                            "0x63" => "advancements",
-                            "0x64" => "entity_update_attributes",
-                            "0x65" => "entity_effect",
-                            "0x66" => "declare_recipes",
-                            "0x67" => "tags",
-
-                            _ => return Err(nom::Err::Error(nom::error::Error::new(input, nom::error::ErrorKind::Verify))),
-                        };
-                        Ok((input, val))
-                    })(input)?;
-                    let (input, self_params) = (|input| match &format!("{}", self_name)[..] {
-                        "spawn_entity" => map(PacketSpawnEntity::deserialize, Params::SpawnEntity)(input),
-                        "spawn_entity_experience_orb" => map(PacketSpawnEntityExperienceOrb::deserialize, Params::SpawnEntityExperienceOrb)(input),
-                        "spawn_entity_living" => map(PacketSpawnEntityLiving::deserialize, Params::SpawnEntityLiving)(input),
-                        "spawn_entity_painting" => map(PacketSpawnEntityPainting::deserialize, Params::SpawnEntityPainting)(input),
-                        "named_entity_spawn" => map(PacketNamedEntitySpawn::deserialize, Params::NamedEntitySpawn)(input),
-                        "animation" => map(PacketAnimation::deserialize, Params::Animation)(input),
-                        "statistics" => map(PacketStatistics::deserialize, Params::Statistics)(input),
-                        "advancements" => map(PacketAdvancements::deserialize, Params::Advancements)(input),
-                        "block_break_animation" => map(PacketBlockBreakAnimation::deserialize, Params::BlockBreakAnimation)(input),
-                        "tile_entity_data" => map(PacketTileEntityData::deserialize, Params::TileEntityData)(input),
-                        "block_action" => map(PacketBlockAction::deserialize, Params::BlockAction)(input),
-                        "block_change" => map(PacketBlockChange::deserialize, Params::BlockChange)(input),
-                        "boss_bar" => map(PacketBossBar::deserialize, Params::BossBar)(input),
-                        "difficulty" => map(PacketDifficulty::deserialize, Params::Difficulty)(input),
-                        "tab_complete" => map(PacketTabComplete::deserialize, Params::TabComplete)(input),
-                        "declare_commands" => map(PacketDeclareCommands::deserialize, Params::DeclareCommands)(input),
-                        "face_player" => map(PacketFacePlayer::deserialize, Params::FacePlayer)(input),
-                        "nbt_query_response" => map(PacketNbtQueryResponse::deserialize, Params::NbtQueryResponse)(input),
-                        "chat" => map(PacketChat::deserialize, Params::Chat)(input),
-                        "multi_block_change" => map(PacketMultiBlockChange::deserialize, Params::MultiBlockChange)(input),
-                        "close_window" => map(PacketCloseWindow::deserialize, Params::CloseWindow)(input),
-                        "open_window" => map(PacketOpenWindow::deserialize, Params::OpenWindow)(input),
-                        "window_items" => map(PacketWindowItems::deserialize, Params::WindowItems)(input),
-                        "craft_progress_bar" => map(PacketCraftProgressBar::deserialize, Params::CraftProgressBar)(input),
-                        "set_slot" => map(PacketSetSlot::deserialize, Params::SetSlot)(input),
-                        "set_cooldown" => map(PacketSetCooldown::deserialize, Params::SetCooldown)(input),
-                        "custom_payload" => map(PacketCustomPayload::deserialize, Params::CustomPayload)(input),
-                        "named_sound_effect" => map(PacketNamedSoundEffect::deserialize, Params::NamedSoundEffect)(input),
-                        "kick_disconnect" => map(PacketKickDisconnect::deserialize, Params::KickDisconnect)(input),
-                        "entity_status" => map(PacketEntityStatus::deserialize, Params::EntityStatus)(input),
-                        "explosion" => map(PacketExplosion::deserialize, Params::Explosion)(input),
-                        "unload_chunk" => map(PacketUnloadChunk::deserialize, Params::UnloadChunk)(input),
-                        "game_state_change" => map(PacketGameStateChange::deserialize, Params::GameStateChange)(input),
-                        "open_horse_window" => map(PacketOpenHorseWindow::deserialize, Params::OpenHorseWindow)(input),
-                        "keep_alive" => map(PacketKeepAlive::deserialize, Params::KeepAlive)(input),
-                        "map_chunk" => map(PacketMapChunk::deserialize, Params::MapChunk)(input),
-                        "world_event" => map(PacketWorldEvent::deserialize, Params::WorldEvent)(input),
-                        "world_particles" => map(PacketWorldParticles::deserialize, Params::WorldParticles)(input),
-                        "update_light" => map(PacketUpdateLight::deserialize, Params::UpdateLight)(input),
-                        "login" => map(PacketLogin::deserialize, Params::Login)(input),
-                        "map" => map(PacketMap::deserialize, Params::Map)(input),
-                        "trade_list" => map(PacketTradeList::deserialize, Params::TradeList)(input),
-                        "rel_entity_move" => map(PacketRelEntityMove::deserialize, Params::RelEntityMove)(input),
-                        "entity_move_look" => map(PacketEntityMoveLook::deserialize, Params::EntityMoveLook)(input),
-                        "entity_look" => map(PacketEntityLook::deserialize, Params::EntityLook)(input),
-                        "vehicle_move" => map(PacketVehicleMove::deserialize, Params::VehicleMove)(input),
-                        "open_book" => map(PacketOpenBook::deserialize, Params::OpenBook)(input),
-                        "open_sign_entity" => map(PacketOpenSignEntity::deserialize, Params::OpenSignEntity)(input),
-                        "craft_recipe_response" => map(PacketCraftRecipeResponse::deserialize, Params::CraftRecipeResponse)(input),
-                        "abilities" => map(PacketAbilities::deserialize, Params::Abilities)(input),
-                        "end_combat_event" => map(PacketEndCombatEvent::deserialize, Params::EndCombatEvent)(input),
-                        "enter_combat_event" => map(PacketEnterCombatEvent::deserialize, Params::EnterCombatEvent)(input),
-                        "death_combat_event" => map(PacketDeathCombatEvent::deserialize, Params::DeathCombatEvent)(input),
-                        "player_info" => map(PacketPlayerInfo::deserialize, Params::PlayerInfo)(input),
-                        "position" => map(PacketPosition::deserialize, Params::Position)(input),
-                        "unlock_recipes" => map(PacketUnlockRecipes::deserialize, Params::UnlockRecipes)(input),
-                        "entity_destroy" => map(PacketEntityDestroy::deserialize, Params::EntityDestroy)(input),
-                        "remove_entity_effect" => map(PacketRemoveEntityEffect::deserialize, Params::RemoveEntityEffect)(input),
-                        "resource_pack_send" => map(PacketResourcePackSend::deserialize, Params::ResourcePackSend)(input),
-                        "respawn" => map(PacketRespawn::deserialize, Params::Respawn)(input),
-                        "entity_update_attributes" => map(PacketEntityUpdateAttributes::deserialize, Params::EntityUpdateAttributes)(input),
-                        "camera" => map(PacketCamera::deserialize, Params::Camera)(input),
-                        "held_item_slot" => map(PacketHeldItemSlot::deserialize, Params::HeldItemSlot)(input),
-                        "update_view_position" => map(PacketUpdateViewPosition::deserialize, Params::UpdateViewPosition)(input),
-                        "update_view_distance" => map(PacketUpdateViewDistance::deserialize, Params::UpdateViewDistance)(input),
-                        "scoreboard_display_objective" => map(PacketScoreboardDisplayObjective::deserialize, Params::ScoreboardDisplayObjective)(input),
-                        "entity_metadata" => map(PacketEntityMetadata::deserialize, Params::EntityMetadata)(input),
-                        "attach_entity" => map(PacketAttachEntity::deserialize, Params::AttachEntity)(input),
-                        "entity_velocity" => map(PacketEntityVelocity::deserialize, Params::EntityVelocity)(input),
-                        "entity_equipment" => map(PacketEntityEquipment::deserialize, Params::EntityEquipment)(input),
-                        "experience" => map(PacketExperience::deserialize, Params::Experience)(input),
-                        "update_health" => map(PacketUpdateHealth::deserialize, Params::UpdateHealth)(input),
-                        "scoreboard_objective" => map(PacketScoreboardObjective::deserialize, Params::ScoreboardObjective)(input),
-                        "set_passengers" => map(PacketSetPassengers::deserialize, Params::SetPassengers)(input),
-                        "teams" => map(PacketTeams::deserialize, Params::Teams)(input),
-                        "scoreboard_score" => map(PacketScoreboardScore::deserialize, Params::ScoreboardScore)(input),
-                        "simulation_distance" => map(PacketSimulationDistance::deserialize, Params::SimulationDistance)(input),
-                        "spawn_position" => map(PacketSpawnPosition::deserialize, Params::SpawnPosition)(input),
-                        "update_time" => map(PacketUpdateTime::deserialize, Params::UpdateTime)(input),
-                        "entity_sound_effect" => map(PacketEntitySoundEffect::deserialize, Params::EntitySoundEffect)(input),
-                        "stop_sound" => map(PacketStopSound::deserialize, Params::StopSound)(input),
-                        "sound_effect" => map(PacketSoundEffect::deserialize, Params::SoundEffect)(input),
-                        "playerlist_header" => map(PacketPlayerlistHeader::deserialize, Params::PlayerlistHeader)(input),
-                        "collect" => map(PacketCollect::deserialize, Params::Collect)(input),
-                        "entity_teleport" => map(PacketEntityTeleport::deserialize, Params::EntityTeleport)(input),
-                        "entity_head_rotation" => map(PacketEntityHeadRotation::deserialize, Params::EntityHeadRotation)(input),
-                        "entity_effect" => map(PacketEntityEffect::deserialize, Params::EntityEffect)(input),
-                        "select_advancement_tab" => map(PacketSelectAdvancementTab::deserialize, Params::SelectAdvancementTab)(input),
-                        "declare_recipes" => map(PacketDeclareRecipes::deserialize, Params::DeclareRecipes)(input),
-                        "tags" => map(PacketTags::deserialize, Params::Tags)(input),
-                        "acknowledge_player_digging" => map(PacketAcknowledgePlayerDigging::deserialize, Params::AcknowledgePlayerDigging)(input),
-                        "sculk_vibration_signal" => map(PacketSculkVibrationSignal::deserialize, Params::SculkVibrationSignal)(input),
-                        "clear_titles" => map(PacketClearTitles::deserialize, Params::ClearTitles)(input),
-                        "initialize_world_border" => map(PacketInitializeWorldBorder::deserialize, Params::InitializeWorldBorder)(input),
-                        "action_bar" => map(PacketActionBar::deserialize, Params::ActionBar)(input),
-                        "world_border_center" => map(PacketWorldBorderCenter::deserialize, Params::WorldBorderCenter)(input),
-                        "world_border_lerp_size" => map(PacketWorldBorderLerpSize::deserialize, Params::WorldBorderLerpSize)(input),
-                        "world_border_size" => map(PacketWorldBorderSize::deserialize, Params::WorldBorderSize)(input),
-                        "world_border_warning_delay" => map(PacketWorldBorderWarningDelay::deserialize, Params::WorldBorderWarningDelay)(input),
-                        "world_border_warning_reach" => map(PacketWorldBorderWarningReach::deserialize, Params::WorldBorderWarningReach)(input),
-                        "ping" => map(PacketPing::deserialize, Params::Ping)(input),
-                        "set_title_subtitle" => map(PacketSetTitleSubtitle::deserialize, Params::SetTitleSubtitle)(input),
-                        "set_title_text" => map(PacketSetTitleText::deserialize, Params::SetTitleText)(input),
-                        "set_title_time" => map(PacketSetTitleTime::deserialize, Params::SetTitleTime)(input),
-                        _ => Ok((input, Params::Default)),
-                    })(input)?;
-                    Ok((input, Packet { name: self_name, params: self_params }))
-                })(input)
-            }
         }
     }
     pub mod serverbound {
         use crate::test::*;
         use nom::{combinator::map, sequence::tuple};
+        use protocol_lib::Packet;
+        #[derive(protocol_lib::Packet)]
         pub struct PacketTeleportConfirm {
             teleport_id: VarInt,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketTeleportConfirm {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.teleport_id, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize,)), |(teleport_id,)| PacketTeleportConfirm { teleport_id }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketQueryBlockNbt {
             transaction_id: VarInt,
             location: Position,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketQueryBlockNbt {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.transaction_id, w)?;
-                let w = Position::serialize(&self.location, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize, Position::deserialize)), |(transaction_id, location)| PacketQueryBlockNbt {
-                    transaction_id,
-                    location,
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketSetDifficulty {
             new_difficulty: u8,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketSetDifficulty {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = u8::serialize(&self.new_difficulty, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((u8::deserialize,)), |(new_difficulty,)| PacketSetDifficulty { new_difficulty }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketEditBook<'a> {
             hand: VarInt,
             pages: VarStringArray<'a>,
             title: Option<VarString<'a>>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketEditBook<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.hand, w)?;
-
-                let w = PrefixedArray::<VarString<'a>, VarInt>::len(&self.pages).serialize(w)?;
-
-                let mut w = w;
-                let items = self.pages.0.iter();
-                for i in items {
-                    w = PrefixedString::<'a, VarInt>::serialize(&i, w)?
-                }
-
-                let w = Option::<VarString<'a>>::serialize(&self.title, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((VarInt::deserialize, PrefixedArray::<VarString<'a>, VarInt>::deserialize, Option::<VarString<'a>>::deserialize)),
-                    |(hand, pages, title)| PacketEditBook { hand, pages, title },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketQueryEntityNbt {
             transaction_id: VarInt,
             entity_id: VarInt,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketQueryEntityNbt {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.transaction_id, w)?;
-                let w = VarInt::serialize(&self.entity_id, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize, VarInt::deserialize)), |(transaction_id, entity_id)| PacketQueryEntityNbt {
-                    transaction_id,
-                    entity_id,
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketPickItem {
             slot: VarInt,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketPickItem {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.slot, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize,)), |(slot,)| PacketPickItem { slot }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketNameItem<'a> {
             name: VarString<'a>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketNameItem<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.name, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((PrefixedString::<'a, VarInt>::deserialize,)), |(name,)| PacketNameItem { name }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketSelectTrade {
             slot: VarInt,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketSelectTrade {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.slot, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize,)), |(slot,)| PacketSelectTrade { slot }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketSetBeaconEffect {
             primary_effect: VarInt,
             secondary_effect: VarInt,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketSetBeaconEffect {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.primary_effect, w)?;
-                let w = VarInt::serialize(&self.secondary_effect, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize, VarInt::deserialize)), |(primary_effect, secondary_effect)| PacketSetBeaconEffect {
-                    primary_effect,
-                    secondary_effect,
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketUpdateCommandBlock<'a> {
             location: Position,
             command: VarString<'a>,
             mode: VarInt,
             flags: u8,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketUpdateCommandBlock<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = Position::serialize(&self.location, w)?;
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.command, w)?;
-                let w = VarInt::serialize(&self.mode, w)?;
-                let w = u8::serialize(&self.flags, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((Position::deserialize, PrefixedString::<'a, VarInt>::deserialize, VarInt::deserialize, u8::deserialize)),
-                    |(location, command, mode, flags)| PacketUpdateCommandBlock { location, command, mode, flags },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketUpdateCommandBlockMinecart<'a> {
             entity_id: VarInt,
             command: VarString<'a>,
             track_output: bool,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketUpdateCommandBlockMinecart<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.entity_id, w)?;
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.command, w)?;
-                let w = bool::serialize(&self.track_output, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((VarInt::deserialize, PrefixedString::<'a, VarInt>::deserialize, bool::deserialize)),
-                    |(entity_id, command, track_output)| PacketUpdateCommandBlockMinecart { entity_id, command, track_output },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketUpdateStructureBlock<'a> {
             location: Position,
             action: VarInt,
@@ -8694,124 +4913,20 @@ pub mod play {
             seed: VarLong,
             flags: u8,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketUpdateStructureBlock<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = Position::serialize(&self.location, w)?;
-                let w = VarInt::serialize(&self.action, w)?;
-                let w = VarInt::serialize(&self.mode, w)?;
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.name, w)?;
-                let w = i8::serialize(&self.offset_x, w)?;
-                let w = i8::serialize(&self.offset_y, w)?;
-                let w = i8::serialize(&self.offset_z, w)?;
-                let w = i8::serialize(&self.size_x, w)?;
-                let w = i8::serialize(&self.size_y, w)?;
-                let w = i8::serialize(&self.size_z, w)?;
-                let w = VarInt::serialize(&self.mirror, w)?;
-                let w = VarInt::serialize(&self.rotation, w)?;
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.metadata, w)?;
-                let w = f32::serialize(&self.integrity, w)?;
-                let w = VarLong::serialize(&self.seed, w)?;
-                let w = u8::serialize(&self.flags, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((
-                        Position::deserialize,
-                        VarInt::deserialize,
-                        VarInt::deserialize,
-                        PrefixedString::<'a, VarInt>::deserialize,
-                        i8::deserialize,
-                        i8::deserialize,
-                        i8::deserialize,
-                        i8::deserialize,
-                        i8::deserialize,
-                        i8::deserialize,
-                        VarInt::deserialize,
-                        VarInt::deserialize,
-                        PrefixedString::<'a, VarInt>::deserialize,
-                        f32::deserialize,
-                        VarLong::deserialize,
-                        u8::deserialize,
-                    )),
-                    |(location, action, mode, name, offset_x, offset_y, offset_z, size_x, size_y, size_z, mirror, rotation, metadata, integrity, seed, flags)| PacketUpdateStructureBlock {
-                        location,
-                        action,
-                        mode,
-                        name,
-                        offset_x,
-                        offset_y,
-                        offset_z,
-                        size_x,
-                        size_y,
-                        size_z,
-                        mirror,
-                        rotation,
-                        metadata,
-                        integrity,
-                        seed,
-                        flags,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketTabComplete<'a> {
             transaction_id: VarInt,
             text: VarString<'a>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketTabComplete<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.transaction_id, w)?;
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.text, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize, PrefixedString::<'a, VarInt>::deserialize)), |(transaction_id, text)| PacketTabComplete {
-                    transaction_id,
-                    text,
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketChat<'a> {
             message: VarString<'a>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketChat<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.message, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((PrefixedString::<'a, VarInt>::deserialize,)), |(message,)| PacketChat { message }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketClientCommand {
             action_id: VarInt,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketClientCommand {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.action_id, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize,)), |(action_id,)| PacketClientCommand { action_id }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketSettings<'a> {
             locale: VarString<'a>,
             view_distance: i8,
@@ -8822,83 +4937,17 @@ pub mod play {
             enable_text_filtering: bool,
             enable_server_listing: bool,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketSettings<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.locale, w)?;
-                let w = i8::serialize(&self.view_distance, w)?;
-                let w = VarInt::serialize(&self.chat_flags, w)?;
-                let w = bool::serialize(&self.chat_colors, w)?;
-                let w = u8::serialize(&self.skin_parts, w)?;
-                let w = VarInt::serialize(&self.main_hand, w)?;
-                let w = bool::serialize(&self.enable_text_filtering, w)?;
-                let w = bool::serialize(&self.enable_server_listing, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((
-                        PrefixedString::<'a, VarInt>::deserialize,
-                        i8::deserialize,
-                        VarInt::deserialize,
-                        bool::deserialize,
-                        u8::deserialize,
-                        VarInt::deserialize,
-                        bool::deserialize,
-                        bool::deserialize,
-                    )),
-                    |(locale, view_distance, chat_flags, chat_colors, skin_parts, main_hand, enable_text_filtering, enable_server_listing)| PacketSettings {
-                        locale,
-                        view_distance,
-                        chat_flags,
-                        chat_colors,
-                        skin_parts,
-                        main_hand,
-                        enable_text_filtering,
-                        enable_server_listing,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketEnchantItem {
             window_id: i8,
             enchantment: i8,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketEnchantItem {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = i8::serialize(&self.window_id, w)?;
-                let w = i8::serialize(&self.enchantment, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((i8::deserialize, i8::deserialize)), |(window_id, enchantment)| PacketEnchantItem { window_id, enchantment }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct ChangedSlot {
             location: i16,
             item: Slot,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for ChangedSlot {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = i16::serialize(&self.location, w)?;
-                let w = Slot::serialize(&self.item, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((i16::deserialize, Slot::deserialize)), |(location, item)| ChangedSlot { location, item }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketWindowClick {
             window_id: u8,
             state_id: VarInt,
@@ -8908,89 +4957,15 @@ pub mod play {
             changed_slots: VarArray<ChangedSlot>,
             cursor_item: Slot,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketWindowClick {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = u8::serialize(&self.window_id, w)?;
-                let w = VarInt::serialize(&self.state_id, w)?;
-                let w = i16::serialize(&self.slot, w)?;
-                let w = i8::serialize(&self.mouse_button, w)?;
-                let w = VarInt::serialize(&self.mode, w)?;
-
-                let w = PrefixedArray::<ChangedSlot, VarInt>::len(&self.changed_slots).serialize(w)?;
-
-                let mut w = w;
-                let items = self.changed_slots.0.iter();
-                for i in items {
-                    w = ChangedSlot::serialize(&i, w)?
-                }
-
-                let w = Slot::serialize(&self.cursor_item, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((
-                        u8::deserialize,
-                        VarInt::deserialize,
-                        i16::deserialize,
-                        i8::deserialize,
-                        VarInt::deserialize,
-                        PrefixedArray::<ChangedSlot, VarInt>::deserialize,
-                        Slot::deserialize,
-                    )),
-                    |(window_id, state_id, slot, mouse_button, mode, changed_slots, cursor_item)| PacketWindowClick {
-                        window_id,
-                        state_id,
-                        slot,
-                        mouse_button,
-                        mode,
-                        changed_slots,
-                        cursor_item,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketCloseWindow {
             window_id: u8,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketCloseWindow {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = u8::serialize(&self.window_id, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((u8::deserialize,)), |(window_id,)| PacketCloseWindow { window_id }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketCustomPayload<'a> {
             channel: VarString<'a>,
             data: RestBuffer<'a>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketCustomPayload<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.channel, w)?;
-                let w = RestBuffer::serialize(&self.data, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((PrefixedString::<'a, VarInt>::deserialize, RestBuffer::deserialize)), |(channel, data)| PacketCustomPayload {
-                    channel,
-                    data,
-                }))(input)
-            }
-        }
-
         pub enum X {
             X2(f32),
             Default,
@@ -9004,8 +4979,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     X::X2(val) => f32::serialize(&val, w)?,
                     X::Default => w,
@@ -9027,8 +5000,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     UseEntityY::UseEntityY2(val) => f32::serialize(&val, w)?,
                     UseEntityY::Default => w,
@@ -9050,8 +5021,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     Z::Z2(val) => f32::serialize(&val, w)?,
                     Z::Default => w,
@@ -9075,8 +5044,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     UseEntityHand::UseEntityHand0(val) => VarInt::serialize(&val, w)?,
                     UseEntityHand::UseEntityHand2(val) => VarInt::serialize(&val, w)?,
@@ -9147,84 +5114,28 @@ pub mod play {
             }
         }
 
+        #[derive(protocol_lib::Packet)]
         pub struct PacketGenerateStructure {
             location: Position,
             levels: VarInt,
             keep_jigsaws: bool,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketGenerateStructure {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = Position::serialize(&self.location, w)?;
-                let w = VarInt::serialize(&self.levels, w)?;
-                let w = bool::serialize(&self.keep_jigsaws, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((Position::deserialize, VarInt::deserialize, bool::deserialize)), |(location, levels, keep_jigsaws)| {
-                    PacketGenerateStructure { location, levels, keep_jigsaws }
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketKeepAlive {
             keep_alive_id: i64,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketKeepAlive {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = i64::serialize(&self.keep_alive_id, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((i64::deserialize,)), |(keep_alive_id,)| PacketKeepAlive { keep_alive_id }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketLockDifficulty {
             locked: bool,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketLockDifficulty {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = bool::serialize(&self.locked, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((bool::deserialize,)), |(locked,)| PacketLockDifficulty { locked }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketPosition {
             x: f64,
             y: f64,
             z: f64,
             on_ground: bool,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketPosition {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = f64::serialize(&self.x, w)?;
-                let w = f64::serialize(&self.y, w)?;
-                let w = f64::serialize(&self.z, w)?;
-                let w = bool::serialize(&self.on_ground, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((f64::deserialize, f64::deserialize, f64::deserialize, bool::deserialize)), |(x, y, z, on_ground)| {
-                    PacketPosition { x, y, z, on_ground }
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketPositionLook {
             x: f64,
             y: f64,
@@ -9233,67 +5144,17 @@ pub mod play {
             pitch: f32,
             on_ground: bool,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketPositionLook {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = f64::serialize(&self.x, w)?;
-                let w = f64::serialize(&self.y, w)?;
-                let w = f64::serialize(&self.z, w)?;
-                let w = f32::serialize(&self.yaw, w)?;
-                let w = f32::serialize(&self.pitch, w)?;
-                let w = bool::serialize(&self.on_ground, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((f64::deserialize, f64::deserialize, f64::deserialize, f32::deserialize, f32::deserialize, bool::deserialize)),
-                    |(x, y, z, yaw, pitch, on_ground)| PacketPositionLook { x, y, z, yaw, pitch, on_ground },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketLook {
             yaw: f32,
             pitch: f32,
             on_ground: bool,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketLook {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = f32::serialize(&self.yaw, w)?;
-                let w = f32::serialize(&self.pitch, w)?;
-                let w = bool::serialize(&self.on_ground, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((f32::deserialize, f32::deserialize, bool::deserialize)), |(yaw, pitch, on_ground)| PacketLook {
-                    yaw,
-                    pitch,
-                    on_ground,
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketFlying {
             on_ground: bool,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketFlying {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = bool::serialize(&self.on_ground, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((bool::deserialize,)), |(on_ground,)| PacketFlying { on_ground }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketVehicleMove {
             x: f64,
             y: f64,
@@ -9301,244 +5162,63 @@ pub mod play {
             yaw: f32,
             pitch: f32,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketVehicleMove {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = f64::serialize(&self.x, w)?;
-                let w = f64::serialize(&self.y, w)?;
-                let w = f64::serialize(&self.z, w)?;
-                let w = f32::serialize(&self.yaw, w)?;
-                let w = f32::serialize(&self.pitch, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((f64::deserialize, f64::deserialize, f64::deserialize, f32::deserialize, f32::deserialize)),
-                    |(x, y, z, yaw, pitch)| PacketVehicleMove { x, y, z, yaw, pitch },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketSteerBoat {
             left_paddle: bool,
             right_paddle: bool,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketSteerBoat {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = bool::serialize(&self.left_paddle, w)?;
-                let w = bool::serialize(&self.right_paddle, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((bool::deserialize, bool::deserialize)), |(left_paddle, right_paddle)| PacketSteerBoat {
-                    left_paddle,
-                    right_paddle,
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketCraftRecipeRequest<'a> {
             window_id: i8,
             recipe: VarString<'a>,
             make_all: bool,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketCraftRecipeRequest<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = i8::serialize(&self.window_id, w)?;
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.recipe, w)?;
-                let w = bool::serialize(&self.make_all, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((i8::deserialize, PrefixedString::<'a, VarInt>::deserialize, bool::deserialize)),
-                    |(window_id, recipe, make_all)| PacketCraftRecipeRequest { window_id, recipe, make_all },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketAbilities {
             flags: i8,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketAbilities {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = i8::serialize(&self.flags, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((i8::deserialize,)), |(flags,)| PacketAbilities { flags }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketBlockDig {
             status: VarInt,
             location: Position,
             face: i8,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketBlockDig {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.status, w)?;
-                let w = Position::serialize(&self.location, w)?;
-                let w = i8::serialize(&self.face, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize, Position::deserialize, i8::deserialize)), |(status, location, face)| PacketBlockDig {
-                    status,
-                    location,
-                    face,
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketEntityAction {
             entity_id: VarInt,
             action_id: VarInt,
             jump_boost: VarInt,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketEntityAction {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.entity_id, w)?;
-                let w = VarInt::serialize(&self.action_id, w)?;
-                let w = VarInt::serialize(&self.jump_boost, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize, VarInt::deserialize, VarInt::deserialize)), |(entity_id, action_id, jump_boost)| {
-                    PacketEntityAction { entity_id, action_id, jump_boost }
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketSteerVehicle {
             sideways: f32,
             forward: f32,
             jump: u8,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketSteerVehicle {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = f32::serialize(&self.sideways, w)?;
-                let w = f32::serialize(&self.forward, w)?;
-                let w = u8::serialize(&self.jump, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((f32::deserialize, f32::deserialize, u8::deserialize)), |(sideways, forward, jump)| PacketSteerVehicle {
-                    sideways,
-                    forward,
-                    jump,
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketDisplayedRecipe<'a> {
             recipe_id: VarString<'a>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketDisplayedRecipe<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.recipe_id, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((PrefixedString::<'a, VarInt>::deserialize,)), |(recipe_id,)| PacketDisplayedRecipe { recipe_id }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketRecipeBook {
             book_id: VarInt,
             book_open: bool,
             filter_active: bool,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketRecipeBook {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.book_id, w)?;
-                let w = bool::serialize(&self.book_open, w)?;
-                let w = bool::serialize(&self.filter_active, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize, bool::deserialize, bool::deserialize)), |(book_id, book_open, filter_active)| {
-                    PacketRecipeBook { book_id, book_open, filter_active }
-                }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketResourcePackReceive {
             result: VarInt,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketResourcePackReceive {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.result, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize,)), |(result,)| PacketResourcePackReceive { result }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketHeldItemSlot {
             slot_id: i16,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketHeldItemSlot {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = i16::serialize(&self.slot_id, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((i16::deserialize,)), |(slot_id,)| PacketHeldItemSlot { slot_id }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketSetCreativeSlot {
             slot: i16,
             item: Slot,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketSetCreativeSlot {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = i16::serialize(&self.slot, w)?;
-                let w = Slot::serialize(&self.item, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((i16::deserialize, Slot::deserialize)), |(slot, item)| PacketSetCreativeSlot { slot, item }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketUpdateJigsawBlock<'a> {
             location: Position,
             name: VarString<'a>,
@@ -9547,41 +5227,7 @@ pub mod play {
             final_state: VarString<'a>,
             joint_type: VarString<'a>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketUpdateJigsawBlock<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = Position::serialize(&self.location, w)?;
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.name, w)?;
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.target, w)?;
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.pool, w)?;
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.final_state, w)?;
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.joint_type, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((
-                        Position::deserialize,
-                        PrefixedString::<'a, VarInt>::deserialize,
-                        PrefixedString::<'a, VarInt>::deserialize,
-                        PrefixedString::<'a, VarInt>::deserialize,
-                        PrefixedString::<'a, VarInt>::deserialize,
-                        PrefixedString::<'a, VarInt>::deserialize,
-                    )),
-                    |(location, name, target, pool, final_state, joint_type)| PacketUpdateJigsawBlock {
-                        location,
-                        name,
-                        target,
-                        pool,
-                        final_state,
-                        joint_type,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketUpdateSign<'a> {
             location: Position,
             text1: VarString<'a>,
@@ -9589,64 +5235,15 @@ pub mod play {
             text3: VarString<'a>,
             text4: VarString<'a>,
         }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketUpdateSign<'a> {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = Position::serialize(&self.location, w)?;
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.text1, w)?;
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.text2, w)?;
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.text3, w)?;
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.text4, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((
-                        Position::deserialize,
-                        PrefixedString::<'a, VarInt>::deserialize,
-                        PrefixedString::<'a, VarInt>::deserialize,
-                        PrefixedString::<'a, VarInt>::deserialize,
-                        PrefixedString::<'a, VarInt>::deserialize,
-                    )),
-                    |(location, text1, text2, text3, text4)| PacketUpdateSign { location, text1, text2, text3, text4 },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketArmAnimation {
             hand: VarInt,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketArmAnimation {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.hand, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize,)), |(hand,)| PacketArmAnimation { hand }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketSpectate {
             target: Uuid,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketSpectate {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = Uuid::serialize(&self.target, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((Uuid::deserialize,)), |(target,)| PacketSpectate { target }))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketBlockPlace {
             hand: VarInt,
             location: Position,
@@ -9656,60 +5253,10 @@ pub mod play {
             cursor_z: f32,
             inside_block: bool,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketBlockPlace {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.hand, w)?;
-                let w = Position::serialize(&self.location, w)?;
-                let w = VarInt::serialize(&self.direction, w)?;
-                let w = f32::serialize(&self.cursor_x, w)?;
-                let w = f32::serialize(&self.cursor_y, w)?;
-                let w = f32::serialize(&self.cursor_z, w)?;
-                let w = bool::serialize(&self.inside_block, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(
-                    tuple((
-                        VarInt::deserialize,
-                        Position::deserialize,
-                        VarInt::deserialize,
-                        f32::deserialize,
-                        f32::deserialize,
-                        f32::deserialize,
-                        bool::deserialize,
-                    )),
-                    |(hand, location, direction, cursor_x, cursor_y, cursor_z, inside_block)| PacketBlockPlace {
-                        hand,
-                        location,
-                        direction,
-                        cursor_x,
-                        cursor_y,
-                        cursor_z,
-                        inside_block,
-                    },
-                ))(input)
-            }
-        }
-
+        #[derive(protocol_lib::Packet)]
         pub struct PacketUseItem {
             hand: VarInt,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketUseItem {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = VarInt::serialize(&self.hand, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((VarInt::deserialize,)), |(hand,)| PacketUseItem { hand }))(input)
-            }
-        }
-
         pub enum TabId<'a> {
             TabId0(VarString<'a>),
             TabId1,
@@ -9725,8 +5272,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     TabId::TabId0(val) => PrefixedString::<'a, VarInt>::serialize(&val, w)?,
                     TabId::TabId1 => w,
@@ -9768,22 +5313,10 @@ pub mod play {
             }
         }
 
+        #[derive(protocol_lib::Packet)]
         pub struct PacketPong {
             id: i32,
         }
-
-        impl<'t> protocol_lib::Packet<'t> for PacketPong {
-            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = i32::serialize(&self.id, w)?;
-
-                Ok(w)
-            }
-
-            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (map(tuple((i32::deserialize,)), |(id,)| PacketPong { id }))(input)
-            }
-        }
-
         pub enum Params<'a> {
             TeleportConfirm(PacketTeleportConfirm),
             QueryBlockNbt(PacketQueryBlockNbt),
@@ -9891,8 +5424,6 @@ pub mod play {
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                use protocol_lib::Packet;
-
                 let w = match &self {
                     Params::TeleportConfirm(val) => PacketTeleportConfirm::serialize(&val, w)?,
                     Params::QueryBlockNbt(val) => PacketQueryBlockNbt::serialize(&val, w)?,
@@ -9948,12 +5479,12 @@ pub mod play {
                 Ok(w)
             }
         }
-        pub struct Packet<'a> {
+        pub struct ToServer<'a> {
             name: &'static str,
             params: Params<'a>,
         }
 
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for Packet<'a> {
+        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for ToServer<'a> {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let tag = match &self.name[..] {
                     "teleport_confirm" => "0x00",
@@ -10125,7 +5656,7 @@ pub mod play {
                         "pong" => map(PacketPong::deserialize, Params::Pong)(input),
                         _ => Ok((input, Params::Default)),
                     })(input)?;
-                    Ok((input, Packet { name: self_name, params: self_params }))
+                    Ok((input, ToServer { name: self_name, params: self_params }))
                 })(input)
             }
         }

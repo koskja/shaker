@@ -195,8 +195,6 @@ class Container(IType):
             return self.true_ser(val)
 
     def true_de(self, previous) -> str:
-        if max([a[1].discriminant_level() for a in self.fields] or [0]) == 0:
-            return self.native_de()
         last = previous[-1][0]
         field_varname = lambda x: f"{last}_{x}"
         field_de = lambda ty, varname: ty.emit_de(previous + [(varname, ty)])
@@ -214,20 +212,6 @@ class Container(IType):
             + " })) }"
         )
 
-    def native_de(self) -> str:
-        fields = "".join(
-            [(f"{a[1].emit_de(['']) or '|_| todo!()'}, ") for a in self.fields]
-        )
-        fields_names = ", ".join([a[0] for a in self.fields])
-        return f"""
-        nom::combinator::map(
-            nom::sequence::tuple((
-                {fields or '|i| Ok((i, ())),'}
-            )),
-            |{'_' if not fields_names else '('+fields_names+',)'}| {self.struct_name} {{ {fields_names} }}
-        )
-        """
-
     def true_ser(self, val) -> str:
         o = ""
         for name, ty in self.fields:
@@ -238,15 +222,17 @@ class Container(IType):
         lifetime = ""
         if self.has_lifetime():
             lifetime = "<'a>"
+        derive = '#[derive(protocol_lib::Packet)]\n' if max([a[1].discriminant_level() for a in self.fields] or [0]) == 0 else ''
         return (
+            derive + 
             f"pub struct {self.struct_name}{lifetime} {{\n"
             + "".join(map(lambda a: f"{a[0]}: {a[1].name()}, \n", self.fields))
             + "}\n"
-            + (
+            + ((
                 make_impl(self, de=Container.true_de, ser=Container.true_ser)
                 if self.discriminant_level() == 0
                 else ""
-            )
+            ) if max([a[1].discriminant_level() for a in self.fields] or [0]) != 0 else '')
         )
 
     def name(self) -> str:
@@ -371,7 +357,6 @@ class Switch(IType):
                 }}
             }}
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {{
-                use protocol_lib::Packet;
                 {self.true_ser('self')}
                 Ok(w)
             }}
@@ -609,6 +594,9 @@ class EntityMetadataLoop(IType):
 
     def has_lifetime(self) -> bool:
         return self.item.has_lifetime()
+    
+    def discriminant_level(self) -> Integer:
+        return 1000000
 
     @camelcased
     def construct(ctx: Context, name: str, params: Any) -> IType:
@@ -662,6 +650,9 @@ class TopbitTerminated(IType):
 
     def has_lifetime(self) -> bool:
         return self.item.has_lifetime()
+
+    def discriminant_level(self) -> Integer:
+        return 1000000
 
     @camelcased
     def construct(ctx: Context, name: str, params: Any) -> IType:
@@ -952,7 +943,7 @@ for i, j in protocol.items():
         for name in l["types"].keys():
             ctx.reserve_ident(name)
         for name, df in l["types"].items():
-            ctx.parse(name, df)
+            ctx.parse(name if name != 'packet' else k, df)
         for m in filter(lambda x: x not in base_ctx.types.keys(), ctx.types.keys()):
             xdd = ctx.types[m].emit_extra()
             o += xdd

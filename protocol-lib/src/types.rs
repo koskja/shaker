@@ -15,7 +15,6 @@ use nom::{
     IResult,
 };
 pub use num_traits::{self, NumCast, PrimInt, Signed, Unsigned};
-use protocol_derive::SerializeFn;
 
 pub use super::varint::VInt;
 use crate::Packet;
@@ -29,7 +28,7 @@ impl<'t: 'a, 'a, const MAX: usize> Packet<'t> for LimitedSlice<'a, MAX> {
     fn serialize<W: Write>(&self, w: WriteContext<W>) -> GenResult<W> {
         assert!(self.0.len() <= MAX);
         cookie_factory::sequence::pair(
-            VInt(self.0.len() as u32),
+            |w| VInt(self.0.len() as u32).serialize(w),
             cookie_factory::combinator::slice(self.0),
         )(w)
     }
@@ -50,7 +49,7 @@ impl<'t: 'a, 'a, const MAX: usize> Packet<'t> for LimitedString<'a, MAX> {
     fn serialize<W: Write>(&self, w: WriteContext<W>) -> GenResult<W> {
         assert!(self.0.len() <= MAX);
         cookie_factory::sequence::pair(
-            VInt(self.0.len() as u32),
+            |w| VInt(self.0.len() as u32).serialize(w),
             cookie_factory::combinator::string(self.0),
         )(w)
     }
@@ -66,7 +65,7 @@ impl<'t: 'a, 'a, const MAX: usize> Packet<'t> for LimitedString<'a, MAX> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, SerializeFn)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Bool(pub bool);
 impl<'a> Packet<'a> for Bool {
     fn serialize<W: Write>(&self, w: WriteContext<W>) -> GenResult<W> {

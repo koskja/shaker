@@ -9,7 +9,7 @@ use std::io::Write;
 
 use cookie_factory::{GenResult, WriteContext};
 use nom::IResult;
-use protocol_derive::Packet;
+pub use protocol_derive::Packet;
 use types::{LimitedSlice, VInt};
 mod varint;
 
@@ -21,7 +21,6 @@ pub trait Packet<'t>: Sized {
 #[derive(Debug, Packet)]
 pub struct First {
     pub a: VInt<u64>,
-    pub b: VInt<i32>,
 }
 
 #[derive(Debug, Packet)]

@@ -25,7 +25,7 @@
     "prelude": {
         "global": [
             "#[allow(unused_imports)]",
-            "use protocol_lib::types::*;",
+            "use protocol_lib::{Packet, types::*};",
             "use nom::{combinator::map, sequence::tuple};",
             "type VarInt = VInt<i32>;",
             "type VarLong = VInt<i64>;",
@@ -36,6 +36,7 @@
         ],
         "all": [
             "use crate::test::*;",
+            "use protocol_lib::Packet;",
             "use nom::{combinator::map, sequence::tuple};"
         ]
     },

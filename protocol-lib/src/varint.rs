@@ -3,11 +3,10 @@ use std::{fmt::Display, io::Write, str::FromStr};
 use cookie_factory::{GenResult, WriteContext};
 use nom::IResult;
 use num_traits::PrimInt;
-use protocol_derive::SerializeFn;
 
 use crate::Packet;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, SerializeFn)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct VInt<T: PrimInt + From<u8>>(pub T);
 impl<'a, T: PrimInt + From<u8>> Packet<'a> for VInt<T> {
     fn serialize<W: Write>(&self, mut w: WriteContext<W>) -> GenResult<W> {

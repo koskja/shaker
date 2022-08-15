@@ -11,17 +11,10 @@ use lifetime::get_type_lifetimes;
 use proc_macro2::TokenStream;
 use quote::{ToTokens, __private::Literal};
 use syn::{
-    parse::Parser, parse_str, punctuated::Punctuated, ExprLit, GenericParam, Lifetime, MetaList,
-    NestedMeta, TypeParam, WherePredicate,
+    parse::Parser, punctuated::Punctuated, ExprLit, Lifetime, MetaList,
+    NestedMeta,
 };
 
-pub fn sfn(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    // Parse the string representation
-    let ast = syn::parse(input).unwrap();
-
-    // Build the impl
-    impl_serialize_fn(&ast).into()
-}
 /// Derives a `Packet` implementation for a given struct.
 /// The struct is represented as a heterogenous list of its fields, and the `Packet` impl is deferred to each of their respective impls.
 /// # Lifetimes
@@ -45,8 +38,7 @@ pub fn packet(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     // Parse the string representation
     let ast = syn::parse(input).unwrap();
 
-    let mut result = impl_packet(&ast);
-    result.extend(impl_serialize_fn(&ast));
+    let result = impl_packet(&ast);
     //eprintln!("{}", result);
     result.into()
 }
@@ -71,23 +63,37 @@ fn impl_packet(ast: &syn::DeriveInput) -> TokenStream {
                     .collect(),
                 syn::Fields::Unit => todo!(),
             };
+            if fields.len() == 0 {
+                return quote! {
+                impl #impl_generics Packet<'_t> for #name #type_generics #where_clause {
+                    fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
+                        Ok(w)
+                    }
+
+                    fn deserialize(input: &'_t [u8]) -> nom::IResult<&'_t [u8], Self> {
+                        Ok((input, Self {}))
+                    }
+                }
+
+                }
+            }
             let f_names: Vec<_> = fields.iter().map(|(x, _)| x).collect();
             let f_types: Vec<_> = fields.iter().map(|(_, x)| x).collect();
             quote! {
                 impl #impl_generics Packet<'_t> for #name #type_generics #where_clause {
-                    fn serialize<W: Write>(&self, w: WriteContext<W>) -> GenResult<W> {
+                    fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                         #(
                             let w = <#f_types as Packet>::serialize(&self.#f_names, w)?;
                         )*
                         Ok(w)
                     }
 
-                    fn deserialize(input: &'_t [u8]) -> IResult<&'_t [u8], Self> {
+                    fn deserialize(input: &'_t [u8]) -> nom::IResult<&'_t [u8], Self> {
                         nom::combinator::map(nom::sequence::tuple((
                             #(
                                 <#f_types as Packet>::deserialize
-                            ),*
-                        )), |(#(#f_names),*)| Self {#(#f_names),*})(input)
+                            ),*,
+                        )), |(#(#f_names),*,)| Self {#(#f_names),*})(input)
                     }
                 }
             }
@@ -159,7 +165,7 @@ fn impl_packet(ast: &syn::DeriveInput) -> TokenStream {
             quote! {
                 impl #impl_generics Packet<'_t> for #name #type_generics #where_clause {
                     #[allow(unused_variables)]
-                    fn serialize<W: Write>(&self, w: WriteContext<W>) -> GenResult<W> {
+                    fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                         let discriminant = match self {
                             #(
                                 Self::#variant_patterns => #l
@@ -178,7 +184,7 @@ fn impl_packet(ast: &syn::DeriveInput) -> TokenStream {
                         }
                     }
 
-                    fn deserialize(input: &'_t [u8]) -> IResult<&'_t [u8], Self> {
+                    fn deserialize(input: &'_t [u8]) -> nom::IResult<&'_t [u8], Self> {
                         todo!()
                     }
                 }
@@ -321,38 +327,6 @@ fn with_this_lifetime(ast: &syn::DeriveInput) -> syn::Generics {
     let mut generics = ast.generics.clone();
     add_this_lifetime(&mut generics, get_borrow_lifetimes(ast));
     generics
-}
-fn impl_serialize_fn(ast: &syn::DeriveInput) -> TokenStream {
-    let (_, ty_generics, _) = ast.generics.split_for_impl();
-    let name = ast.ident.clone();
-    let mut type_params = ast.generics.params.clone();
-    type_params.push(GenericParam::Type(parse_str::<TypeParam>("__W").unwrap()));
-    let mut g = ast.generics.clone();
-    let where_clause = g.make_where_clause();
-    where_clause
-        .predicates
-        .push(parse_str::<WherePredicate>("__W: ::std::io::Write").unwrap());
-    let r = quote! {
-        impl <#type_params> FnOnce<(WriteContext<__W>, )> for #name #ty_generics #where_clause{
-            type Output = GenResult<__W>;
-
-            extern "rust-call" fn call_once(self, args: (WriteContext<__W>, )) -> Self::Output {
-                self.serialize(args.0)
-            }
-        }
-        impl <#type_params> Fn<(WriteContext<__W>, )> for #name #ty_generics #where_clause{
-            extern "rust-call" fn call(&self, args: (WriteContext<__W>, )) -> Self::Output {
-                self.serialize(args.0)
-            }
-        }
-        impl <#type_params> FnMut<(WriteContext<__W>, )> for #name #ty_generics #where_clause{
-            extern "rust-call" fn call_mut(&mut self, args: (WriteContext<__W>, )) -> Self::Output {
-                self.serialize(args.0)
-            }
-        }
-    }
-    .into();
-    r
 }
 fn gen_identifiers(count: usize) -> impl Iterator<Item = syn::Ident> {
     (0..count)
