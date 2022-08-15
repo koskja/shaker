@@ -1,4 +1,3 @@
-
 #[allow(unused_imports)]
 use protocol_lib::types::*;
 type VarInt = VInt<i32>;
@@ -7229,7 +7228,9 @@ pub mod play {
                             nom::multi::count(
                                 |input| {
                                     let (input, self_data_uuid) = (Uuid::deserialize)(input)?;
-                                    let (input, self_data_name) = (|input| match &format!(
+                                    let (input, self_data_name) =
+                                        (|input| {
+                                            match &format!(
                                         "{}",
                                         self_action
                                     )[..]
@@ -7239,9 +7240,8 @@ pub mod play {
                                             PlayerInfoDataItemName::<'a>::PlayerInfoDataItemName0,
                                         )(input),
                                         _ => Ok((input, PlayerInfoDataItemName::<'a>::Default)),
-                                    })(
-                                        input
-                                    )?;
+                                    }
+                                        })(input)?;
                                     let (input, self_data_properties) =
                                         (|input| {
                                             match &format!("{}", self_action)[..] {

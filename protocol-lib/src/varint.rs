@@ -1,4 +1,4 @@
-use std::{io::Write, str::FromStr, fmt::Display};
+use std::{fmt::Display, io::Write, str::FromStr};
 
 use cookie_factory::{GenResult, WriteContext};
 use nom::IResult;

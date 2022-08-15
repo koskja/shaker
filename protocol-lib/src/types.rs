@@ -1,7 +1,8 @@
 use std::{
+    fmt::Display,
     io::{Cursor, Write},
     marker::PhantomData,
-    ops::Deref, fmt::Display,
+    ops::Deref,
 };
 
 use cookie_factory::{GenError, GenResult, WriteContext};
@@ -9,11 +10,11 @@ use nom::{
     branch::alt,
     bytes::complete::{tag, take},
     combinator::{map, map_opt, map_res},
-    multi::{length_count, length_data, count},
+    multi::{count, length_count, length_data},
     sequence::preceded,
     IResult,
 };
-pub use num_traits::{self, PrimInt, NumCast, Signed, Unsigned};
+pub use num_traits::{self, NumCast, PrimInt, Signed, Unsigned};
 use protocol_derive::SerializeFn;
 
 pub use super::varint::VInt;
@@ -119,9 +120,7 @@ impl<'a, T> Display for PrefixedString<'a, T> {
     }
 }
 pub struct PrefixedArray<T, U>(pub Vec<T>, pub PhantomData<U>);
-impl<'t, T: Packet<'t>, U: Packet<'t> + PrimInt> Packet<'t>
-    for PrefixedArray<T, U>
-{
+impl<'t, T: Packet<'t>, U: Packet<'t> + PrimInt> Packet<'t> for PrefixedArray<T, U> {
     fn serialize<W: Write>(&self, w: WriteContext<W>) -> GenResult<W> {
         let length = <U as NumCast>::from(self.0.len()).ok_or_else(|| GenError::CustomError(0))?;
         let mut w = length.serialize(w)?;
@@ -138,10 +137,12 @@ impl<'t, T: Packet<'t>, U: Packet<'t> + PrimInt> Packet<'t>
 }
 impl<'t, T: Packet<'t>, U: Packet<'t> + PrimInt> PrefixedArray<T, U> {
     pub fn deserialize_ext(input: &'t [u8], size: U) -> IResult<&'t [u8], Self> {
-        let size = size.to_usize().ok_or(nom::Err::Error(nom::error::Error::new(
-            input,
-            nom::error::ErrorKind::TooLarge,
-        )))?;
+        let size = size
+            .to_usize()
+            .ok_or(nom::Err::Error(nom::error::Error::new(
+                input,
+                nom::error::ErrorKind::TooLarge,
+            )))?;
         map(count(T::deserialize, size), |x| Self(x, PhantomData))(input)
     }
     pub fn serialize_ext<W: Write>(&self, mut w: WriteContext<W>) -> GenResult<W> {
@@ -250,19 +251,23 @@ impl<'t> Packet<'t> for bool {
     }
 
     fn deserialize(input: &'t [u8]) -> IResult<&'t [u8], Self> {
-        map_res(u8::deserialize, |x| match x { 0 => Ok(false), 1 => Ok(true), _ => Err(nom::error::ErrorKind::Alt) })(input)
+        map_res(u8::deserialize, |x| match x {
+            0 => Ok(false),
+            1 => Ok(true),
+            _ => Err(nom::error::ErrorKind::Alt),
+        })(input)
     }
 }
 
-pub fn parse_bits_signed<T: PrimInt + Signed>(len: usize) -> impl Fn((&[u8], usize)) -> nom::IResult<(&[u8], usize), T> {
-    move |input| {
-        nom::combinator::map(nom::bits::complete::take(len), parse_signed_be(len))(input)
-    }
+pub fn parse_bits_signed<T: PrimInt + Signed>(
+    len: usize,
+) -> impl Fn((&[u8], usize)) -> nom::IResult<(&[u8], usize), T> {
+    move |input| nom::combinator::map(nom::bits::complete::take(len), parse_signed_be(len))(input)
 }
-pub fn parse_bits_unsigned<T: PrimInt + Unsigned>(len: usize) -> impl Fn((&[u8], usize)) -> nom::IResult<(&[u8], usize), T> {
-    move |input| {
-        nom::combinator::map(nom::bits::complete::take(len), parse_unsigned_be(len))(input)
-    }
+pub fn parse_bits_unsigned<T: PrimInt + Unsigned>(
+    len: usize,
+) -> impl Fn((&[u8], usize)) -> nom::IResult<(&[u8], usize), T> {
+    move |input| nom::combinator::map(nom::bits::complete::take(len), parse_unsigned_be(len))(input)
 }
 pub fn write_bits<W: Write>(values: &[(u64, usize)], mut w: WriteContext<W>) -> GenResult<W> {
     let mut accum = vec![];
@@ -272,7 +277,9 @@ pub fn write_bits<W: Write>(values: &[(u64, usize)], mut w: WriteContext<W>) -> 
             accum.push((value & 0x1) as u8);
             value = value.unsigned_shl(1);
             if accum.len() == 8 {
-                w = cookie_factory::bytes::be_u8(accum.drain(..).fold(0, |a, b| (a >> 1) | (b << 7)))(w)?;
+                w = cookie_factory::bytes::be_u8(
+                    accum.drain(..).fold(0, |a, b| (a >> 1) | (b << 7)),
+                )(w)?;
             }
         }
     }
@@ -287,7 +294,9 @@ pub fn parse_signed_be<T: PrimInt + Signed>(len: usize) -> impl Fn(u64) -> T {
             accum = accum | T::from::<u8>((val & 1) as u8).unwrap();
             val >>= 1;
         }
-        accum = accum.unsigned_shl(64 - len as u32).signed_shr(64 - len as u32); // sign extend
+        accum = accum
+            .unsigned_shl(64 - len as u32)
+            .signed_shr(64 - len as u32); // sign extend
         accum.to_le()
     }
 }
