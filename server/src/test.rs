@@ -79,15 +79,15 @@ impl<'t> protocol_lib::Packet<'t> for RTrue {
 }
 
 pub enum Ident0 {
-    RFalse(Void),
+    RFalse,
     RTrue(RTrue),
-    Default(Void),
+    Default,
 }
 
 impl Ident0 {
     pub fn discriminant(&self) -> &'static str {
         match self {
-            Ident0::RFalse(_) => "false",
+            Ident0::RFalse => "false",
             Ident0::RTrue(_) => "true",
             _ => "",
         }
@@ -99,15 +99,12 @@ impl Ident0 {
         use protocol_lib::Packet;
 
         let w = match &self {
-            Ident0::RFalse(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
+            Ident0::RFalse => w,
             Ident0::RTrue(val) => {
                 let w = RTrue::serialize(&val, w)?;
                 w
             }
-            Ident0::Default(val) => Void::serialize(val, w)?,
+            Ident0::Default => w,
         };
 
         Ok(w)
@@ -133,9 +130,9 @@ impl<'t> protocol_lib::Packet<'t> for Slot {
         (|input| {
             let (input, self_present) = (bool::deserialize)(input)?;
             let (input, self_ident0) = (|input| match &format!("{}", self_present)[..] {
-                "false" => nom::combinator::map(Void::deserialize, Ident0::RFalse)(input),
+                "false" => Ok((input, Ident0::RFalse)),
                 "true" => nom::combinator::map(RTrue::deserialize, Ident0::RTrue)(input),
-                _ => nom::combinator::map(Void::deserialize, Ident0::Default)(input),
+                _ => Ok((input, Ident0::Default)),
             })(input)?;
             Ok((
                 input,
@@ -326,7 +323,7 @@ impl<'t> protocol_lib::Packet<'t> for Data35 {
 pub enum Destination {
     Block(Position),
     Entity(VarInt),
-    Default(Void),
+    Default,
 }
 
 impl Destination {
@@ -352,7 +349,7 @@ impl Destination {
                 let w = VarInt::serialize(&val, w)?;
                 w
             }
-            Destination::Default(val) => Void::serialize(val, w)?,
+            Destination::Default => w,
         };
 
         Ok(w)
@@ -389,7 +386,7 @@ impl<'t: 'a, 'a> protocol_lib::Packet<'t> for Data36<'a> {
                 "minecraft:entity" => {
                     nom::combinator::map(VarInt::deserialize, Destination::Entity)(input)
                 }
-                _ => nom::combinator::map(Void::deserialize, Destination::Default)(input),
+                _ => Ok((input, Destination::Default)),
             })(input)?;
             let (input, self_ticks) = (VarInt::deserialize)(input)?;
             Ok((
@@ -413,7 +410,7 @@ pub enum Data<'a> {
     Data24(Data24),
     Data35(Data35),
     Data36(Data36<'a>),
-    Default(Void),
+    Default,
 }
 
 impl<'a> Data<'a> {
@@ -464,7 +461,7 @@ impl<'a> Data<'a> {
                 let w = Data36::<'a>::serialize(&val, w)?;
                 w
             }
-            Data::<'a>::Default(val) => Void::serialize(val, w)?,
+            Data::<'a>::Default => w,
         };
 
         Ok(w)
@@ -497,7 +494,7 @@ impl<'t: 'a, 'a> protocol_lib::Packet<'t> for Particle<'a> {
                 "24" => nom::combinator::map(Data24::deserialize, Data::<'a>::Data24)(input),
                 "35" => nom::combinator::map(Data35::deserialize, Data::<'a>::Data35)(input),
                 "36" => nom::combinator::map(Data36::<'a>::deserialize, Data::<'a>::Data36)(input),
-                _ => nom::combinator::map(Void::deserialize, Data::<'a>::Default)(input),
+                _ => Ok((input, Data::<'a>::Default)),
             })(input)?;
             Ok((
                 input,
@@ -594,7 +591,7 @@ impl<'t> protocol_lib::Packet<'t> for Value16 {
     }
 }
 
-pub enum Value<'a> {
+pub enum EntityMetadata<'a> {
     Value0(i8),
     Value1(VarInt),
     Value2(f32),
@@ -614,31 +611,31 @@ pub enum Value<'a> {
     Value16(Value16),
     Value17(Optvarint),
     Value18(VarInt),
-    Default(Void),
+    Default,
 }
 
-impl<'a> Value<'a> {
+impl<'a> EntityMetadata<'a> {
     pub fn discriminant(&self) -> &'static str {
         match self {
-            Value::<'a>::Value0(_) => "0",
-            Value::<'a>::Value1(_) => "1",
-            Value::<'a>::Value2(_) => "2",
-            Value::<'a>::Value3(_) => "3",
-            Value::<'a>::Value4(_) => "4",
-            Value::<'a>::Value5(_) => "5",
-            Value::<'a>::Value6(_) => "6",
-            Value::<'a>::Value7(_) => "7",
-            Value::<'a>::Value8(_) => "8",
-            Value::<'a>::Value9(_) => "9",
-            Value::<'a>::Value10(_) => "10",
-            Value::<'a>::Value11(_) => "11",
-            Value::<'a>::Value12(_) => "12",
-            Value::<'a>::Value13(_) => "13",
-            Value::<'a>::Value14(_) => "14",
-            Value::<'a>::Value15(_) => "15",
-            Value::<'a>::Value16(_) => "16",
-            Value::<'a>::Value17(_) => "17",
-            Value::<'a>::Value18(_) => "18",
+            EntityMetadata::<'a>::Value0(_) => "0",
+            EntityMetadata::<'a>::Value1(_) => "1",
+            EntityMetadata::<'a>::Value2(_) => "2",
+            EntityMetadata::<'a>::Value3(_) => "3",
+            EntityMetadata::<'a>::Value4(_) => "4",
+            EntityMetadata::<'a>::Value5(_) => "5",
+            EntityMetadata::<'a>::Value6(_) => "6",
+            EntityMetadata::<'a>::Value7(_) => "7",
+            EntityMetadata::<'a>::Value8(_) => "8",
+            EntityMetadata::<'a>::Value9(_) => "9",
+            EntityMetadata::<'a>::Value10(_) => "10",
+            EntityMetadata::<'a>::Value11(_) => "11",
+            EntityMetadata::<'a>::Value12(_) => "12",
+            EntityMetadata::<'a>::Value13(_) => "13",
+            EntityMetadata::<'a>::Value14(_) => "14",
+            EntityMetadata::<'a>::Value15(_) => "15",
+            EntityMetadata::<'a>::Value16(_) => "16",
+            EntityMetadata::<'a>::Value17(_) => "17",
+            EntityMetadata::<'a>::Value18(_) => "18",
             _ => "",
         }
     }
@@ -649,102 +646,102 @@ impl<'a> Value<'a> {
         use protocol_lib::Packet;
 
         let w = match &self {
-            Value::<'a>::Value0(val) => {
+            EntityMetadata::<'a>::Value0(val) => {
                 let w = i8::serialize(&val, w)?;
                 w
             }
-            Value::<'a>::Value1(val) => {
+            EntityMetadata::<'a>::Value1(val) => {
                 let w = VarInt::serialize(&val, w)?;
                 w
             }
-            Value::<'a>::Value2(val) => {
+            EntityMetadata::<'a>::Value2(val) => {
                 let w = f32::serialize(&val, w)?;
                 w
             }
-            Value::<'a>::Value3(val) => {
+            EntityMetadata::<'a>::Value3(val) => {
                 let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
                 w
             }
-            Value::<'a>::Value4(val) => {
+            EntityMetadata::<'a>::Value4(val) => {
                 let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
                 w
             }
-            Value::<'a>::Value5(val) => {
+            EntityMetadata::<'a>::Value5(val) => {
                 let w = Option::<VarString<'a>>::serialize(&val, w)?;
                 w
             }
-            Value::<'a>::Value6(val) => {
+            EntityMetadata::<'a>::Value6(val) => {
                 let w = Slot::serialize(&val, w)?;
                 w
             }
-            Value::<'a>::Value7(val) => {
+            EntityMetadata::<'a>::Value7(val) => {
                 let w = bool::serialize(&val, w)?;
                 w
             }
-            Value::<'a>::Value8(val) => {
+            EntityMetadata::<'a>::Value8(val) => {
                 let w = Value8::serialize(&val, w)?;
                 w
             }
-            Value::<'a>::Value9(val) => {
+            EntityMetadata::<'a>::Value9(val) => {
                 let w = Position::serialize(&val, w)?;
                 w
             }
-            Value::<'a>::Value10(val) => {
+            EntityMetadata::<'a>::Value10(val) => {
                 let w = Option::<Position>::serialize(&val, w)?;
                 w
             }
-            Value::<'a>::Value11(val) => {
+            EntityMetadata::<'a>::Value11(val) => {
                 let w = VarInt::serialize(&val, w)?;
                 w
             }
-            Value::<'a>::Value12(val) => {
+            EntityMetadata::<'a>::Value12(val) => {
                 let w = Option::<Uuid>::serialize(&val, w)?;
                 w
             }
-            Value::<'a>::Value13(val) => {
+            EntityMetadata::<'a>::Value13(val) => {
                 let w = VarInt::serialize(&val, w)?;
                 w
             }
-            Value::<'a>::Value14(val) => {
+            EntityMetadata::<'a>::Value14(val) => {
                 let w = Nbt::serialize(&val, w)?;
                 w
             }
-            Value::<'a>::Value15(val) => {
+            EntityMetadata::<'a>::Value15(val) => {
                 let w = Particle::<'a>::serialize(&val, w)?;
                 w
             }
-            Value::<'a>::Value16(val) => {
+            EntityMetadata::<'a>::Value16(val) => {
                 let w = Value16::serialize(&val, w)?;
                 w
             }
-            Value::<'a>::Value17(val) => {
+            EntityMetadata::<'a>::Value17(val) => {
                 let w = VarInt::serialize(&val, w)?;
                 w
             }
-            Value::<'a>::Value18(val) => {
+            EntityMetadata::<'a>::Value18(val) => {
                 let w = VarInt::serialize(&val, w)?;
                 w
             }
-            Value::<'a>::Default(val) => Void::serialize(val, w)?,
+            EntityMetadata::<'a>::Default => w,
         };
 
         Ok(w)
     }
 }
-pub struct EntityMetadata<'a> {
+pub struct EntityMetadataWrapper<'a> {
     key: u8,
     r_type: VarInt,
-    value: Value<'a>,
+    value: EntityMetadata<'a>,
 }
 
-impl<'t: 'a, 'a> protocol_lib::Packet<'t> for EntityMetadata<'a> {
+impl<'t: 'a, 'a> protocol_lib::Packet<'t> for EntityMetadataWrapper<'a> {
     fn serialize<W: std::io::Write>(
         &self,
         w: cookie_factory::WriteContext<W>,
     ) -> cookie_factory::GenResult<W> {
         let w = u8::serialize(&self.key, w)?;
         let w = VarInt::serialize(&self.r_type, w)?;
-        let w = Value::<'a>::serialize(&self.value, w)?;
+        let w = EntityMetadata::<'a>::serialize(&self.value, w)?;
 
         Ok(w)
     }
@@ -754,47 +751,66 @@ impl<'t: 'a, 'a> protocol_lib::Packet<'t> for EntityMetadata<'a> {
             let (input, self_key) = (u8::deserialize)(input)?;
             let (input, self_r_type) = (VarInt::deserialize)(input)?;
             let (input, self_value) = (|input| match &format!("{}", self_r_type)[..] {
-                "0" => nom::combinator::map(i8::deserialize, Value::<'a>::Value0)(input),
-                "1" => nom::combinator::map(VarInt::deserialize, Value::<'a>::Value1)(input),
-                "2" => nom::combinator::map(f32::deserialize, Value::<'a>::Value2)(input),
+                "0" => nom::combinator::map(i8::deserialize, EntityMetadata::<'a>::Value0)(input),
+                "1" => {
+                    nom::combinator::map(VarInt::deserialize, EntityMetadata::<'a>::Value1)(input)
+                }
+                "2" => nom::combinator::map(f32::deserialize, EntityMetadata::<'a>::Value2)(input),
                 "3" => nom::combinator::map(
                     PrefixedString::<'a, VarInt>::deserialize,
-                    Value::<'a>::Value3,
+                    EntityMetadata::<'a>::Value3,
                 )(input),
                 "4" => nom::combinator::map(
                     PrefixedString::<'a, VarInt>::deserialize,
-                    Value::<'a>::Value4,
+                    EntityMetadata::<'a>::Value4,
                 )(input),
                 "5" => nom::combinator::map(
                     Option::<VarString<'a>>::deserialize,
-                    Value::<'a>::Value5,
+                    EntityMetadata::<'a>::Value5,
                 )(input),
-                "6" => nom::combinator::map(Slot::deserialize, Value::<'a>::Value6)(input),
-                "7" => nom::combinator::map(bool::deserialize, Value::<'a>::Value7)(input),
-                "8" => nom::combinator::map(Value8::deserialize, Value::<'a>::Value8)(input),
-                "9" => nom::combinator::map(Position::deserialize, Value::<'a>::Value9)(input),
-                "10" => {
-                    nom::combinator::map(Option::<Position>::deserialize, Value::<'a>::Value10)(
-                        input,
-                    )
+                "6" => nom::combinator::map(Slot::deserialize, EntityMetadata::<'a>::Value6)(input),
+                "7" => nom::combinator::map(bool::deserialize, EntityMetadata::<'a>::Value7)(input),
+                "8" => {
+                    nom::combinator::map(Value8::deserialize, EntityMetadata::<'a>::Value8)(input)
                 }
-                "11" => nom::combinator::map(VarInt::deserialize, Value::<'a>::Value11)(input),
-                "12" => {
-                    nom::combinator::map(Option::<Uuid>::deserialize, Value::<'a>::Value12)(input)
+                "9" => {
+                    nom::combinator::map(Position::deserialize, EntityMetadata::<'a>::Value9)(input)
                 }
-                "13" => nom::combinator::map(VarInt::deserialize, Value::<'a>::Value13)(input),
-                "14" => nom::combinator::map(Nbt::deserialize, Value::<'a>::Value14)(input),
-                "15" => {
-                    nom::combinator::map(Particle::<'a>::deserialize, Value::<'a>::Value15)(input)
+                "10" => nom::combinator::map(
+                    Option::<Position>::deserialize,
+                    EntityMetadata::<'a>::Value10,
+                )(input),
+                "11" => {
+                    nom::combinator::map(VarInt::deserialize, EntityMetadata::<'a>::Value11)(input)
                 }
-                "16" => nom::combinator::map(Value16::deserialize, Value::<'a>::Value16)(input),
-                "17" => nom::combinator::map(VarInt::deserialize, Value::<'a>::Value17)(input),
-                "18" => nom::combinator::map(VarInt::deserialize, Value::<'a>::Value18)(input),
-                _ => nom::combinator::map(Void::deserialize, Value::<'a>::Default)(input),
+                "12" => nom::combinator::map(
+                    Option::<Uuid>::deserialize,
+                    EntityMetadata::<'a>::Value12,
+                )(input),
+                "13" => {
+                    nom::combinator::map(VarInt::deserialize, EntityMetadata::<'a>::Value13)(input)
+                }
+                "14" => {
+                    nom::combinator::map(Nbt::deserialize, EntityMetadata::<'a>::Value14)(input)
+                }
+                "15" => nom::combinator::map(
+                    Particle::<'a>::deserialize,
+                    EntityMetadata::<'a>::Value15,
+                )(input),
+                "16" => {
+                    nom::combinator::map(Value16::deserialize, EntityMetadata::<'a>::Value16)(input)
+                }
+                "17" => {
+                    nom::combinator::map(VarInt::deserialize, EntityMetadata::<'a>::Value17)(input)
+                }
+                "18" => {
+                    nom::combinator::map(VarInt::deserialize, EntityMetadata::<'a>::Value18)(input)
+                }
+                _ => Ok((input, EntityMetadata::<'a>::Default)),
             })(input)?;
             Ok((
                 input,
-                EntityMetadata {
+                EntityMetadataWrapper {
                     key: self_key,
                     r_type: self_r_type,
                     value: self_value,
@@ -1010,7 +1026,7 @@ impl<'t> protocol_lib::Packet<'t> for Flags {
 
 pub enum RedirectNode {
     RedirectNode1(VarInt),
-    Default(Void),
+    Default,
 }
 
 impl RedirectNode {
@@ -1031,7 +1047,7 @@ impl RedirectNode {
                 let w = VarInt::serialize(&val, w)?;
                 w
             }
-            RedirectNode::Default(val) => Void::serialize(val, w)?,
+            RedirectNode::Default => w,
         };
 
         Ok(w)
@@ -1100,7 +1116,7 @@ impl<'t> protocol_lib::Packet<'t> for FloatFlags {
 
 pub enum Min {
     Min1(f32),
-    Default(Void),
+    Default,
 }
 
 impl Min {
@@ -1121,7 +1137,7 @@ impl Min {
                 let w = f32::serialize(&val, w)?;
                 w
             }
-            Min::Default(val) => Void::serialize(val, w)?,
+            Min::Default => w,
         };
 
         Ok(w)
@@ -1129,7 +1145,7 @@ impl Min {
 }
 pub enum Max {
     Max1(f32),
-    Default(Void),
+    Default,
 }
 
 impl Max {
@@ -1150,7 +1166,7 @@ impl Max {
                 let w = f32::serialize(&val, w)?;
                 w
             }
-            Max::Default(val) => Void::serialize(val, w)?,
+            Max::Default => w,
         };
 
         Ok(w)
@@ -1179,11 +1195,11 @@ impl<'t> protocol_lib::Packet<'t> for Float {
             let (input, self_flags) = (FloatFlags::deserialize)(input)?;
             let (input, self_min) = (|input| match &format!("{}", self_flags.min_present)[..] {
                 "1" => nom::combinator::map(f32::deserialize, Min::Min1)(input),
-                _ => nom::combinator::map(Void::deserialize, Min::Default)(input),
+                _ => Ok((input, Min::Default)),
             })(input)?;
             let (input, self_max) = (|input| match &format!("{}", self_flags.max_present)[..] {
                 "1" => nom::combinator::map(f32::deserialize, Max::Max1)(input),
-                _ => nom::combinator::map(Void::deserialize, Max::Default)(input),
+                _ => Ok((input, Max::Default)),
             })(input)?;
             Ok((
                 input,
@@ -1238,7 +1254,7 @@ impl<'t> protocol_lib::Packet<'t> for DoubleFlags {
 
 pub enum DoubleMin {
     DoubleMin1(f64),
-    Default(Void),
+    Default,
 }
 
 impl DoubleMin {
@@ -1259,7 +1275,7 @@ impl DoubleMin {
                 let w = f64::serialize(&val, w)?;
                 w
             }
-            DoubleMin::Default(val) => Void::serialize(val, w)?,
+            DoubleMin::Default => w,
         };
 
         Ok(w)
@@ -1267,7 +1283,7 @@ impl DoubleMin {
 }
 pub enum DoubleMax {
     DoubleMax1(f64),
-    Default(Void),
+    Default,
 }
 
 impl DoubleMax {
@@ -1288,7 +1304,7 @@ impl DoubleMax {
                 let w = f64::serialize(&val, w)?;
                 w
             }
-            DoubleMax::Default(val) => Void::serialize(val, w)?,
+            DoubleMax::Default => w,
         };
 
         Ok(w)
@@ -1317,11 +1333,11 @@ impl<'t> protocol_lib::Packet<'t> for Double {
             let (input, self_flags) = (DoubleFlags::deserialize)(input)?;
             let (input, self_min) = (|input| match &format!("{}", self_flags.min_present)[..] {
                 "1" => nom::combinator::map(f64::deserialize, DoubleMin::DoubleMin1)(input),
-                _ => nom::combinator::map(Void::deserialize, DoubleMin::Default)(input),
+                _ => Ok((input, DoubleMin::Default)),
             })(input)?;
             let (input, self_max) = (|input| match &format!("{}", self_flags.max_present)[..] {
                 "1" => nom::combinator::map(f64::deserialize, DoubleMax::DoubleMax1)(input),
-                _ => nom::combinator::map(Void::deserialize, DoubleMax::Default)(input),
+                _ => Ok((input, DoubleMax::Default)),
             })(input)?;
             Ok((
                 input,
@@ -1376,7 +1392,7 @@ impl<'t> protocol_lib::Packet<'t> for IntegerFlags {
 
 pub enum IntegerMin {
     IntegerMin1(i32),
-    Default(Void),
+    Default,
 }
 
 impl IntegerMin {
@@ -1397,7 +1413,7 @@ impl IntegerMin {
                 let w = i32::serialize(&val, w)?;
                 w
             }
-            IntegerMin::Default(val) => Void::serialize(val, w)?,
+            IntegerMin::Default => w,
         };
 
         Ok(w)
@@ -1405,7 +1421,7 @@ impl IntegerMin {
 }
 pub enum IntegerMax {
     IntegerMax1(i32),
-    Default(Void),
+    Default,
 }
 
 impl IntegerMax {
@@ -1426,7 +1442,7 @@ impl IntegerMax {
                 let w = i32::serialize(&val, w)?;
                 w
             }
-            IntegerMax::Default(val) => Void::serialize(val, w)?,
+            IntegerMax::Default => w,
         };
 
         Ok(w)
@@ -1455,11 +1471,11 @@ impl<'t> protocol_lib::Packet<'t> for Integer {
             let (input, self_flags) = (IntegerFlags::deserialize)(input)?;
             let (input, self_min) = (|input| match &format!("{}", self_flags.min_present)[..] {
                 "1" => nom::combinator::map(i32::deserialize, IntegerMin::IntegerMin1)(input),
-                _ => nom::combinator::map(Void::deserialize, IntegerMin::Default)(input),
+                _ => Ok((input, IntegerMin::Default)),
             })(input)?;
             let (input, self_max) = (|input| match &format!("{}", self_flags.max_present)[..] {
                 "1" => nom::combinator::map(i32::deserialize, IntegerMax::IntegerMax1)(input),
-                _ => nom::combinator::map(Void::deserialize, IntegerMax::Default)(input),
+                _ => Ok((input, IntegerMax::Default)),
             })(input)?;
             Ok((
                 input,
@@ -1514,7 +1530,7 @@ impl<'t> protocol_lib::Packet<'t> for LongFlags {
 
 pub enum LongMin {
     LongMin1(i64),
-    Default(Void),
+    Default,
 }
 
 impl LongMin {
@@ -1535,7 +1551,7 @@ impl LongMin {
                 let w = i64::serialize(&val, w)?;
                 w
             }
-            LongMin::Default(val) => Void::serialize(val, w)?,
+            LongMin::Default => w,
         };
 
         Ok(w)
@@ -1543,7 +1559,7 @@ impl LongMin {
 }
 pub enum LongMax {
     LongMax1(i64),
-    Default(Void),
+    Default,
 }
 
 impl LongMax {
@@ -1564,7 +1580,7 @@ impl LongMax {
                 let w = i64::serialize(&val, w)?;
                 w
             }
-            LongMax::Default(val) => Void::serialize(val, w)?,
+            LongMax::Default => w,
         };
 
         Ok(w)
@@ -1593,11 +1609,11 @@ impl<'t> protocol_lib::Packet<'t> for Long {
             let (input, self_flags) = (LongFlags::deserialize)(input)?;
             let (input, self_min) = (|input| match &format!("{}", self_flags.min_present)[..] {
                 "1" => nom::combinator::map(i64::deserialize, LongMin::LongMin1)(input),
-                _ => nom::combinator::map(Void::deserialize, LongMin::Default)(input),
+                _ => Ok((input, LongMin::Default)),
             })(input)?;
             let (input, self_max) = (|input| match &format!("{}", self_flags.max_present)[..] {
                 "1" => nom::combinator::map(i64::deserialize, LongMax::LongMax1)(input),
-                _ => nom::combinator::map(Void::deserialize, LongMax::Default)(input),
+                _ => Ok((input, LongMax::Default)),
             })(input)?;
             Ok((
                 input,
@@ -1746,106 +1762,106 @@ impl<'t: 'a, 'a> protocol_lib::Packet<'t> for Resource<'a> {
 }
 
 pub enum Properties<'a> {
-    Bool(Void),
+    Bool,
     Float(Float),
     Double(Double),
     Integer(Integer),
     Long(Long),
     String(&'static str),
     MinecraftEntity(MinecraftEntity),
-    GameProfile(Void),
-    BlockPos(Void),
-    ColumnPos(Void),
-    Vec3(Void),
-    Vec2(Void),
-    BlockState(Void),
-    BlockPredicate(Void),
-    ItemStack(Void),
-    ItemPredicate(Void),
-    Color(Void),
-    Component(Void),
-    Message(Void),
-    Nbt(Void),
-    NbtPath(Void),
-    Objective(Void),
-    ObjectiveCriteria(Void),
-    Operation(Void),
-    Particle(Void),
-    Angle(Void),
-    Rotation(Void),
-    ScoreboardSlot(Void),
+    GameProfile,
+    BlockPos,
+    ColumnPos,
+    Vec3,
+    Vec2,
+    BlockState,
+    BlockPredicate,
+    ItemStack,
+    ItemPredicate,
+    Color,
+    Component,
+    Message,
+    Nbt,
+    NbtPath,
+    Objective,
+    ObjectiveCriteria,
+    Operation,
+    Particle,
+    Angle,
+    Rotation,
+    ScoreboardSlot,
     ScoreHolder(ScoreHolder),
-    Swizzle(Void),
-    Team(Void),
-    ItemSlot(Void),
-    ResourceLocation(Void),
-    MobEffect(Void),
-    Function(Void),
-    EntityAnchor(Void),
+    Swizzle,
+    Team,
+    ItemSlot,
+    ResourceLocation,
+    MobEffect,
+    Function,
+    EntityAnchor,
     Range(Range),
-    IntRange(Void),
-    FloatRange(Void),
-    ItemEnchantment(Void),
-    EntitySummon(Void),
-    Dimension(Void),
-    NbtCompoundTag(Void),
-    Time(Void),
+    IntRange,
+    FloatRange,
+    ItemEnchantment,
+    EntitySummon,
+    Dimension,
+    NbtCompoundTag,
+    Time,
     ResourceOrTag(ResourceOrTag<'a>),
     Resource(Resource<'a>),
-    Uuid(Void),
-    Default(Void),
+    Uuid,
+    Default,
 }
 
 impl<'a> Properties<'a> {
     pub fn discriminant(&self) -> &'static str {
         match self {
-            Properties::<'a>::Bool(_) => "brigadier:bool",
+            Properties::<'a>::Bool => "brigadier:bool",
             Properties::<'a>::Float(_) => "brigadier:float",
             Properties::<'a>::Double(_) => "brigadier:double",
             Properties::<'a>::Integer(_) => "brigadier:integer",
             Properties::<'a>::Long(_) => "brigadier:long",
             Properties::<'a>::String(_) => "brigadier:string",
             Properties::<'a>::MinecraftEntity(_) => "minecraft:entity",
-            Properties::<'a>::GameProfile(_) => "minecraft:game_profile",
-            Properties::<'a>::BlockPos(_) => "minecraft:block_pos",
-            Properties::<'a>::ColumnPos(_) => "minecraft:column_pos",
-            Properties::<'a>::Vec3(_) => "minecraft:vec3",
-            Properties::<'a>::Vec2(_) => "minecraft:vec2",
-            Properties::<'a>::BlockState(_) => "minecraft:block_state",
-            Properties::<'a>::BlockPredicate(_) => "minecraft:block_predicate",
-            Properties::<'a>::ItemStack(_) => "minecraft:item_stack",
-            Properties::<'a>::ItemPredicate(_) => "minecraft:item_predicate",
-            Properties::<'a>::Color(_) => "minecraft:color",
-            Properties::<'a>::Component(_) => "minecraft:component",
-            Properties::<'a>::Message(_) => "minecraft:message",
-            Properties::<'a>::Nbt(_) => "minecraft:nbt",
-            Properties::<'a>::NbtPath(_) => "minecraft:nbt_path",
-            Properties::<'a>::Objective(_) => "minecraft:objective",
-            Properties::<'a>::ObjectiveCriteria(_) => "minecraft:objective_criteria",
-            Properties::<'a>::Operation(_) => "minecraft:operation",
-            Properties::<'a>::Particle(_) => "minecraft:particle",
-            Properties::<'a>::Angle(_) => "minecraft:angle",
-            Properties::<'a>::Rotation(_) => "minecraft:rotation",
-            Properties::<'a>::ScoreboardSlot(_) => "minecraft:scoreboard_slot",
+            Properties::<'a>::GameProfile => "minecraft:game_profile",
+            Properties::<'a>::BlockPos => "minecraft:block_pos",
+            Properties::<'a>::ColumnPos => "minecraft:column_pos",
+            Properties::<'a>::Vec3 => "minecraft:vec3",
+            Properties::<'a>::Vec2 => "minecraft:vec2",
+            Properties::<'a>::BlockState => "minecraft:block_state",
+            Properties::<'a>::BlockPredicate => "minecraft:block_predicate",
+            Properties::<'a>::ItemStack => "minecraft:item_stack",
+            Properties::<'a>::ItemPredicate => "minecraft:item_predicate",
+            Properties::<'a>::Color => "minecraft:color",
+            Properties::<'a>::Component => "minecraft:component",
+            Properties::<'a>::Message => "minecraft:message",
+            Properties::<'a>::Nbt => "minecraft:nbt",
+            Properties::<'a>::NbtPath => "minecraft:nbt_path",
+            Properties::<'a>::Objective => "minecraft:objective",
+            Properties::<'a>::ObjectiveCriteria => "minecraft:objective_criteria",
+            Properties::<'a>::Operation => "minecraft:operation",
+            Properties::<'a>::Particle => "minecraft:particle",
+            Properties::<'a>::Angle => "minecraft:angle",
+            Properties::<'a>::Rotation => "minecraft:rotation",
+            Properties::<'a>::ScoreboardSlot => "minecraft:scoreboard_slot",
             Properties::<'a>::ScoreHolder(_) => "minecraft:score_holder",
-            Properties::<'a>::Swizzle(_) => "minecraft:swizzle",
-            Properties::<'a>::Team(_) => "minecraft:team",
-            Properties::<'a>::ItemSlot(_) => "minecraft:item_slot",
-            Properties::<'a>::ResourceLocation(_) => "minecraft:resource_location",
-            Properties::<'a>::MobEffect(_) => "minecraft:mob_effect",
-            Properties::<'a>::Function(_) => "minecraft:function",
-            Properties::<'a>::EntityAnchor(_) => "minecraft:entity_anchor",
+            Properties::<'a>::Swizzle => "minecraft:swizzle",
+            Properties::<'a>::Team => "minecraft:team",
+            Properties::<'a>::ItemSlot => "minecraft:item_slot",
+            Properties::<'a>::ResourceLocation => "minecraft:resource_location",
+            Properties::<'a>::MobEffect => "minecraft:mob_effect",
+            Properties::<'a>::Function => "minecraft:function",
+            Properties::<'a>::EntityAnchor => "minecraft:entity_anchor",
             Properties::<'a>::Range(_) => "minecraft:range",
-            Properties::<'a>::IntRange(_) => "minecraft:int_range",
-            Properties::<'a>::FloatRange(_) => "minecraft:float_range",
-            Properties::<'a>::ItemEnchantment(_) => "minecraft:item_enchantment",
-            Properties::<'a>::EntitySummon(_) => "minecraft:entity_summon",
-            Properties::<'a>::Dimension(_) => "minecraft:dimension",
-            Properties::<'a>::NbtCompoundTag(_) => "minecraft:nbt_compound_tag",
-            Properties::<'a>::Time(_) => "minecraft:time",
+            Properties::<'a>::IntRange => "minecraft:int_range",
+            Properties::<'a>::FloatRange => "minecraft:float_range",
+            Properties::<'a>::ItemEnchantment => "minecraft:item_enchantment",
+            Properties::<'a>::EntitySummon => "minecraft:entity_summon",
+            Properties::<'a>::Dimension => "minecraft:dimension",
+            Properties::<'a>::NbtCompoundTag => "minecraft:nbt_compound_tag",
+            Properties::<'a>::Time => "minecraft:time",
             Properties::<'a>::ResourceOrTag(_) => "minecraft:resource_or_tag",
             Properties::<'a>::Resource(_) => "minecraft:resource",
-            Properties::<'a>::Uuid(_) => "minecraft:uuid",
+            Properties::<'a>::Uuid => "minecraft:uuid",
             _ => "",
         }
     }
@@ -1856,10 +1872,7 @@ impl<'a> Properties<'a> {
         use protocol_lib::Packet;
 
         let w = match &self {
-            Properties::<'a>::Bool(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
+            Properties::<'a>::Bool => w,
             Properties::<'a>::Float(val) => {
                 let w = Float::serialize(&val, w)?;
                 w
@@ -1892,154 +1905,49 @@ impl<'a> Properties<'a> {
                 let w = MinecraftEntity::serialize(&val, w)?;
                 w
             }
-            Properties::<'a>::GameProfile(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::BlockPos(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::ColumnPos(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::Vec3(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::Vec2(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::BlockState(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::BlockPredicate(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::ItemStack(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::ItemPredicate(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::Color(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::Component(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::Message(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::Nbt(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::NbtPath(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::Objective(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::ObjectiveCriteria(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::Operation(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::Particle(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::Angle(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::Rotation(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::ScoreboardSlot(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
+            Properties::<'a>::GameProfile => w,
+            Properties::<'a>::BlockPos => w,
+            Properties::<'a>::ColumnPos => w,
+            Properties::<'a>::Vec3 => w,
+            Properties::<'a>::Vec2 => w,
+            Properties::<'a>::BlockState => w,
+            Properties::<'a>::BlockPredicate => w,
+            Properties::<'a>::ItemStack => w,
+            Properties::<'a>::ItemPredicate => w,
+            Properties::<'a>::Color => w,
+            Properties::<'a>::Component => w,
+            Properties::<'a>::Message => w,
+            Properties::<'a>::Nbt => w,
+            Properties::<'a>::NbtPath => w,
+            Properties::<'a>::Objective => w,
+            Properties::<'a>::ObjectiveCriteria => w,
+            Properties::<'a>::Operation => w,
+            Properties::<'a>::Particle => w,
+            Properties::<'a>::Angle => w,
+            Properties::<'a>::Rotation => w,
+            Properties::<'a>::ScoreboardSlot => w,
             Properties::<'a>::ScoreHolder(val) => {
                 let w = ScoreHolder::serialize(&val, w)?;
                 w
             }
-            Properties::<'a>::Swizzle(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::Team(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::ItemSlot(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::ResourceLocation(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::MobEffect(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::Function(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::EntityAnchor(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
+            Properties::<'a>::Swizzle => w,
+            Properties::<'a>::Team => w,
+            Properties::<'a>::ItemSlot => w,
+            Properties::<'a>::ResourceLocation => w,
+            Properties::<'a>::MobEffect => w,
+            Properties::<'a>::Function => w,
+            Properties::<'a>::EntityAnchor => w,
             Properties::<'a>::Range(val) => {
                 let w = Range::serialize(&val, w)?;
                 w
             }
-            Properties::<'a>::IntRange(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::FloatRange(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::ItemEnchantment(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::EntitySummon(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::Dimension(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::NbtCompoundTag(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::Time(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
+            Properties::<'a>::IntRange => w,
+            Properties::<'a>::FloatRange => w,
+            Properties::<'a>::ItemEnchantment => w,
+            Properties::<'a>::EntitySummon => w,
+            Properties::<'a>::Dimension => w,
+            Properties::<'a>::NbtCompoundTag => w,
+            Properties::<'a>::Time => w,
             Properties::<'a>::ResourceOrTag(val) => {
                 let w = ResourceOrTag::<'a>::serialize(&val, w)?;
                 w
@@ -2048,11 +1956,8 @@ impl<'a> Properties<'a> {
                 let w = Resource::<'a>::serialize(&val, w)?;
                 w
             }
-            Properties::<'a>::Uuid(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Properties::<'a>::Default(val) => Void::serialize(val, w)?,
+            Properties::<'a>::Uuid => w,
+            Properties::<'a>::Default => w,
         };
 
         Ok(w)
@@ -2060,7 +1965,7 @@ impl<'a> Properties<'a> {
 }
 pub enum SuggestionType<'a> {
     SuggestionType1(VarString<'a>),
-    Default(Void),
+    Default,
 }
 
 impl<'a> SuggestionType<'a> {
@@ -2081,7 +1986,7 @@ impl<'a> SuggestionType<'a> {
                 let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
                 w
             }
-            SuggestionType::<'a>::Default(val) => Void::serialize(val, w)?,
+            SuggestionType::<'a>::Default => w,
         };
 
         Ok(w)
@@ -2094,16 +1999,16 @@ pub struct ExtraNodeData2<'a> {
     suggestion_type: SuggestionType<'a>,
 }
 pub enum ExtraNodeData<'a> {
-    ExtraNodeData0(Void),
+    ExtraNodeData0,
     ExtraNodeData1(ExtraNodeData1<'a>),
     ExtraNodeData2(ExtraNodeData2<'a>),
-    Default(Void),
+    Default,
 }
 
 impl<'a> ExtraNodeData<'a> {
     pub fn discriminant(&self) -> &'static str {
         match self {
-            ExtraNodeData::<'a>::ExtraNodeData0(_) => "0",
+            ExtraNodeData::<'a>::ExtraNodeData0 => "0",
             ExtraNodeData::<'a>::ExtraNodeData1(_) => "1",
             ExtraNodeData::<'a>::ExtraNodeData2(_) => "2",
             _ => "",
@@ -2116,10 +2021,7 @@ impl<'a> ExtraNodeData<'a> {
         use protocol_lib::Packet;
 
         let w = match &self {
-            ExtraNodeData::<'a>::ExtraNodeData0(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
+            ExtraNodeData::<'a>::ExtraNodeData0 => w,
             ExtraNodeData::<'a>::ExtraNodeData1(val) => {
                 let w = ExtraNodeData1::<'a>::serialize(&val, w)?;
                 w
@@ -2131,7 +2033,7 @@ impl<'a> ExtraNodeData<'a> {
                 let w = SuggestionType::<'a>::serialize(&val.suggestion_type, w)?;
                 w
             }
-            ExtraNodeData::<'a>::Default(val) => Void::serialize(val, w)?,
+            ExtraNodeData::<'a>::Default => w,
         };
 
         Ok(w)
@@ -2177,18 +2079,14 @@ impl<'t: 'a, 'a> protocol_lib::Packet<'t> for CommandNode<'a> {
                     "1" => nom::combinator::map(VarInt::deserialize, RedirectNode::RedirectNode1)(
                         input,
                     ),
-                    _ => nom::combinator::map(Void::deserialize, RedirectNode::Default)(input),
+                    _ => Ok((input, RedirectNode::Default)),
                 })(input)?;
             let (input, self_extra_node_data) = (|input| match &format!(
                 "{}",
                 self_flags.command_node_type
             )[..]
             {
-                "0" => {
-                    nom::combinator::map(Void::deserialize, ExtraNodeData::<'a>::ExtraNodeData0)(
-                        input,
-                    )
-                }
+                "0" => Ok((input, ExtraNodeData::<'a>::ExtraNodeData0)),
                 "1" => nom::combinator::map(
                     ExtraNodeData1::<'a>::deserialize,
                     ExtraNodeData::<'a>::ExtraNodeData1,
@@ -2201,10 +2099,7 @@ impl<'t: 'a, 'a> protocol_lib::Packet<'t> for CommandNode<'a> {
                             (PrefixedString::<'a, VarInt>::deserialize)(input)?;
                         let (input, self_extra_node_data_properties) =
                             (|input| match &format!("{}", self_extra_node_data_parser)[..] {
-                                "brigadier:bool" => nom::combinator::map(
-                                    Void::deserialize,
-                                    Properties::<'a>::Bool,
-                                )(input),
+                                "brigadier:bool" => Ok((input, Properties::<'a>::Bool)),
                                 "brigadier:float" => nom::combinator::map(
                                     Float::deserialize,
                                     Properties::<'a>::Float,
@@ -2247,172 +2142,73 @@ impl<'t: 'a, 'a> protocol_lib::Packet<'t> for CommandNode<'a> {
                                     MinecraftEntity::deserialize,
                                     Properties::<'a>::MinecraftEntity,
                                 )(input),
-                                "minecraft:game_profile" => nom::combinator::map(
-                                    Void::deserialize,
-                                    Properties::<'a>::GameProfile,
-                                )(input),
-                                "minecraft:block_pos" => nom::combinator::map(
-                                    Void::deserialize,
-                                    Properties::<'a>::BlockPos,
-                                )(input),
-                                "minecraft:column_pos" => nom::combinator::map(
-                                    Void::deserialize,
-                                    Properties::<'a>::ColumnPos,
-                                )(input),
-                                "minecraft:vec3" => nom::combinator::map(
-                                    Void::deserialize,
-                                    Properties::<'a>::Vec3,
-                                )(input),
-                                "minecraft:vec2" => nom::combinator::map(
-                                    Void::deserialize,
-                                    Properties::<'a>::Vec2,
-                                )(input),
-                                "minecraft:block_state" => nom::combinator::map(
-                                    Void::deserialize,
-                                    Properties::<'a>::BlockState,
-                                )(input),
+                                "minecraft:game_profile" => {
+                                    Ok((input, Properties::<'a>::GameProfile))
+                                }
+                                "minecraft:block_pos" => Ok((input, Properties::<'a>::BlockPos)),
+                                "minecraft:column_pos" => Ok((input, Properties::<'a>::ColumnPos)),
+                                "minecraft:vec3" => Ok((input, Properties::<'a>::Vec3)),
+                                "minecraft:vec2" => Ok((input, Properties::<'a>::Vec2)),
+                                "minecraft:block_state" => {
+                                    Ok((input, Properties::<'a>::BlockState))
+                                }
                                 "minecraft:block_predicate" => {
-                                    nom::combinator::map(
-                                        Void::deserialize,
-                                        Properties::<'a>::BlockPredicate,
-                                    )(input)
+                                    Ok((input, Properties::<'a>::BlockPredicate))
                                 }
-                                "minecraft:item_stack" => nom::combinator::map(
-                                    Void::deserialize,
-                                    Properties::<'a>::ItemStack,
-                                )(input),
+                                "minecraft:item_stack" => Ok((input, Properties::<'a>::ItemStack)),
                                 "minecraft:item_predicate" => {
-                                    nom::combinator::map(
-                                        Void::deserialize,
-                                        Properties::<'a>::ItemPredicate,
-                                    )(input)
+                                    Ok((input, Properties::<'a>::ItemPredicate))
                                 }
-                                "minecraft:color" => nom::combinator::map(
-                                    Void::deserialize,
-                                    Properties::<'a>::Color,
-                                )(input),
-                                "minecraft:component" => nom::combinator::map(
-                                    Void::deserialize,
-                                    Properties::<'a>::Component,
-                                )(input),
-                                "minecraft:message" => nom::combinator::map(
-                                    Void::deserialize,
-                                    Properties::<'a>::Message,
-                                )(input),
-                                "minecraft:nbt" => nom::combinator::map(
-                                    Void::deserialize,
-                                    Properties::<'a>::Nbt,
-                                )(input),
-                                "minecraft:nbt_path" => nom::combinator::map(
-                                    Void::deserialize,
-                                    Properties::<'a>::NbtPath,
-                                )(input),
-                                "minecraft:objective" => nom::combinator::map(
-                                    Void::deserialize,
-                                    Properties::<'a>::Objective,
-                                )(input),
+                                "minecraft:color" => Ok((input, Properties::<'a>::Color)),
+                                "minecraft:component" => Ok((input, Properties::<'a>::Component)),
+                                "minecraft:message" => Ok((input, Properties::<'a>::Message)),
+                                "minecraft:nbt" => Ok((input, Properties::<'a>::Nbt)),
+                                "minecraft:nbt_path" => Ok((input, Properties::<'a>::NbtPath)),
+                                "minecraft:objective" => Ok((input, Properties::<'a>::Objective)),
                                 "minecraft:objective_criteria" => {
-                                    nom::combinator::map(
-                                        Void::deserialize,
-                                        Properties::<'a>::ObjectiveCriteria,
-                                    )(input)
+                                    Ok((input, Properties::<'a>::ObjectiveCriteria))
                                 }
-                                "minecraft:operation" => nom::combinator::map(
-                                    Void::deserialize,
-                                    Properties::<'a>::Operation,
-                                )(input),
-                                "minecraft:particle" => nom::combinator::map(
-                                    Void::deserialize,
-                                    Properties::<'a>::Particle,
-                                )(input),
-                                "minecraft:angle" => nom::combinator::map(
-                                    Void::deserialize,
-                                    Properties::<'a>::Angle,
-                                )(input),
-                                "minecraft:rotation" => nom::combinator::map(
-                                    Void::deserialize,
-                                    Properties::<'a>::Rotation,
-                                )(input),
+                                "minecraft:operation" => Ok((input, Properties::<'a>::Operation)),
+                                "minecraft:particle" => Ok((input, Properties::<'a>::Particle)),
+                                "minecraft:angle" => Ok((input, Properties::<'a>::Angle)),
+                                "minecraft:rotation" => Ok((input, Properties::<'a>::Rotation)),
                                 "minecraft:scoreboard_slot" => {
-                                    nom::combinator::map(
-                                        Void::deserialize,
-                                        Properties::<'a>::ScoreboardSlot,
-                                    )(input)
+                                    Ok((input, Properties::<'a>::ScoreboardSlot))
                                 }
                                 "minecraft:score_holder" => nom::combinator::map(
                                     ScoreHolder::deserialize,
                                     Properties::<'a>::ScoreHolder,
                                 )(input),
-                                "minecraft:swizzle" => nom::combinator::map(
-                                    Void::deserialize,
-                                    Properties::<'a>::Swizzle,
-                                )(input),
-                                "minecraft:team" => nom::combinator::map(
-                                    Void::deserialize,
-                                    Properties::<'a>::Team,
-                                )(input),
-                                "minecraft:item_slot" => nom::combinator::map(
-                                    Void::deserialize,
-                                    Properties::<'a>::ItemSlot,
-                                )(input),
+                                "minecraft:swizzle" => Ok((input, Properties::<'a>::Swizzle)),
+                                "minecraft:team" => Ok((input, Properties::<'a>::Team)),
+                                "minecraft:item_slot" => Ok((input, Properties::<'a>::ItemSlot)),
                                 "minecraft:resource_location" => {
-                                    nom::combinator::map(
-                                        Void::deserialize,
-                                        Properties::<'a>::ResourceLocation,
-                                    )(input)
+                                    Ok((input, Properties::<'a>::ResourceLocation))
                                 }
-                                "minecraft:mob_effect" => nom::combinator::map(
-                                    Void::deserialize,
-                                    Properties::<'a>::MobEffect,
-                                )(input),
-                                "minecraft:function" => nom::combinator::map(
-                                    Void::deserialize,
-                                    Properties::<'a>::Function,
-                                )(input),
+                                "minecraft:mob_effect" => Ok((input, Properties::<'a>::MobEffect)),
+                                "minecraft:function" => Ok((input, Properties::<'a>::Function)),
                                 "minecraft:entity_anchor" => {
-                                    nom::combinator::map(
-                                        Void::deserialize,
-                                        Properties::<'a>::EntityAnchor,
-                                    )(input)
+                                    Ok((input, Properties::<'a>::EntityAnchor))
                                 }
                                 "minecraft:range" => nom::combinator::map(
                                     Range::deserialize,
                                     Properties::<'a>::Range,
                                 )(input),
-                                "minecraft:int_range" => nom::combinator::map(
-                                    Void::deserialize,
-                                    Properties::<'a>::IntRange,
-                                )(input),
-                                "minecraft:float_range" => nom::combinator::map(
-                                    Void::deserialize,
-                                    Properties::<'a>::FloatRange,
-                                )(input),
+                                "minecraft:int_range" => Ok((input, Properties::<'a>::IntRange)),
+                                "minecraft:float_range" => {
+                                    Ok((input, Properties::<'a>::FloatRange))
+                                }
                                 "minecraft:item_enchantment" => {
-                                    nom::combinator::map(
-                                        Void::deserialize,
-                                        Properties::<'a>::ItemEnchantment,
-                                    )(input)
+                                    Ok((input, Properties::<'a>::ItemEnchantment))
                                 }
                                 "minecraft:entity_summon" => {
-                                    nom::combinator::map(
-                                        Void::deserialize,
-                                        Properties::<'a>::EntitySummon,
-                                    )(input)
+                                    Ok((input, Properties::<'a>::EntitySummon))
                                 }
-                                "minecraft:dimension" => nom::combinator::map(
-                                    Void::deserialize,
-                                    Properties::<'a>::Dimension,
-                                )(input),
+                                "minecraft:dimension" => Ok((input, Properties::<'a>::Dimension)),
                                 "minecraft:nbt_compound_tag" => {
-                                    nom::combinator::map(
-                                        Void::deserialize,
-                                        Properties::<'a>::NbtCompoundTag,
-                                    )(input)
+                                    Ok((input, Properties::<'a>::NbtCompoundTag))
                                 }
-                                "minecraft:time" => nom::combinator::map(
-                                    Void::deserialize,
-                                    Properties::<'a>::Time,
-                                )(input),
+                                "minecraft:time" => Ok((input, Properties::<'a>::Time)),
                                 "minecraft:resource_or_tag" => {
                                     nom::combinator::map(
                                         ResourceOrTag::<'a>::deserialize,
@@ -2423,14 +2219,8 @@ impl<'t: 'a, 'a> protocol_lib::Packet<'t> for CommandNode<'a> {
                                     Resource::<'a>::deserialize,
                                     Properties::<'a>::Resource,
                                 )(input),
-                                "minecraft:uuid" => nom::combinator::map(
-                                    Void::deserialize,
-                                    Properties::<'a>::Uuid,
-                                )(input),
-                                _ => nom::combinator::map(
-                                    Void::deserialize,
-                                    Properties::<'a>::Default,
-                                )(input),
+                                "minecraft:uuid" => Ok((input, Properties::<'a>::Uuid)),
+                                _ => Ok((input, Properties::<'a>::Default)),
                             })(input)?;
                         let (input, self_extra_node_data_suggestion_type) =
                             (|input| match &format!("{}", self_flags.has_custom_suggestions)[..] {
@@ -2438,10 +2228,7 @@ impl<'t: 'a, 'a> protocol_lib::Packet<'t> for CommandNode<'a> {
                                     PrefixedString::<'a, VarInt>::deserialize,
                                     SuggestionType::<'a>::SuggestionType1,
                                 )(input),
-                                _ => nom::combinator::map(
-                                    Void::deserialize,
-                                    SuggestionType::<'a>::Default,
-                                )(input),
+                                _ => Ok((input, SuggestionType::<'a>::Default)),
                             })(input)?;
                         Ok((
                             input,
@@ -2455,7 +2242,7 @@ impl<'t: 'a, 'a> protocol_lib::Packet<'t> for CommandNode<'a> {
                     },
                     ExtraNodeData::<'a>::ExtraNodeData2,
                 )(input),
-                _ => nom::combinator::map(Void::deserialize, ExtraNodeData::<'a>::Default)(input),
+                _ => Ok((input, ExtraNodeData::<'a>::Default)),
             })(input)?;
             Ok((
                 input,
@@ -2474,7 +2261,7 @@ pub mod handshaking {
     pub mod clientbound {
         use crate::test::*;
         pub enum Params {
-            Default(Void),
+            Default,
         }
 
         impl Params {
@@ -2490,7 +2277,7 @@ pub mod handshaking {
                 use protocol_lib::Packet;
 
                 let w = match &self {
-                    Params::Default(val) => Void::serialize(val, w)?,
+                    Params::Default => w,
                 };
 
                 Ok(w)
@@ -2515,7 +2302,7 @@ pub mod handshaking {
                 (|input| {
                     let (input, self_name) = (|x| Ok((x, "")))(input)?;
                     let (input, self_params) = (|input| match &format!("{}", self_name)[..] {
-                        _ => nom::combinator::map(Void::deserialize, Params::Default)(input),
+                        _ => Ok((input, Params::Default)),
                     })(input)?;
                     Ok((
                         input,
@@ -2592,7 +2379,7 @@ pub mod handshaking {
         pub enum Params<'a> {
             SetProtocol(PacketSetProtocol<'a>),
             LegacyServerListPing(PacketLegacyServerListPing),
-            Default(Void),
+            Default,
         }
 
         impl<'a> Params<'a> {
@@ -2618,7 +2405,7 @@ pub mod handshaking {
                         let w = PacketLegacyServerListPing::serialize(&val, w)?;
                         w
                     }
-                    Params::<'a>::Default(val) => Void::serialize(val, w)?,
+                    Params::<'a>::Default => w,
                 };
 
                 Ok(w)
@@ -2675,7 +2462,7 @@ pub mod handshaking {
                             PacketLegacyServerListPing::deserialize,
                             Params::<'a>::LegacyServerListPing,
                         )(input),
-                        _ => nom::combinator::map(Void::deserialize, Params::<'a>::Default)(input),
+                        _ => Ok((input, Params::<'a>::Default)),
                     })(input)?;
                     Ok((
                         input,
@@ -2738,7 +2525,7 @@ pub mod status {
         pub enum Params<'a> {
             ServerInfo(PacketServerInfo<'a>),
             Ping(PacketPing),
-            Default(Void),
+            Default,
         }
 
         impl<'a> Params<'a> {
@@ -2764,7 +2551,7 @@ pub mod status {
                         let w = PacketPing::serialize(&val, w)?;
                         w
                     }
-                    Params::<'a>::Default(val) => Void::serialize(val, w)?,
+                    Params::<'a>::Default => w,
                 };
 
                 Ok(w)
@@ -2820,7 +2607,7 @@ pub mod status {
                         "ping" => {
                             nom::combinator::map(PacketPing::deserialize, Params::<'a>::Ping)(input)
                         }
-                        _ => nom::combinator::map(Void::deserialize, Params::<'a>::Default)(input),
+                        _ => Ok((input, Params::<'a>::Default)),
                     })(input)?;
                     Ok((
                         input,
@@ -2876,7 +2663,7 @@ pub mod status {
         pub enum Params {
             PingStart(PacketPingStart),
             Ping(PacketPing),
-            Default(Void),
+            Default,
         }
 
         impl Params {
@@ -2902,7 +2689,7 @@ pub mod status {
                         let w = PacketPing::serialize(&val, w)?;
                         w
                     }
-                    Params::Default(val) => Void::serialize(val, w)?,
+                    Params::Default => w,
                 };
 
                 Ok(w)
@@ -2958,7 +2745,7 @@ pub mod status {
                         "ping" => {
                             nom::combinator::map(PacketPing::deserialize, Params::Ping)(input)
                         }
-                        _ => nom::combinator::map(Void::deserialize, Params::Default)(input),
+                        _ => Ok((input, Params::Default)),
                     })(input)?;
                     Ok((
                         input,
@@ -3120,7 +2907,7 @@ pub mod login {
             Success(PacketSuccess<'a>),
             Compress(PacketCompress),
             LoginPluginRequest(PacketLoginPluginRequest<'a>),
-            Default(Void),
+            Default,
         }
 
         impl<'a> Params<'a> {
@@ -3161,7 +2948,7 @@ pub mod login {
                         let w = PacketLoginPluginRequest::<'a>::serialize(&val, w)?;
                         w
                     }
-                    Params::<'a>::Default(val) => Void::serialize(val, w)?,
+                    Params::<'a>::Default => w,
                 };
 
                 Ok(w)
@@ -3236,7 +3023,7 @@ pub mod login {
                             PacketLoginPluginRequest::<'a>::deserialize,
                             Params::<'a>::LoginPluginRequest,
                         )(input),
-                        _ => nom::combinator::map(Void::deserialize, Params::<'a>::Default)(input),
+                        _ => Ok((input, Params::<'a>::Default)),
                     })(input)?;
                     Ok((
                         input,
@@ -3334,7 +3121,7 @@ pub mod login {
             LoginStart(PacketLoginStart<'a>),
             EncryptionBegin(PacketEncryptionBegin<'a>),
             LoginPluginResponse(PacketLoginPluginResponse<'a>),
-            Default(Void),
+            Default,
         }
 
         impl<'a> Params<'a> {
@@ -3365,7 +3152,7 @@ pub mod login {
                         let w = PacketLoginPluginResponse::<'a>::serialize(&val, w)?;
                         w
                     }
-                    Params::<'a>::Default(val) => Void::serialize(val, w)?,
+                    Params::<'a>::Default => w,
                 };
 
                 Ok(w)
@@ -3428,7 +3215,7 @@ pub mod login {
                             PacketLoginPluginResponse::<'a>::deserialize,
                             Params::<'a>::LoginPluginResponse,
                         )(input),
-                        _ => nom::combinator::map(Void::deserialize, Params::<'a>::Default)(input),
+                        _ => Ok((input, Params::<'a>::Default)),
                     })(input)?;
                     Ok((
                         input,
@@ -3885,7 +3672,7 @@ pub mod play {
 
         pub enum BackgroundTexture<'a> {
             BackgroundTexture1(VarString<'a>),
-            Default(Void),
+            Default,
         }
 
         impl<'a> BackgroundTexture<'a> {
@@ -3906,7 +3693,7 @@ pub mod play {
                         let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
                         w
                     }
-                    BackgroundTexture::<'a>::Default(val) => Void::serialize(val, w)?,
+                    BackgroundTexture::<'a>::Default => w,
                 };
 
                 Ok(w)
@@ -3954,10 +3741,7 @@ pub mod play {
                                 PrefixedString::<'a, VarInt>::deserialize,
                                 BackgroundTexture::<'a>::BackgroundTexture1,
                             )(input),
-                            _ => nom::combinator::map(
-                                Void::deserialize,
-                                BackgroundTexture::<'a>::Default,
-                            )(input),
+                            _ => Ok((input, BackgroundTexture::<'a>::Default)),
                         })(input)?;
                     let (input, self_x_cord) = (f32::deserialize)(input)?;
                     let (input, self_y_cord) = (f32::deserialize)(input)?;
@@ -4381,7 +4165,7 @@ pub mod play {
         pub enum BossBarTitle<'a> {
             BossBarTitle0(VarString<'a>),
             BossBarTitle3(VarString<'a>),
-            Default(Void),
+            Default,
         }
 
         impl<'a> BossBarTitle<'a> {
@@ -4407,7 +4191,7 @@ pub mod play {
                         let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
                         w
                     }
-                    BossBarTitle::<'a>::Default(val) => Void::serialize(val, w)?,
+                    BossBarTitle::<'a>::Default => w,
                 };
 
                 Ok(w)
@@ -4416,7 +4200,7 @@ pub mod play {
         pub enum Health {
             Health0(f32),
             Health2(f32),
-            Default(Void),
+            Default,
         }
 
         impl Health {
@@ -4442,7 +4226,7 @@ pub mod play {
                         let w = f32::serialize(&val, w)?;
                         w
                     }
-                    Health::Default(val) => Void::serialize(val, w)?,
+                    Health::Default => w,
                 };
 
                 Ok(w)
@@ -4451,7 +4235,7 @@ pub mod play {
         pub enum Color {
             Color0(VarInt),
             Color4(VarInt),
-            Default(Void),
+            Default,
         }
 
         impl Color {
@@ -4477,7 +4261,7 @@ pub mod play {
                         let w = VarInt::serialize(&val, w)?;
                         w
                     }
-                    Color::Default(val) => Void::serialize(val, w)?,
+                    Color::Default => w,
                 };
 
                 Ok(w)
@@ -4486,7 +4270,7 @@ pub mod play {
         pub enum Dividers {
             Dividers0(VarInt),
             Dividers4(VarInt),
-            Default(Void),
+            Default,
         }
 
         impl Dividers {
@@ -4512,7 +4296,7 @@ pub mod play {
                         let w = VarInt::serialize(&val, w)?;
                         w
                     }
-                    Dividers::Default(val) => Void::serialize(val, w)?,
+                    Dividers::Default => w,
                 };
 
                 Ok(w)
@@ -4521,7 +4305,7 @@ pub mod play {
         pub enum BossBarFlags {
             BossBarFlags0(u8),
             BossBarFlags5(u8),
-            Default(Void),
+            Default,
         }
 
         impl BossBarFlags {
@@ -4547,7 +4331,7 @@ pub mod play {
                         let w = u8::serialize(&val, w)?;
                         w
                     }
-                    BossBarFlags::Default(val) => Void::serialize(val, w)?,
+                    BossBarFlags::Default => w,
                 };
 
                 Ok(w)
@@ -4592,19 +4376,17 @@ pub mod play {
                             PrefixedString::<'a, VarInt>::deserialize,
                             BossBarTitle::<'a>::BossBarTitle3,
                         )(input),
-                        _ => nom::combinator::map(Void::deserialize, BossBarTitle::<'a>::Default)(
-                            input,
-                        ),
+                        _ => Ok((input, BossBarTitle::<'a>::Default)),
                     })(input)?;
                     let (input, self_health) = (|input| match &format!("{}", self_action)[..] {
                         "0" => nom::combinator::map(f32::deserialize, Health::Health0)(input),
                         "2" => nom::combinator::map(f32::deserialize, Health::Health2)(input),
-                        _ => nom::combinator::map(Void::deserialize, Health::Default)(input),
+                        _ => Ok((input, Health::Default)),
                     })(input)?;
                     let (input, self_color) = (|input| match &format!("{}", self_action)[..] {
                         "0" => nom::combinator::map(VarInt::deserialize, Color::Color0)(input),
                         "4" => nom::combinator::map(VarInt::deserialize, Color::Color4)(input),
-                        _ => nom::combinator::map(Void::deserialize, Color::Default)(input),
+                        _ => Ok((input, Color::Default)),
                     })(input)?;
                     let (input, self_dividers) = (|input| match &format!("{}", self_action)[..] {
                         "0" => {
@@ -4613,7 +4395,7 @@ pub mod play {
                         "4" => {
                             nom::combinator::map(VarInt::deserialize, Dividers::Dividers4)(input)
                         }
-                        _ => nom::combinator::map(Void::deserialize, Dividers::Default)(input),
+                        _ => Ok((input, Dividers::Default)),
                     })(input)?;
                     let (input, self_flags) = (|input| match &format!("{}", self_action)[..] {
                         "0" => nom::combinator::map(u8::deserialize, BossBarFlags::BossBarFlags0)(
@@ -4622,7 +4404,7 @@ pub mod play {
                         "5" => nom::combinator::map(u8::deserialize, BossBarFlags::BossBarFlags5)(
                             input,
                         ),
-                        _ => nom::combinator::map(Void::deserialize, BossBarFlags::Default)(input),
+                        _ => Ok((input, BossBarFlags::Default)),
                     })(input)?;
                     Ok((
                         input,
@@ -4780,14 +4562,14 @@ pub mod play {
         }
 
         pub enum FacePlayerEntityId {
-            FacePlayerEntityIdTrue(VarInt),
-            Default(Void),
+            True(VarInt),
+            Default,
         }
 
         impl FacePlayerEntityId {
             pub fn discriminant(&self) -> &'static str {
                 match self {
-                    FacePlayerEntityId::FacePlayerEntityIdTrue(_) => "true",
+                    FacePlayerEntityId::True(_) => "true",
                     _ => "",
                 }
             }
@@ -4798,25 +4580,25 @@ pub mod play {
                 use protocol_lib::Packet;
 
                 let w = match &self {
-                    FacePlayerEntityId::FacePlayerEntityIdTrue(val) => {
+                    FacePlayerEntityId::True(val) => {
                         let w = VarInt::serialize(&val, w)?;
                         w
                     }
-                    FacePlayerEntityId::Default(val) => Void::serialize(val, w)?,
+                    FacePlayerEntityId::Default => w,
                 };
 
                 Ok(w)
             }
         }
         pub enum EntityFeetEyes<'a> {
-            EntityFeetEyesTrue(VarString<'a>),
-            Default(Void),
+            True(VarString<'a>),
+            Default,
         }
 
         impl<'a> EntityFeetEyes<'a> {
             pub fn discriminant(&self) -> &'static str {
                 match self {
-                    EntityFeetEyes::<'a>::EntityFeetEyesTrue(_) => "true",
+                    EntityFeetEyes::<'a>::True(_) => "true",
                     _ => "",
                 }
             }
@@ -4827,11 +4609,11 @@ pub mod play {
                 use protocol_lib::Packet;
 
                 let w = match &self {
-                    EntityFeetEyes::<'a>::EntityFeetEyesTrue(val) => {
+                    EntityFeetEyes::<'a>::True(val) => {
                         let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
                         w
                     }
-                    EntityFeetEyes::<'a>::Default(val) => Void::serialize(val, w)?,
+                    EntityFeetEyes::<'a>::Default => w,
                 };
 
                 Ok(w)
@@ -4874,22 +4656,17 @@ pub mod play {
                     {
                         "true" => nom::combinator::map(
                             VarInt::deserialize,
-                            FacePlayerEntityId::FacePlayerEntityIdTrue,
+                            FacePlayerEntityId::True,
                         )(input),
-                        _ => nom::combinator::map(Void::deserialize, FacePlayerEntityId::Default)(
-                            input,
-                        ),
+                        _ => Ok((input, FacePlayerEntityId::Default)),
                     })(input)?;
                     let (input, self_entity_feet_eyes) =
                         (|input| match &format!("{}", self_is_entity)[..] {
                             "true" => nom::combinator::map(
                                 PrefixedString::<'a, VarInt>::deserialize,
-                                EntityFeetEyes::<'a>::EntityFeetEyesTrue,
+                                EntityFeetEyes::<'a>::True,
                             )(input),
-                            _ => nom::combinator::map(
-                                Void::deserialize,
-                                EntityFeetEyes::<'a>::Default,
-                            )(input),
+                            _ => Ok((input, EntityFeetEyes::<'a>::Default)),
                         })(input)?;
                     Ok((
                         input,
@@ -5969,17 +5746,15 @@ pub mod play {
 
         pub enum WorldParticlesData36Destination {
             MinecraftBlock(Position),
-            WorldParticlesData36DestinationEntity(VarInt),
-            Default(Void),
+            Entity(VarInt),
+            Default,
         }
 
         impl WorldParticlesData36Destination {
             pub fn discriminant(&self) -> &'static str {
                 match self {
                     WorldParticlesData36Destination::MinecraftBlock(_) => "minecraft:block",
-                    WorldParticlesData36Destination::WorldParticlesData36DestinationEntity(_) => {
-                        "minecraft:entity"
-                    }
+                    WorldParticlesData36Destination::Entity(_) => "minecraft:entity",
                     _ => "",
                 }
             }
@@ -5994,11 +5769,11 @@ pub mod play {
                         let w = Position::serialize(&val, w)?;
                         w
                     }
-                    WorldParticlesData36Destination::WorldParticlesData36DestinationEntity(val) => {
+                    WorldParticlesData36Destination::Entity(val) => {
                         let w = VarInt::serialize(&val, w)?;
                         w
                     }
-                    WorldParticlesData36Destination::Default(val) => Void::serialize(val, w)?,
+                    WorldParticlesData36Destination::Default => w,
                 };
 
                 Ok(w)
@@ -6029,24 +5804,18 @@ pub mod play {
                     let (input, self_origin) = (Position::deserialize)(input)?;
                     let (input, self_position_type) =
                         (PrefixedString::<'a, VarInt>::deserialize)(input)?;
-                    let (input, self_destination) = (|input| match &format!(
-                        "{}",
-                        self_position_type
-                    )[..]
-                    {
-                        "minecraft:block" => nom::combinator::map(
-                            Position::deserialize,
-                            WorldParticlesData36Destination::MinecraftBlock,
-                        )(input),
-                        "minecraft:entity" => nom::combinator::map(
-                            VarInt::deserialize,
-                            WorldParticlesData36Destination::WorldParticlesData36DestinationEntity,
-                        )(input),
-                        _ => nom::combinator::map(
-                            Void::deserialize,
-                            WorldParticlesData36Destination::Default,
-                        )(input),
-                    })(input)?;
+                    let (input, self_destination) =
+                        (|input| match &format!("{}", self_position_type)[..] {
+                            "minecraft:block" => nom::combinator::map(
+                                Position::deserialize,
+                                WorldParticlesData36Destination::MinecraftBlock,
+                            )(input),
+                            "minecraft:entity" => nom::combinator::map(
+                                VarInt::deserialize,
+                                WorldParticlesData36Destination::Entity,
+                            )(input),
+                            _ => Ok((input, WorldParticlesData36Destination::Default)),
+                        })(input)?;
                     let (input, self_ticks) = (VarInt::deserialize)(input)?;
                     Ok((
                         input,
@@ -6069,7 +5838,7 @@ pub mod play {
             WorldParticlesData24(WorldParticlesData24),
             WorldParticlesData35(WorldParticlesData35),
             WorldParticlesData36(WorldParticlesData36<'a>),
-            Default(Void),
+            Default,
         }
 
         impl<'a> WorldParticlesData<'a> {
@@ -6120,7 +5889,7 @@ pub mod play {
                         let w = WorldParticlesData36::<'a>::serialize(&val, w)?;
                         w
                     }
-                    WorldParticlesData::<'a>::Default(val) => Void::serialize(val, w)?,
+                    WorldParticlesData::<'a>::Default => w,
                 };
 
                 Ok(w)
@@ -6201,10 +5970,7 @@ pub mod play {
                             WorldParticlesData36::<'a>::deserialize,
                             WorldParticlesData::<'a>::WorldParticlesData36,
                         )(input),
-                        _ => nom::combinator::map(
-                            Void::deserialize,
-                            WorldParticlesData::<'a>::Default,
-                        )(input),
+                        _ => Ok((input, WorldParticlesData::<'a>::Default)),
                     })(input)?;
                     Ok((
                         input,
@@ -6535,14 +6301,14 @@ pub mod play {
         }
 
         pub enum Rows {
-            Rows0(Void),
+            Rows0,
             Default(u8),
         }
 
         impl Rows {
             pub fn discriminant(&self) -> &'static str {
                 match self {
-                    Rows::Rows0(_) => "0",
+                    Rows::Rows0 => "0",
                     _ => "",
                 }
             }
@@ -6553,10 +6319,7 @@ pub mod play {
                 use protocol_lib::Packet;
 
                 let w = match &self {
-                    Rows::Rows0(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
+                    Rows::Rows0 => w,
                     Rows::Default(val) => u8::serialize(val, w)?,
                 };
 
@@ -6564,14 +6327,14 @@ pub mod play {
             }
         }
         pub enum MapX {
-            MapX0(Void),
+            MapX0,
             Default(u8),
         }
 
         impl MapX {
             pub fn discriminant(&self) -> &'static str {
                 match self {
-                    MapX::MapX0(_) => "0",
+                    MapX::MapX0 => "0",
                     _ => "",
                 }
             }
@@ -6582,10 +6345,7 @@ pub mod play {
                 use protocol_lib::Packet;
 
                 let w = match &self {
-                    MapX::MapX0(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
+                    MapX::MapX0 => w,
                     MapX::Default(val) => u8::serialize(val, w)?,
                 };
 
@@ -6593,14 +6353,14 @@ pub mod play {
             }
         }
         pub enum MapY {
-            MapY0(Void),
+            MapY0,
             Default(u8),
         }
 
         impl MapY {
             pub fn discriminant(&self) -> &'static str {
                 match self {
-                    MapY::MapY0(_) => "0",
+                    MapY::MapY0 => "0",
                     _ => "",
                 }
             }
@@ -6611,10 +6371,7 @@ pub mod play {
                 use protocol_lib::Packet;
 
                 let w = match &self {
-                    MapY::MapY0(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
+                    MapY::MapY0 => w,
                     MapY::Default(val) => u8::serialize(val, w)?,
                 };
 
@@ -6622,14 +6379,14 @@ pub mod play {
             }
         }
         pub enum MapData<'a> {
-            MapData0(Void),
+            MapData0,
             Default(VarBuffer<'a>),
         }
 
         impl<'a> MapData<'a> {
             pub fn discriminant(&self) -> &'static str {
                 match self {
-                    MapData::<'a>::MapData0(_) => "0",
+                    MapData::<'a>::MapData0 => "0",
                     _ => "",
                 }
             }
@@ -6640,10 +6397,7 @@ pub mod play {
                 use protocol_lib::Packet;
 
                 let w = match &self {
-                    MapData::<'a>::MapData0(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
+                    MapData::<'a>::MapData0 => w,
                     MapData::<'a>::Default(val) => PrefixedBuffer::<'a, VarInt>::serialize(val, w)?,
                 };
 
@@ -6689,21 +6443,19 @@ pub mod play {
                         (Option::<PrefixedArray<Ident11<'a>, VarInt>>::deserialize)(input)?;
                     let (input, self_columns) = (u8::deserialize)(input)?;
                     let (input, self_rows) = (|input| match &format!("{}", self_columns)[..] {
-                        "0" => nom::combinator::map(Void::deserialize, Rows::Rows0)(input),
+                        "0" => Ok((input, Rows::Rows0)),
                         _ => nom::combinator::map(u8::deserialize, Rows::Default)(input),
                     })(input)?;
                     let (input, self_x) = (|input| match &format!("{}", self_columns)[..] {
-                        "0" => nom::combinator::map(Void::deserialize, MapX::MapX0)(input),
+                        "0" => Ok((input, MapX::MapX0)),
                         _ => nom::combinator::map(u8::deserialize, MapX::Default)(input),
                     })(input)?;
                     let (input, self_y) = (|input| match &format!("{}", self_columns)[..] {
-                        "0" => nom::combinator::map(Void::deserialize, MapY::MapY0)(input),
+                        "0" => Ok((input, MapY::MapY0)),
                         _ => nom::combinator::map(u8::deserialize, MapY::Default)(input),
                     })(input)?;
                     let (input, self_data) = (|input| match &format!("{}", self_columns)[..] {
-                        "0" => {
-                            nom::combinator::map(Void::deserialize, MapData::<'a>::MapData0)(input)
-                        }
+                        "0" => Ok((input, MapData::<'a>::MapData0)),
                         _ => nom::combinator::map(
                             PrefixedBuffer::<'a, VarInt>::deserialize,
                             MapData::<'a>::Default,
@@ -7216,7 +6968,7 @@ pub mod play {
 
         pub enum PlayerInfoDataItemName<'a> {
             PlayerInfoDataItemName0(VarString<'a>),
-            Default(Void),
+            Default,
         }
 
         impl<'a> PlayerInfoDataItemName<'a> {
@@ -7237,7 +6989,7 @@ pub mod play {
                         let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
                         w
                     }
-                    PlayerInfoDataItemName::<'a>::Default(val) => Void::serialize(val, w)?,
+                    PlayerInfoDataItemName::<'a>::Default => w,
                 };
 
                 Ok(w)
@@ -7279,7 +7031,7 @@ pub mod play {
 
         pub enum PlayerInfoDataItemProperties<'a> {
             PlayerInfoDataItemProperties0(PrefixedArray<PlayerInfoDataItemProperties0<'a>, VarInt>),
-            Default(Void),
+            Default,
         }
 
         impl<'a> PlayerInfoDataItemProperties<'a> {
@@ -7311,7 +7063,7 @@ pub mod play {
                         }
                         w
                     }
-                    PlayerInfoDataItemProperties::<'a>::Default(val) => Void::serialize(val, w)?,
+                    PlayerInfoDataItemProperties::<'a>::Default => w,
                 };
 
                 Ok(w)
@@ -7320,7 +7072,7 @@ pub mod play {
         pub enum Gamemode {
             Gamemode0(VarInt),
             Gamemode1(VarInt),
-            Default(Void),
+            Default,
         }
 
         impl Gamemode {
@@ -7346,7 +7098,7 @@ pub mod play {
                         let w = VarInt::serialize(&val, w)?;
                         w
                     }
-                    Gamemode::Default(val) => Void::serialize(val, w)?,
+                    Gamemode::Default => w,
                 };
 
                 Ok(w)
@@ -7355,7 +7107,7 @@ pub mod play {
         pub enum Ping {
             Ping0(VarInt),
             Ping2(VarInt),
-            Default(Void),
+            Default,
         }
 
         impl Ping {
@@ -7381,7 +7133,7 @@ pub mod play {
                         let w = VarInt::serialize(&val, w)?;
                         w
                     }
-                    Ping::Default(val) => Void::serialize(val, w)?,
+                    Ping::Default => w,
                 };
 
                 Ok(w)
@@ -7390,7 +7142,7 @@ pub mod play {
         pub enum PlayerInfoDataItemDisplayName<'a> {
             PlayerInfoDataItemDisplayName0(Option<VarString<'a>>),
             PlayerInfoDataItemDisplayName3(Option<VarString<'a>>),
-            Default(Void),
+            Default,
         }
 
         impl<'a> PlayerInfoDataItemDisplayName<'a> {
@@ -7416,7 +7168,7 @@ pub mod play {
                         let w = Option::<VarString<'a>>::serialize(&val, w)?;
                         w
                     }
-                    PlayerInfoDataItemDisplayName::<'a>::Default(val) => Void::serialize(val, w)?,
+                    PlayerInfoDataItemDisplayName::<'a>::Default => w,
                 };
 
                 Ok(w)
@@ -7486,10 +7238,7 @@ pub mod play {
                                             PrefixedString::<'a, VarInt>::deserialize,
                                             PlayerInfoDataItemName::<'a>::PlayerInfoDataItemName0,
                                         )(input),
-                                        _ => nom::combinator::map(
-                                            Void::deserialize,
-                                            PlayerInfoDataItemName::<'a>::Default,
-                                        )(input),
+                                        _ => Ok((input, PlayerInfoDataItemName::<'a>::Default)),
                                     })(
                                         input
                                     )?;
@@ -7499,7 +7248,8 @@ pub mod play {
 "0" => nom::combinator::map(
                     PrefixedArray::<PlayerInfoDataItemProperties0<'a>, VarInt>::deserialize
                 , PlayerInfoDataItemProperties::<'a>::PlayerInfoDataItemProperties0)(input),
- _ => nom::combinator::map(Void::deserialize, PlayerInfoDataItemProperties::<'a>::Default)(input)}
+_ => Ok((input, PlayerInfoDataItemProperties::<'a>::Default)),
+}
                                         })(input)?;
                                     let (input, self_data_gamemode) =
                                         (|input| match &format!("{}", self_action)[..] {
@@ -7515,12 +7265,7 @@ pub mod play {
                                             )(
                                                 input
                                             ),
-                                            _ => nom::combinator::map(
-                                                Void::deserialize,
-                                                Gamemode::Default,
-                                            )(
-                                                input
-                                            ),
+                                            _ => Ok((input, Gamemode::Default)),
                                         })(input)?;
                                     let (input, self_data_ping) =
                                         (|input| match &format!("{}", self_action)[..] {
@@ -7536,18 +7281,14 @@ pub mod play {
                                             )(
                                                 input
                                             ),
-                                            _ => nom::combinator::map(
-                                                Void::deserialize,
-                                                Ping::Default,
-                                            )(
-                                                input
-                                            ),
+                                            _ => Ok((input, Ping::Default)),
                                         })(input)?;
                                     let (input, self_data_display_name) = (|input| {
                                         match &format!("{}", self_action)[..] {
 "0" => nom::combinator::map(Option::<VarString<'a>>::deserialize, PlayerInfoDataItemDisplayName::<'a>::PlayerInfoDataItemDisplayName0)(input),
 "3" => nom::combinator::map(Option::<VarString<'a>>::deserialize, PlayerInfoDataItemDisplayName::<'a>::PlayerInfoDataItemDisplayName3)(input),
- _ => nom::combinator::map(Void::deserialize, PlayerInfoDataItemDisplayName::<'a>::Default)(input)}
+_ => Ok((input, PlayerInfoDataItemDisplayName::<'a>::Default)),
+}
                                     })(
                                         input
                                     )?;
@@ -7640,7 +7381,7 @@ pub mod play {
 
         pub enum Recipes2<'a> {
             Recipes20(VarStringArray<'a>),
-            Default(Void),
+            Default,
         }
 
         impl<'a> Recipes2<'a> {
@@ -7670,7 +7411,7 @@ pub mod play {
                         }
                         w
                     }
-                    Recipes2::<'a>::Default(val) => Void::serialize(val, w)?,
+                    Recipes2::<'a>::Default => w,
                 };
 
                 Ok(w)
@@ -7739,9 +7480,7 @@ pub mod play {
                             PrefixedArray::<VarString<'a>, VarInt>::deserialize,
                             Recipes2::<'a>::Recipes20,
                         )(input),
-                        _ => {
-                            nom::combinator::map(Void::deserialize, Recipes2::<'a>::Default)(input)
-                        }
+                        _ => Ok((input, Recipes2::<'a>::Default)),
                     })(input)?;
                     Ok((
                         input,
@@ -8067,7 +7806,7 @@ pub mod play {
 
         pub struct PacketEntityMetadata<'a> {
             entity_id: VarInt,
-            metadata: Vec<Value<'a>>,
+            metadata: Vec<EntityMetadata<'a>>,
         }
 
         impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketEntityMetadata<'a> {
@@ -8091,7 +7830,7 @@ pub mod play {
                         .unwrap()
                         .serialize(w)?;
                     w = {
-                        let w = Value::<'a>::serialize(&item, w)?;
+                        let w = EntityMetadata::<'a>::serialize(&item, w)?;
                         w
                     }
                 }
@@ -8104,7 +7843,7 @@ pub mod play {
                     nom::sequence::tuple((VarInt::deserialize, |mut input| {
                         let mut accum = vec![];
                         loop {
-                            let (i, item) = EntityMetadata::<'a>::deserialize(input)?;
+                            let (i, item) = EntityMetadataWrapper::<'a>::deserialize(input)?;
                             input = i;
                             let index = item.key;
                             accum.push(item.value);
@@ -8304,7 +8043,7 @@ pub mod play {
         pub enum DisplayText<'a> {
             DisplayText0(VarString<'a>),
             DisplayText2(VarString<'a>),
-            Default(Void),
+            Default,
         }
 
         impl<'a> DisplayText<'a> {
@@ -8330,7 +8069,7 @@ pub mod play {
                         let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
                         w
                     }
-                    DisplayText::<'a>::Default(val) => Void::serialize(val, w)?,
+                    DisplayText::<'a>::Default => w,
                 };
 
                 Ok(w)
@@ -8339,7 +8078,7 @@ pub mod play {
         pub enum ScoreboardObjectiveType {
             ScoreboardObjectiveType0(VarInt),
             ScoreboardObjectiveType2(VarInt),
-            Default(Void),
+            Default,
         }
 
         impl ScoreboardObjectiveType {
@@ -8365,7 +8104,7 @@ pub mod play {
                         let w = VarInt::serialize(&val, w)?;
                         w
                     }
-                    ScoreboardObjectiveType::Default(val) => Void::serialize(val, w)?,
+                    ScoreboardObjectiveType::Default => w,
                 };
 
                 Ok(w)
@@ -8405,9 +8144,7 @@ pub mod play {
                             PrefixedString::<'a, VarInt>::deserialize,
                             DisplayText::<'a>::DisplayText2,
                         )(input),
-                        _ => nom::combinator::map(Void::deserialize, DisplayText::<'a>::Default)(
-                            input,
-                        ),
+                        _ => Ok((input, DisplayText::<'a>::Default)),
                     })(input)?;
                     let (input, self_r_type) = (|input| match &format!("{}", self_action)[..] {
                         "0" => nom::combinator::map(
@@ -8418,10 +8155,7 @@ pub mod play {
                             VarInt::deserialize,
                             ScoreboardObjectiveType::ScoreboardObjectiveType2,
                         )(input),
-                        _ => nom::combinator::map(
-                            Void::deserialize,
-                            ScoreboardObjectiveType::Default,
-                        )(input),
+                        _ => Ok((input, ScoreboardObjectiveType::Default)),
                     })(input)?;
                     Ok((
                         input,
@@ -8479,7 +8213,7 @@ pub mod play {
         pub enum TeamsName<'a> {
             TeamsName0(VarString<'a>),
             TeamsName2(VarString<'a>),
-            Default(Void),
+            Default,
         }
 
         impl<'a> TeamsName<'a> {
@@ -8505,7 +8239,7 @@ pub mod play {
                         let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
                         w
                     }
-                    TeamsName::<'a>::Default(val) => Void::serialize(val, w)?,
+                    TeamsName::<'a>::Default => w,
                 };
 
                 Ok(w)
@@ -8514,7 +8248,7 @@ pub mod play {
         pub enum FriendlyFire {
             FriendlyFire0(i8),
             FriendlyFire2(i8),
-            Default(Void),
+            Default,
         }
 
         impl FriendlyFire {
@@ -8540,7 +8274,7 @@ pub mod play {
                         let w = i8::serialize(&val, w)?;
                         w
                     }
-                    FriendlyFire::Default(val) => Void::serialize(val, w)?,
+                    FriendlyFire::Default => w,
                 };
 
                 Ok(w)
@@ -8549,7 +8283,7 @@ pub mod play {
         pub enum NameTagVisibility<'a> {
             NameTagVisibility0(VarString<'a>),
             NameTagVisibility2(VarString<'a>),
-            Default(Void),
+            Default,
         }
 
         impl<'a> NameTagVisibility<'a> {
@@ -8575,7 +8309,7 @@ pub mod play {
                         let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
                         w
                     }
-                    NameTagVisibility::<'a>::Default(val) => Void::serialize(val, w)?,
+                    NameTagVisibility::<'a>::Default => w,
                 };
 
                 Ok(w)
@@ -8584,7 +8318,7 @@ pub mod play {
         pub enum CollisionRule<'a> {
             CollisionRule0(VarString<'a>),
             CollisionRule2(VarString<'a>),
-            Default(Void),
+            Default,
         }
 
         impl<'a> CollisionRule<'a> {
@@ -8610,7 +8344,7 @@ pub mod play {
                         let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
                         w
                     }
-                    CollisionRule::<'a>::Default(val) => Void::serialize(val, w)?,
+                    CollisionRule::<'a>::Default => w,
                 };
 
                 Ok(w)
@@ -8619,7 +8353,7 @@ pub mod play {
         pub enum Formatting {
             Formatting0(VarInt),
             Formatting2(VarInt),
-            Default(Void),
+            Default,
         }
 
         impl Formatting {
@@ -8645,7 +8379,7 @@ pub mod play {
                         let w = VarInt::serialize(&val, w)?;
                         w
                     }
-                    Formatting::Default(val) => Void::serialize(val, w)?,
+                    Formatting::Default => w,
                 };
 
                 Ok(w)
@@ -8654,7 +8388,7 @@ pub mod play {
         pub enum Prefix<'a> {
             Prefix0(VarString<'a>),
             Prefix2(VarString<'a>),
-            Default(Void),
+            Default,
         }
 
         impl<'a> Prefix<'a> {
@@ -8680,7 +8414,7 @@ pub mod play {
                         let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
                         w
                     }
-                    Prefix::<'a>::Default(val) => Void::serialize(val, w)?,
+                    Prefix::<'a>::Default => w,
                 };
 
                 Ok(w)
@@ -8689,7 +8423,7 @@ pub mod play {
         pub enum Suffix<'a> {
             Suffix0(VarString<'a>),
             Suffix2(VarString<'a>),
-            Default(Void),
+            Default,
         }
 
         impl<'a> Suffix<'a> {
@@ -8715,7 +8449,7 @@ pub mod play {
                         let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
                         w
                     }
-                    Suffix::<'a>::Default(val) => Void::serialize(val, w)?,
+                    Suffix::<'a>::Default => w,
                 };
 
                 Ok(w)
@@ -8725,7 +8459,7 @@ pub mod play {
             Players0(VarStringArray<'a>),
             Players3(VarStringArray<'a>),
             Players4(VarStringArray<'a>),
-            Default(Void),
+            Default,
         }
 
         impl<'a> Players<'a> {
@@ -8783,7 +8517,7 @@ pub mod play {
                         }
                         w
                     }
-                    Players::<'a>::Default(val) => Void::serialize(val, w)?,
+                    Players::<'a>::Default => w,
                 };
 
                 Ok(w)
@@ -8834,9 +8568,7 @@ pub mod play {
                             PrefixedString::<'a, VarInt>::deserialize,
                             TeamsName::<'a>::TeamsName2,
                         )(input),
-                        _ => {
-                            nom::combinator::map(Void::deserialize, TeamsName::<'a>::Default)(input)
-                        }
+                        _ => Ok((input, TeamsName::<'a>::Default)),
                     })(input)?;
                     let (input, self_friendly_fire) = (|input| match &format!("{}", self_mode)[..] {
                         "0" => nom::combinator::map(i8::deserialize, FriendlyFire::FriendlyFire0)(
@@ -8845,7 +8577,7 @@ pub mod play {
                         "2" => nom::combinator::map(i8::deserialize, FriendlyFire::FriendlyFire2)(
                             input,
                         ),
-                        _ => nom::combinator::map(Void::deserialize, FriendlyFire::Default)(input),
+                        _ => Ok((input, FriendlyFire::Default)),
                     })(input)?;
                     let (input, self_name_tag_visibility) =
                         (|input| match &format!("{}", self_mode)[..] {
@@ -8857,10 +8589,7 @@ pub mod play {
                                 PrefixedString::<'a, VarInt>::deserialize,
                                 NameTagVisibility::<'a>::NameTagVisibility2,
                             )(input),
-                            _ => nom::combinator::map(
-                                Void::deserialize,
-                                NameTagVisibility::<'a>::Default,
-                            )(input),
+                            _ => Ok((input, NameTagVisibility::<'a>::Default)),
                         })(input)?;
                     let (input, self_collision_rule) = (|input| match &format!("{}", self_mode)[..]
                     {
@@ -8872,9 +8601,7 @@ pub mod play {
                             PrefixedString::<'a, VarInt>::deserialize,
                             CollisionRule::<'a>::CollisionRule2,
                         )(input),
-                        _ => nom::combinator::map(Void::deserialize, CollisionRule::<'a>::Default)(
-                            input,
-                        ),
+                        _ => Ok((input, CollisionRule::<'a>::Default)),
                     })(input)?;
                     let (input, self_formatting) = (|input| match &format!("{}", self_mode)[..] {
                         "0" => nom::combinator::map(VarInt::deserialize, Formatting::Formatting0)(
@@ -8883,7 +8610,7 @@ pub mod play {
                         "2" => nom::combinator::map(VarInt::deserialize, Formatting::Formatting2)(
                             input,
                         ),
-                        _ => nom::combinator::map(Void::deserialize, Formatting::Default)(input),
+                        _ => Ok((input, Formatting::Default)),
                     })(input)?;
                     let (input, self_prefix) = (|input| match &format!("{}", self_mode)[..] {
                         "0" => nom::combinator::map(
@@ -8894,7 +8621,7 @@ pub mod play {
                             PrefixedString::<'a, VarInt>::deserialize,
                             Prefix::<'a>::Prefix2,
                         )(input),
-                        _ => nom::combinator::map(Void::deserialize, Prefix::<'a>::Default)(input),
+                        _ => Ok((input, Prefix::<'a>::Default)),
                     })(input)?;
                     let (input, self_suffix) = (|input| match &format!("{}", self_mode)[..] {
                         "0" => nom::combinator::map(
@@ -8905,7 +8632,7 @@ pub mod play {
                             PrefixedString::<'a, VarInt>::deserialize,
                             Suffix::<'a>::Suffix2,
                         )(input),
-                        _ => nom::combinator::map(Void::deserialize, Suffix::<'a>::Default)(input),
+                        _ => Ok((input, Suffix::<'a>::Default)),
                     })(input)?;
                     let (input, self_players) = (|input| match &format!("{}", self_mode)[..] {
                         "0" => nom::combinator::map(
@@ -8920,7 +8647,7 @@ pub mod play {
                             PrefixedArray::<VarString<'a>, VarInt>::deserialize,
                             Players::<'a>::Players4,
                         )(input),
-                        _ => nom::combinator::map(Void::deserialize, Players::<'a>::Default)(input),
+                        _ => Ok((input, Players::<'a>::Default)),
                     })(input)?;
                     Ok((
                         input,
@@ -8942,14 +8669,14 @@ pub mod play {
         }
 
         pub enum ScoreboardScoreValue {
-            ScoreboardScoreValue1(Void),
+            ScoreboardScoreValue1,
             Default(VarInt),
         }
 
         impl ScoreboardScoreValue {
             pub fn discriminant(&self) -> &'static str {
                 match self {
-                    ScoreboardScoreValue::ScoreboardScoreValue1(_) => "1",
+                    ScoreboardScoreValue::ScoreboardScoreValue1 => "1",
                     _ => "",
                 }
             }
@@ -8960,10 +8687,7 @@ pub mod play {
                 use protocol_lib::Packet;
 
                 let w = match &self {
-                    ScoreboardScoreValue::ScoreboardScoreValue1(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
+                    ScoreboardScoreValue::ScoreboardScoreValue1 => w,
                     ScoreboardScoreValue::Default(val) => VarInt::serialize(val, w)?,
                 };
 
@@ -8998,10 +8722,7 @@ pub mod play {
                     let (input, self_score_name) =
                         (PrefixedString::<'a, VarInt>::deserialize)(input)?;
                     let (input, self_value) = (|input| match &format!("{}", self_action)[..] {
-                        "1" => nom::combinator::map(
-                            Void::deserialize,
-                            ScoreboardScoreValue::ScoreboardScoreValue1,
-                        )(input),
+                        "1" => Ok((input, ScoreboardScoreValue::ScoreboardScoreValue1)),
                         _ => nom::combinator::map(
                             VarInt::deserialize,
                             ScoreboardScoreValue::Default,
@@ -9115,7 +8836,7 @@ pub mod play {
         pub enum Source {
             Source3(VarInt),
             Source1(VarInt),
-            Default(Void),
+            Default,
         }
 
         impl Source {
@@ -9141,7 +8862,7 @@ pub mod play {
                         let w = VarInt::serialize(&val, w)?;
                         w
                     }
-                    Source::Default(val) => Void::serialize(val, w)?,
+                    Source::Default => w,
                 };
 
                 Ok(w)
@@ -9150,7 +8871,7 @@ pub mod play {
         pub enum Sound<'a> {
             Sound3(VarString<'a>),
             Sound2(VarString<'a>),
-            Default(Void),
+            Default,
         }
 
         impl<'a> Sound<'a> {
@@ -9176,7 +8897,7 @@ pub mod play {
                         let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
                         w
                     }
-                    Sound::<'a>::Default(val) => Void::serialize(val, w)?,
+                    Sound::<'a>::Default => w,
                 };
 
                 Ok(w)
@@ -9206,7 +8927,7 @@ pub mod play {
                     let (input, self_source) = (|input| match &format!("{}", self_flags)[..] {
                         "3" => nom::combinator::map(VarInt::deserialize, Source::Source3)(input),
                         "1" => nom::combinator::map(VarInt::deserialize, Source::Source1)(input),
-                        _ => nom::combinator::map(Void::deserialize, Source::Default)(input),
+                        _ => Ok((input, Source::Default)),
                     })(input)?;
                     let (input, self_sound) = (|input| match &format!("{}", self_flags)[..] {
                         "3" => nom::combinator::map(
@@ -9217,7 +8938,7 @@ pub mod play {
                             PrefixedString::<'a, VarInt>::deserialize,
                             Sound::<'a>::Sound2,
                         )(input),
-                        _ => nom::combinator::map(Void::deserialize, Sound::<'a>::Default)(input),
+                        _ => Ok((input, Sound::<'a>::Default)),
                     })(input)?;
                     Ok((
                         input,
@@ -9824,27 +9545,27 @@ pub mod play {
         pub enum RecipeData<'a> {
             CraftingShapeless(CraftingShapeless<'a>),
             CraftingShaped(CraftingShaped<'a>),
-            CraftingSpecialArmordye(Void),
-            CraftingSpecialBookcloning(Void),
-            CraftingSpecialMapcloning(Void),
-            CraftingSpecialMapextending(Void),
-            CraftingSpecialFireworkRocket(Void),
-            CraftingSpecialFireworkStar(Void),
-            CraftingSpecialFireworkStarFade(Void),
-            CraftingSpecialRepairitem(Void),
-            CraftingSpecialTippedarrow(Void),
-            CraftingSpecialBannerduplicate(Void),
-            CraftingSpecialBanneraddpattern(Void),
-            CraftingSpecialShielddecoration(Void),
-            CraftingSpecialShulkerboxcoloring(Void),
-            CraftingSpecialSuspiciousstew(Void),
+            CraftingSpecialArmordye,
+            CraftingSpecialBookcloning,
+            CraftingSpecialMapcloning,
+            CraftingSpecialMapextending,
+            CraftingSpecialFireworkRocket,
+            CraftingSpecialFireworkStar,
+            CraftingSpecialFireworkStarFade,
+            CraftingSpecialRepairitem,
+            CraftingSpecialTippedarrow,
+            CraftingSpecialBannerduplicate,
+            CraftingSpecialBanneraddpattern,
+            CraftingSpecialShielddecoration,
+            CraftingSpecialShulkerboxcoloring,
+            CraftingSpecialSuspiciousstew,
             Smelting(MinecraftSmeltingFormat<'a>),
             Blasting(MinecraftSmeltingFormat<'a>),
             Smoking(MinecraftSmeltingFormat<'a>),
             CampfireCooking(MinecraftSmeltingFormat<'a>),
             Stonecutting(Stonecutting<'a>),
             Smithing(Smithing),
-            Default(Void),
+            Default,
         }
 
         impl<'a> RecipeData<'a> {
@@ -9852,46 +9573,46 @@ pub mod play {
                 match self {
                     RecipeData::<'a>::CraftingShapeless(_) => "minecraft:crafting_shapeless",
                     RecipeData::<'a>::CraftingShaped(_) => "minecraft:crafting_shaped",
-                    RecipeData::<'a>::CraftingSpecialArmordye(_) => {
+                    RecipeData::<'a>::CraftingSpecialArmordye => {
                         "minecraft:crafting_special_armordye"
                     }
-                    RecipeData::<'a>::CraftingSpecialBookcloning(_) => {
+                    RecipeData::<'a>::CraftingSpecialBookcloning => {
                         "minecraft:crafting_special_bookcloning"
                     }
-                    RecipeData::<'a>::CraftingSpecialMapcloning(_) => {
+                    RecipeData::<'a>::CraftingSpecialMapcloning => {
                         "minecraft:crafting_special_mapcloning"
                     }
-                    RecipeData::<'a>::CraftingSpecialMapextending(_) => {
+                    RecipeData::<'a>::CraftingSpecialMapextending => {
                         "minecraft:crafting_special_mapextending"
                     }
-                    RecipeData::<'a>::CraftingSpecialFireworkRocket(_) => {
+                    RecipeData::<'a>::CraftingSpecialFireworkRocket => {
                         "minecraft:crafting_special_firework_rocket"
                     }
-                    RecipeData::<'a>::CraftingSpecialFireworkStar(_) => {
+                    RecipeData::<'a>::CraftingSpecialFireworkStar => {
                         "minecraft:crafting_special_firework_star"
                     }
-                    RecipeData::<'a>::CraftingSpecialFireworkStarFade(_) => {
+                    RecipeData::<'a>::CraftingSpecialFireworkStarFade => {
                         "minecraft:crafting_special_firework_star_fade"
                     }
-                    RecipeData::<'a>::CraftingSpecialRepairitem(_) => {
+                    RecipeData::<'a>::CraftingSpecialRepairitem => {
                         "minecraft:crafting_special_repairitem"
                     }
-                    RecipeData::<'a>::CraftingSpecialTippedarrow(_) => {
+                    RecipeData::<'a>::CraftingSpecialTippedarrow => {
                         "minecraft:crafting_special_tippedarrow"
                     }
-                    RecipeData::<'a>::CraftingSpecialBannerduplicate(_) => {
+                    RecipeData::<'a>::CraftingSpecialBannerduplicate => {
                         "minecraft:crafting_special_bannerduplicate"
                     }
-                    RecipeData::<'a>::CraftingSpecialBanneraddpattern(_) => {
+                    RecipeData::<'a>::CraftingSpecialBanneraddpattern => {
                         "minecraft:crafting_special_banneraddpattern"
                     }
-                    RecipeData::<'a>::CraftingSpecialShielddecoration(_) => {
+                    RecipeData::<'a>::CraftingSpecialShielddecoration => {
                         "minecraft:crafting_special_shielddecoration"
                     }
-                    RecipeData::<'a>::CraftingSpecialShulkerboxcoloring(_) => {
+                    RecipeData::<'a>::CraftingSpecialShulkerboxcoloring => {
                         "minecraft:crafting_special_shulkerboxcoloring"
                     }
-                    RecipeData::<'a>::CraftingSpecialSuspiciousstew(_) => {
+                    RecipeData::<'a>::CraftingSpecialSuspiciousstew => {
                         "minecraft:crafting_special_suspiciousstew"
                     }
                     RecipeData::<'a>::Smelting(_) => "minecraft:smelting",
@@ -9918,62 +9639,20 @@ pub mod play {
                         let w = CraftingShaped::<'a>::serialize(&val, w)?;
                         w
                     }
-                    RecipeData::<'a>::CraftingSpecialArmordye(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    RecipeData::<'a>::CraftingSpecialBookcloning(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    RecipeData::<'a>::CraftingSpecialMapcloning(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    RecipeData::<'a>::CraftingSpecialMapextending(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    RecipeData::<'a>::CraftingSpecialFireworkRocket(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    RecipeData::<'a>::CraftingSpecialFireworkStar(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    RecipeData::<'a>::CraftingSpecialFireworkStarFade(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    RecipeData::<'a>::CraftingSpecialRepairitem(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    RecipeData::<'a>::CraftingSpecialTippedarrow(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    RecipeData::<'a>::CraftingSpecialBannerduplicate(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    RecipeData::<'a>::CraftingSpecialBanneraddpattern(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    RecipeData::<'a>::CraftingSpecialShielddecoration(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    RecipeData::<'a>::CraftingSpecialShulkerboxcoloring(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    RecipeData::<'a>::CraftingSpecialSuspiciousstew(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
+                    RecipeData::<'a>::CraftingSpecialArmordye => w,
+                    RecipeData::<'a>::CraftingSpecialBookcloning => w,
+                    RecipeData::<'a>::CraftingSpecialMapcloning => w,
+                    RecipeData::<'a>::CraftingSpecialMapextending => w,
+                    RecipeData::<'a>::CraftingSpecialFireworkRocket => w,
+                    RecipeData::<'a>::CraftingSpecialFireworkStar => w,
+                    RecipeData::<'a>::CraftingSpecialFireworkStarFade => w,
+                    RecipeData::<'a>::CraftingSpecialRepairitem => w,
+                    RecipeData::<'a>::CraftingSpecialTippedarrow => w,
+                    RecipeData::<'a>::CraftingSpecialBannerduplicate => w,
+                    RecipeData::<'a>::CraftingSpecialBanneraddpattern => w,
+                    RecipeData::<'a>::CraftingSpecialShielddecoration => w,
+                    RecipeData::<'a>::CraftingSpecialShulkerboxcoloring => w,
+                    RecipeData::<'a>::CraftingSpecialSuspiciousstew => w,
                     RecipeData::<'a>::Smelting(val) => {
                         let w = MinecraftSmeltingFormat::<'a>::serialize(&val, w)?;
                         w
@@ -9998,7 +9677,7 @@ pub mod play {
                         let w = Smithing::serialize(&val, w)?;
                         w
                     }
-                    RecipeData::<'a>::Default(val) => Void::serialize(val, w)?,
+                    RecipeData::<'a>::Default => w,
                 };
 
                 Ok(w)
@@ -10036,79 +9715,47 @@ pub mod play {
                             CraftingShaped::<'a>::deserialize,
                             RecipeData::<'a>::CraftingShaped,
                         )(input),
-                        "minecraft:crafting_special_armordye" => nom::combinator::map(
-                            Void::deserialize,
-                            RecipeData::<'a>::CraftingSpecialArmordye,
-                        )(input),
-                        "minecraft:crafting_special_bookcloning" => nom::combinator::map(
-                            Void::deserialize,
-                            RecipeData::<'a>::CraftingSpecialBookcloning,
-                        )(input),
-                        "minecraft:crafting_special_mapcloning" => nom::combinator::map(
-                            Void::deserialize,
-                            RecipeData::<'a>::CraftingSpecialMapcloning,
-                        )(input),
+                        "minecraft:crafting_special_armordye" => {
+                            Ok((input, RecipeData::<'a>::CraftingSpecialArmordye))
+                        }
+                        "minecraft:crafting_special_bookcloning" => {
+                            Ok((input, RecipeData::<'a>::CraftingSpecialBookcloning))
+                        }
+                        "minecraft:crafting_special_mapcloning" => {
+                            Ok((input, RecipeData::<'a>::CraftingSpecialMapcloning))
+                        }
                         "minecraft:crafting_special_mapextending" => {
-                            nom::combinator::map(
-                                Void::deserialize,
-                                RecipeData::<'a>::CraftingSpecialMapextending,
-                            )(input)
+                            Ok((input, RecipeData::<'a>::CraftingSpecialMapextending))
                         }
                         "minecraft:crafting_special_firework_rocket" => {
-                            nom::combinator::map(
-                                Void::deserialize,
-                                RecipeData::<'a>::CraftingSpecialFireworkRocket,
-                            )(input)
+                            Ok((input, RecipeData::<'a>::CraftingSpecialFireworkRocket))
                         }
                         "minecraft:crafting_special_firework_star" => {
-                            nom::combinator::map(
-                                Void::deserialize,
-                                RecipeData::<'a>::CraftingSpecialFireworkStar,
-                            )(input)
+                            Ok((input, RecipeData::<'a>::CraftingSpecialFireworkStar))
                         }
                         "minecraft:crafting_special_firework_star_fade" => {
-                            nom::combinator::map(
-                                Void::deserialize,
-                                RecipeData::<'a>::CraftingSpecialFireworkStarFade,
-                            )(input)
+                            Ok((input, RecipeData::<'a>::CraftingSpecialFireworkStarFade))
                         }
-                        "minecraft:crafting_special_repairitem" => nom::combinator::map(
-                            Void::deserialize,
-                            RecipeData::<'a>::CraftingSpecialRepairitem,
-                        )(input),
-                        "minecraft:crafting_special_tippedarrow" => nom::combinator::map(
-                            Void::deserialize,
-                            RecipeData::<'a>::CraftingSpecialTippedarrow,
-                        )(input),
+                        "minecraft:crafting_special_repairitem" => {
+                            Ok((input, RecipeData::<'a>::CraftingSpecialRepairitem))
+                        }
+                        "minecraft:crafting_special_tippedarrow" => {
+                            Ok((input, RecipeData::<'a>::CraftingSpecialTippedarrow))
+                        }
                         "minecraft:crafting_special_bannerduplicate" => {
-                            nom::combinator::map(
-                                Void::deserialize,
-                                RecipeData::<'a>::CraftingSpecialBannerduplicate,
-                            )(input)
+                            Ok((input, RecipeData::<'a>::CraftingSpecialBannerduplicate))
                         }
                         "minecraft:crafting_special_banneraddpattern" => {
-                            nom::combinator::map(
-                                Void::deserialize,
-                                RecipeData::<'a>::CraftingSpecialBanneraddpattern,
-                            )(input)
+                            Ok((input, RecipeData::<'a>::CraftingSpecialBanneraddpattern))
                         }
                         "minecraft:crafting_special_shielddecoration" => {
-                            nom::combinator::map(
-                                Void::deserialize,
-                                RecipeData::<'a>::CraftingSpecialShielddecoration,
-                            )(input)
+                            Ok((input, RecipeData::<'a>::CraftingSpecialShielddecoration))
                         }
                         "minecraft:crafting_special_shulkerboxcoloring" => {
-                            nom::combinator::map(
-                                Void::deserialize,
-                                RecipeData::<'a>::CraftingSpecialShulkerboxcoloring,
-                            )(input)
+                            Ok((input, RecipeData::<'a>::CraftingSpecialShulkerboxcoloring))
                         }
                         "minecraft:crafting_special_suspiciousstew" => {
-                            nom::combinator::map(
-                                Void::deserialize,
-                                RecipeData::<'a>::CraftingSpecialSuspiciousstew,
-                            )(input)
+                            Ok((input, RecipeData::<'a>::CraftingSpecialSuspiciousstew))
                         }
                         "minecraft:smelting" => nom::combinator::map(
                             MinecraftSmeltingFormat::<'a>::deserialize,
@@ -10134,9 +9781,7 @@ pub mod play {
                             Smithing::deserialize,
                             RecipeData::<'a>::Smithing,
                         )(input),
-                        _ => nom::combinator::map(Void::deserialize, RecipeData::<'a>::Default)(
-                            input,
-                        ),
+                        _ => Ok((input, RecipeData::<'a>::Default)),
                     })(input)?;
                     Ok((
                         input,
@@ -10289,20 +9934,16 @@ pub mod play {
         }
 
         pub enum SculkVibrationSignalDestination {
-            SculkVibrationSignalDestinationBlock(Position),
-            SculkVibrationSignalDestinationEntityId(VarInt),
-            Default(Void),
+            Block(Position),
+            EntityId(VarInt),
+            Default,
         }
 
         impl SculkVibrationSignalDestination {
             pub fn discriminant(&self) -> &'static str {
                 match self {
-                    SculkVibrationSignalDestination::SculkVibrationSignalDestinationBlock(_) => {
-                        "block"
-                    }
-                    SculkVibrationSignalDestination::SculkVibrationSignalDestinationEntityId(_) => {
-                        "entityId"
-                    }
+                    SculkVibrationSignalDestination::Block(_) => "block",
+                    SculkVibrationSignalDestination::EntityId(_) => "entityId",
                     _ => "",
                 }
             }
@@ -10313,17 +9954,15 @@ pub mod play {
                 use protocol_lib::Packet;
 
                 let w = match &self {
-                    SculkVibrationSignalDestination::SculkVibrationSignalDestinationBlock(val) => {
+                    SculkVibrationSignalDestination::Block(val) => {
                         let w = Position::serialize(&val, w)?;
                         w
                     }
-                    SculkVibrationSignalDestination::SculkVibrationSignalDestinationEntityId(
-                        val,
-                    ) => {
+                    SculkVibrationSignalDestination::EntityId(val) => {
                         let w = VarInt::serialize(&val, w)?;
                         w
                     }
-                    SculkVibrationSignalDestination::Default(val) => Void::serialize(val, w)?,
+                    SculkVibrationSignalDestination::Default => w,
                 };
 
                 Ok(w)
@@ -10354,12 +9993,18 @@ pub mod play {
                     let (input, self_source_position) = (Position::deserialize)(input)?;
                     let (input, self_destination_identifier) =
                         (PrefixedString::<'a, VarInt>::deserialize)(input)?;
-                    let (input, self_destination) = (|input| {
-                        match &format!("{}", self_destination_identifier)[..] {
-"block" => nom::combinator::map(Position::deserialize, SculkVibrationSignalDestination::SculkVibrationSignalDestinationBlock)(input),
-"entityId" => nom::combinator::map(VarInt::deserialize, SculkVibrationSignalDestination::SculkVibrationSignalDestinationEntityId)(input),
- _ => nom::combinator::map(Void::deserialize, SculkVibrationSignalDestination::Default)(input)}
-                    })(input)?;
+                    let (input, self_destination) =
+                        (|input| match &format!("{}", self_destination_identifier)[..] {
+                            "block" => nom::combinator::map(
+                                Position::deserialize,
+                                SculkVibrationSignalDestination::Block,
+                            )(input),
+                            "entityId" => nom::combinator::map(
+                                VarInt::deserialize,
+                                SculkVibrationSignalDestination::EntityId,
+                            )(input),
+                            _ => Ok((input, SculkVibrationSignalDestination::Default)),
+                        })(input)?;
                     let (input, self_arrival_ticks) = (VarInt::deserialize)(input)?;
                     Ok((
                         input,
@@ -10726,7 +10371,7 @@ pub mod play {
             SpawnEntityLiving(PacketSpawnEntityLiving),
             SpawnEntityPainting(PacketSpawnEntityPainting),
             NamedEntitySpawn(PacketNamedEntitySpawn),
-            ParamsAnimation(PacketAnimation),
+            Animation(PacketAnimation),
             Statistics(PacketStatistics),
             Advancements(PacketAdvancements<'a>),
             BlockBreakAnimation(PacketBlockBreakAnimation),
@@ -10734,7 +10379,7 @@ pub mod play {
             BlockAction(PacketBlockAction),
             BlockChange(PacketBlockChange),
             BossBar(PacketBossBar<'a>),
-            ParamsDifficulty(PacketDifficulty),
+            Difficulty(PacketDifficulty),
             TabComplete(PacketTabComplete<'a>),
             DeclareCommands(PacketDeclareCommands<'a>),
             FacePlayer(PacketFacePlayer<'a>),
@@ -10750,7 +10395,7 @@ pub mod play {
             CustomPayload(PacketCustomPayload<'a>),
             NamedSoundEffect(PacketNamedSoundEffect<'a>),
             KickDisconnect(PacketKickDisconnect<'a>),
-            ParamsEntityStatus(PacketEntityStatus),
+            EntityStatus(PacketEntityStatus),
             Explosion(PacketExplosion),
             UnloadChunk(PacketUnloadChunk),
             GameStateChange(PacketGameStateChange),
@@ -10775,7 +10420,7 @@ pub mod play {
             EnterCombatEvent(PacketEnterCombatEvent),
             DeathCombatEvent(PacketDeathCombatEvent<'a>),
             PlayerInfo(PacketPlayerInfo<'a>),
-            ParamsPosition(PacketPosition),
+            Position(PacketPosition),
             UnlockRecipes(PacketUnlockRecipes<'a>),
             EntityDestroy(PacketEntityDestroy),
             RemoveEntityEffect(PacketRemoveEntityEffect),
@@ -10787,17 +10432,17 @@ pub mod play {
             UpdateViewPosition(PacketUpdateViewPosition),
             UpdateViewDistance(PacketUpdateViewDistance),
             ScoreboardDisplayObjective(PacketScoreboardDisplayObjective<'a>),
-            ParamsEntityMetadata(PacketEntityMetadata<'a>),
+            EntityMetadata(PacketEntityMetadata<'a>),
             AttachEntity(PacketAttachEntity),
             EntityVelocity(PacketEntityVelocity),
             EntityEquipment(PacketEntityEquipment),
-            ParamsExperience(PacketExperience),
+            Experience(PacketExperience),
             UpdateHealth(PacketUpdateHealth),
             ScoreboardObjective(PacketScoreboardObjective<'a>),
             SetPassengers(PacketSetPassengers),
             Teams(PacketTeams<'a>),
             ScoreboardScore(PacketScoreboardScore<'a>),
-            ParamsSimulationDistance(PacketSimulationDistance),
+            SimulationDistance(PacketSimulationDistance),
             SpawnPosition(PacketSpawnPosition),
             UpdateTime(PacketUpdateTime),
             EntitySoundEffect(PacketEntitySoundEffect),
@@ -10810,7 +10455,7 @@ pub mod play {
             EntityEffect(PacketEntityEffect),
             SelectAdvancementTab(PacketSelectAdvancementTab<'a>),
             DeclareRecipes(PacketDeclareRecipes<'a>),
-            ParamsTags(PacketTags<'a>),
+            Tags(PacketTags<'a>),
             AcknowledgePlayerDigging(PacketAcknowledgePlayerDigging),
             SculkVibrationSignal(PacketSculkVibrationSignal<'a>),
             ClearTitles(PacketClearTitles),
@@ -10821,11 +10466,11 @@ pub mod play {
             WorldBorderSize(PacketWorldBorderSize),
             WorldBorderWarningDelay(PacketWorldBorderWarningDelay),
             WorldBorderWarningReach(PacketWorldBorderWarningReach),
-            ParamsPing(PacketPing),
+            Ping(PacketPing),
             SetTitleSubtitle(PacketSetTitleSubtitle<'a>),
             SetTitleText(PacketSetTitleText<'a>),
             SetTitleTime(PacketSetTitleTime),
-            Default(Void),
+            Default,
         }
 
         impl<'a> Params<'a> {
@@ -10836,7 +10481,7 @@ pub mod play {
                     Params::<'a>::SpawnEntityLiving(_) => "spawn_entity_living",
                     Params::<'a>::SpawnEntityPainting(_) => "spawn_entity_painting",
                     Params::<'a>::NamedEntitySpawn(_) => "named_entity_spawn",
-                    Params::<'a>::ParamsAnimation(_) => "animation",
+                    Params::<'a>::Animation(_) => "animation",
                     Params::<'a>::Statistics(_) => "statistics",
                     Params::<'a>::Advancements(_) => "advancements",
                     Params::<'a>::BlockBreakAnimation(_) => "block_break_animation",
@@ -10844,7 +10489,7 @@ pub mod play {
                     Params::<'a>::BlockAction(_) => "block_action",
                     Params::<'a>::BlockChange(_) => "block_change",
                     Params::<'a>::BossBar(_) => "boss_bar",
-                    Params::<'a>::ParamsDifficulty(_) => "difficulty",
+                    Params::<'a>::Difficulty(_) => "difficulty",
                     Params::<'a>::TabComplete(_) => "tab_complete",
                     Params::<'a>::DeclareCommands(_) => "declare_commands",
                     Params::<'a>::FacePlayer(_) => "face_player",
@@ -10860,7 +10505,7 @@ pub mod play {
                     Params::<'a>::CustomPayload(_) => "custom_payload",
                     Params::<'a>::NamedSoundEffect(_) => "named_sound_effect",
                     Params::<'a>::KickDisconnect(_) => "kick_disconnect",
-                    Params::<'a>::ParamsEntityStatus(_) => "entity_status",
+                    Params::<'a>::EntityStatus(_) => "entity_status",
                     Params::<'a>::Explosion(_) => "explosion",
                     Params::<'a>::UnloadChunk(_) => "unload_chunk",
                     Params::<'a>::GameStateChange(_) => "game_state_change",
@@ -10885,7 +10530,7 @@ pub mod play {
                     Params::<'a>::EnterCombatEvent(_) => "enter_combat_event",
                     Params::<'a>::DeathCombatEvent(_) => "death_combat_event",
                     Params::<'a>::PlayerInfo(_) => "player_info",
-                    Params::<'a>::ParamsPosition(_) => "position",
+                    Params::<'a>::Position(_) => "position",
                     Params::<'a>::UnlockRecipes(_) => "unlock_recipes",
                     Params::<'a>::EntityDestroy(_) => "entity_destroy",
                     Params::<'a>::RemoveEntityEffect(_) => "remove_entity_effect",
@@ -10897,17 +10542,17 @@ pub mod play {
                     Params::<'a>::UpdateViewPosition(_) => "update_view_position",
                     Params::<'a>::UpdateViewDistance(_) => "update_view_distance",
                     Params::<'a>::ScoreboardDisplayObjective(_) => "scoreboard_display_objective",
-                    Params::<'a>::ParamsEntityMetadata(_) => "entity_metadata",
+                    Params::<'a>::EntityMetadata(_) => "entity_metadata",
                     Params::<'a>::AttachEntity(_) => "attach_entity",
                     Params::<'a>::EntityVelocity(_) => "entity_velocity",
                     Params::<'a>::EntityEquipment(_) => "entity_equipment",
-                    Params::<'a>::ParamsExperience(_) => "experience",
+                    Params::<'a>::Experience(_) => "experience",
                     Params::<'a>::UpdateHealth(_) => "update_health",
                     Params::<'a>::ScoreboardObjective(_) => "scoreboard_objective",
                     Params::<'a>::SetPassengers(_) => "set_passengers",
                     Params::<'a>::Teams(_) => "teams",
                     Params::<'a>::ScoreboardScore(_) => "scoreboard_score",
-                    Params::<'a>::ParamsSimulationDistance(_) => "simulation_distance",
+                    Params::<'a>::SimulationDistance(_) => "simulation_distance",
                     Params::<'a>::SpawnPosition(_) => "spawn_position",
                     Params::<'a>::UpdateTime(_) => "update_time",
                     Params::<'a>::EntitySoundEffect(_) => "entity_sound_effect",
@@ -10920,7 +10565,7 @@ pub mod play {
                     Params::<'a>::EntityEffect(_) => "entity_effect",
                     Params::<'a>::SelectAdvancementTab(_) => "select_advancement_tab",
                     Params::<'a>::DeclareRecipes(_) => "declare_recipes",
-                    Params::<'a>::ParamsTags(_) => "tags",
+                    Params::<'a>::Tags(_) => "tags",
                     Params::<'a>::AcknowledgePlayerDigging(_) => "acknowledge_player_digging",
                     Params::<'a>::SculkVibrationSignal(_) => "sculk_vibration_signal",
                     Params::<'a>::ClearTitles(_) => "clear_titles",
@@ -10931,7 +10576,7 @@ pub mod play {
                     Params::<'a>::WorldBorderSize(_) => "world_border_size",
                     Params::<'a>::WorldBorderWarningDelay(_) => "world_border_warning_delay",
                     Params::<'a>::WorldBorderWarningReach(_) => "world_border_warning_reach",
-                    Params::<'a>::ParamsPing(_) => "ping",
+                    Params::<'a>::Ping(_) => "ping",
                     Params::<'a>::SetTitleSubtitle(_) => "set_title_subtitle",
                     Params::<'a>::SetTitleText(_) => "set_title_text",
                     Params::<'a>::SetTitleTime(_) => "set_title_time",
@@ -10965,7 +10610,7 @@ pub mod play {
                         let w = PacketNamedEntitySpawn::serialize(&val, w)?;
                         w
                     }
-                    Params::<'a>::ParamsAnimation(val) => {
+                    Params::<'a>::Animation(val) => {
                         let w = PacketAnimation::serialize(&val, w)?;
                         w
                     }
@@ -10997,7 +10642,7 @@ pub mod play {
                         let w = PacketBossBar::<'a>::serialize(&val, w)?;
                         w
                     }
-                    Params::<'a>::ParamsDifficulty(val) => {
+                    Params::<'a>::Difficulty(val) => {
                         let w = PacketDifficulty::serialize(&val, w)?;
                         w
                     }
@@ -11061,7 +10706,7 @@ pub mod play {
                         let w = PacketKickDisconnect::<'a>::serialize(&val, w)?;
                         w
                     }
-                    Params::<'a>::ParamsEntityStatus(val) => {
+                    Params::<'a>::EntityStatus(val) => {
                         let w = PacketEntityStatus::serialize(&val, w)?;
                         w
                     }
@@ -11161,7 +10806,7 @@ pub mod play {
                         let w = PacketPlayerInfo::<'a>::serialize(&val, w)?;
                         w
                     }
-                    Params::<'a>::ParamsPosition(val) => {
+                    Params::<'a>::Position(val) => {
                         let w = PacketPosition::serialize(&val, w)?;
                         w
                     }
@@ -11209,7 +10854,7 @@ pub mod play {
                         let w = PacketScoreboardDisplayObjective::<'a>::serialize(&val, w)?;
                         w
                     }
-                    Params::<'a>::ParamsEntityMetadata(val) => {
+                    Params::<'a>::EntityMetadata(val) => {
                         let w = PacketEntityMetadata::<'a>::serialize(&val, w)?;
                         w
                     }
@@ -11225,7 +10870,7 @@ pub mod play {
                         let w = PacketEntityEquipment::serialize(&val, w)?;
                         w
                     }
-                    Params::<'a>::ParamsExperience(val) => {
+                    Params::<'a>::Experience(val) => {
                         let w = PacketExperience::serialize(&val, w)?;
                         w
                     }
@@ -11249,7 +10894,7 @@ pub mod play {
                         let w = PacketScoreboardScore::<'a>::serialize(&val, w)?;
                         w
                     }
-                    Params::<'a>::ParamsSimulationDistance(val) => {
+                    Params::<'a>::SimulationDistance(val) => {
                         let w = PacketSimulationDistance::serialize(&val, w)?;
                         w
                     }
@@ -11301,7 +10946,7 @@ pub mod play {
                         let w = PacketDeclareRecipes::<'a>::serialize(&val, w)?;
                         w
                     }
-                    Params::<'a>::ParamsTags(val) => {
+                    Params::<'a>::Tags(val) => {
                         let w = PacketTags::<'a>::serialize(&val, w)?;
                         w
                     }
@@ -11345,7 +10990,7 @@ pub mod play {
                         let w = PacketWorldBorderWarningReach::serialize(&val, w)?;
                         w
                     }
-                    Params::<'a>::ParamsPing(val) => {
+                    Params::<'a>::Ping(val) => {
                         let w = PacketPing::serialize(&val, w)?;
                         w
                     }
@@ -11361,7 +11006,7 @@ pub mod play {
                         let w = PacketSetTitleTime::serialize(&val, w)?;
                         w
                     }
-                    Params::<'a>::Default(val) => Void::serialize(val, w)?,
+                    Params::<'a>::Default => w,
                 };
 
                 Ok(w)
@@ -11636,7 +11281,7 @@ pub mod play {
                         )(input),
                         "animation" => nom::combinator::map(
                             PacketAnimation::deserialize,
-                            Params::<'a>::ParamsAnimation,
+                            Params::<'a>::Animation,
                         )(input),
                         "statistics" => nom::combinator::map(
                             PacketStatistics::deserialize,
@@ -11668,7 +11313,7 @@ pub mod play {
                         )(input),
                         "difficulty" => nom::combinator::map(
                             PacketDifficulty::deserialize,
-                            Params::<'a>::ParamsDifficulty,
+                            Params::<'a>::Difficulty,
                         )(input),
                         "tab_complete" => nom::combinator::map(
                             PacketTabComplete::<'a>::deserialize,
@@ -11732,7 +11377,7 @@ pub mod play {
                         )(input),
                         "entity_status" => nom::combinator::map(
                             PacketEntityStatus::deserialize,
-                            Params::<'a>::ParamsEntityStatus,
+                            Params::<'a>::EntityStatus,
                         )(input),
                         "explosion" => nom::combinator::map(
                             PacketExplosion::deserialize,
@@ -11832,7 +11477,7 @@ pub mod play {
                         )(input),
                         "position" => nom::combinator::map(
                             PacketPosition::deserialize,
-                            Params::<'a>::ParamsPosition,
+                            Params::<'a>::Position,
                         )(input),
                         "unlock_recipes" => nom::combinator::map(
                             PacketUnlockRecipes::<'a>::deserialize,
@@ -11880,7 +11525,7 @@ pub mod play {
                         )(input),
                         "entity_metadata" => nom::combinator::map(
                             PacketEntityMetadata::<'a>::deserialize,
-                            Params::<'a>::ParamsEntityMetadata,
+                            Params::<'a>::EntityMetadata,
                         )(input),
                         "attach_entity" => nom::combinator::map(
                             PacketAttachEntity::deserialize,
@@ -11896,7 +11541,7 @@ pub mod play {
                         )(input),
                         "experience" => nom::combinator::map(
                             PacketExperience::deserialize,
-                            Params::<'a>::ParamsExperience,
+                            Params::<'a>::Experience,
                         )(input),
                         "update_health" => nom::combinator::map(
                             PacketUpdateHealth::deserialize,
@@ -11920,7 +11565,7 @@ pub mod play {
                         )(input),
                         "simulation_distance" => nom::combinator::map(
                             PacketSimulationDistance::deserialize,
-                            Params::<'a>::ParamsSimulationDistance,
+                            Params::<'a>::SimulationDistance,
                         )(input),
                         "spawn_position" => nom::combinator::map(
                             PacketSpawnPosition::deserialize,
@@ -11972,7 +11617,7 @@ pub mod play {
                         )(input),
                         "tags" => nom::combinator::map(
                             PacketTags::<'a>::deserialize,
-                            Params::<'a>::ParamsTags,
+                            Params::<'a>::Tags,
                         )(input),
                         "acknowledge_player_digging" => nom::combinator::map(
                             PacketAcknowledgePlayerDigging::deserialize,
@@ -12014,10 +11659,9 @@ pub mod play {
                             PacketWorldBorderWarningReach::deserialize,
                             Params::<'a>::WorldBorderWarningReach,
                         )(input),
-                        "ping" => nom::combinator::map(
-                            PacketPing::deserialize,
-                            Params::<'a>::ParamsPing,
-                        )(input),
+                        "ping" => {
+                            nom::combinator::map(PacketPing::deserialize, Params::<'a>::Ping)(input)
+                        }
                         "set_title_subtitle" => nom::combinator::map(
                             PacketSetTitleSubtitle::<'a>::deserialize,
                             Params::<'a>::SetTitleSubtitle,
@@ -12030,7 +11674,7 @@ pub mod play {
                             PacketSetTitleTime::deserialize,
                             Params::<'a>::SetTitleTime,
                         )(input),
-                        _ => nom::combinator::map(Void::deserialize, Params::<'a>::Default)(input),
+                        _ => Ok((input, Params::<'a>::Default)),
                     })(input)?;
                     Ok((
                         input,
@@ -12758,7 +12402,7 @@ pub mod play {
 
         pub enum X {
             X2(f32),
-            Default(Void),
+            Default,
         }
 
         impl X {
@@ -12779,7 +12423,7 @@ pub mod play {
                         let w = f32::serialize(&val, w)?;
                         w
                     }
-                    X::Default(val) => Void::serialize(val, w)?,
+                    X::Default => w,
                 };
 
                 Ok(w)
@@ -12787,7 +12431,7 @@ pub mod play {
         }
         pub enum UseEntityY {
             UseEntityY2(f32),
-            Default(Void),
+            Default,
         }
 
         impl UseEntityY {
@@ -12808,7 +12452,7 @@ pub mod play {
                         let w = f32::serialize(&val, w)?;
                         w
                     }
-                    UseEntityY::Default(val) => Void::serialize(val, w)?,
+                    UseEntityY::Default => w,
                 };
 
                 Ok(w)
@@ -12816,7 +12460,7 @@ pub mod play {
         }
         pub enum Z {
             Z2(f32),
-            Default(Void),
+            Default,
         }
 
         impl Z {
@@ -12837,7 +12481,7 @@ pub mod play {
                         let w = f32::serialize(&val, w)?;
                         w
                     }
-                    Z::Default(val) => Void::serialize(val, w)?,
+                    Z::Default => w,
                 };
 
                 Ok(w)
@@ -12846,7 +12490,7 @@ pub mod play {
         pub enum UseEntityHand {
             UseEntityHand0(VarInt),
             UseEntityHand2(VarInt),
-            Default(Void),
+            Default,
         }
 
         impl UseEntityHand {
@@ -12872,7 +12516,7 @@ pub mod play {
                         let w = VarInt::serialize(&val, w)?;
                         w
                     }
-                    UseEntityHand::Default(val) => Void::serialize(val, w)?,
+                    UseEntityHand::Default => w,
                 };
 
                 Ok(w)
@@ -12910,17 +12554,17 @@ pub mod play {
                     let (input, self_mouse) = (VarInt::deserialize)(input)?;
                     let (input, self_x) = (|input| match &format!("{}", self_mouse)[..] {
                         "2" => nom::combinator::map(f32::deserialize, X::X2)(input),
-                        _ => nom::combinator::map(Void::deserialize, X::Default)(input),
+                        _ => Ok((input, X::Default)),
                     })(input)?;
                     let (input, self_y) = (|input| match &format!("{}", self_mouse)[..] {
                         "2" => {
                             nom::combinator::map(f32::deserialize, UseEntityY::UseEntityY2)(input)
                         }
-                        _ => nom::combinator::map(Void::deserialize, UseEntityY::Default)(input),
+                        _ => Ok((input, UseEntityY::Default)),
                     })(input)?;
                     let (input, self_z) = (|input| match &format!("{}", self_mouse)[..] {
                         "2" => nom::combinator::map(f32::deserialize, Z::Z2)(input),
-                        _ => nom::combinator::map(Void::deserialize, Z::Default)(input),
+                        _ => Ok((input, Z::Default)),
                     })(input)?;
                     let (input, self_hand) = (|input| match &format!("{}", self_mouse)[..] {
                         "0" => nom::combinator::map(
@@ -12931,7 +12575,7 @@ pub mod play {
                             VarInt::deserialize,
                             UseEntityHand::UseEntityHand2,
                         )(input),
-                        _ => nom::combinator::map(Void::deserialize, UseEntityHand::Default)(input),
+                        _ => Ok((input, UseEntityHand::Default)),
                     })(input)?;
                     let (input, self_sneaking) = (bool::deserialize)(input)?;
                     Ok((
@@ -13708,15 +13352,15 @@ pub mod play {
 
         pub enum TabId<'a> {
             TabId0(VarString<'a>),
-            TabId1(Void),
-            Default(Void),
+            TabId1,
+            Default,
         }
 
         impl<'a> TabId<'a> {
             pub fn discriminant(&self) -> &'static str {
                 match self {
                     TabId::<'a>::TabId0(_) => "0",
-                    TabId::<'a>::TabId1(_) => "1",
+                    TabId::<'a>::TabId1 => "1",
                     _ => "",
                 }
             }
@@ -13731,11 +13375,8 @@ pub mod play {
                         let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
                         w
                     }
-                    TabId::<'a>::TabId1(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    TabId::<'a>::Default(val) => Void::serialize(val, w)?,
+                    TabId::<'a>::TabId1 => w,
+                    TabId::<'a>::Default => w,
                 };
 
                 Ok(w)
@@ -13765,8 +13406,8 @@ pub mod play {
                             PrefixedString::<'a, VarInt>::deserialize,
                             TabId::<'a>::TabId0,
                         )(input),
-                        "1" => nom::combinator::map(Void::deserialize, TabId::<'a>::TabId1)(input),
-                        _ => nom::combinator::map(Void::deserialize, TabId::<'a>::Default)(input),
+                        "1" => Ok((input, TabId::<'a>::TabId1)),
+                        _ => Ok((input, TabId::<'a>::Default)),
                     })(input)?;
                     Ok((
                         input,
@@ -13825,7 +13466,7 @@ pub mod play {
             GenerateStructure(PacketGenerateStructure),
             KeepAlive(PacketKeepAlive),
             LockDifficulty(PacketLockDifficulty),
-            ParamsPosition(PacketPosition),
+            Position(PacketPosition),
             PositionLook(PacketPositionLook),
             Look(PacketLook),
             Flying(PacketFlying),
@@ -13849,7 +13490,7 @@ pub mod play {
             UseItem(PacketUseItem),
             AdvancementTab(PacketAdvancementTab<'a>),
             Pong(PacketPong),
-            Default(Void),
+            Default,
         }
 
         impl<'a> Params<'a> {
@@ -13879,7 +13520,7 @@ pub mod play {
                     Params::<'a>::GenerateStructure(_) => "generate_structure",
                     Params::<'a>::KeepAlive(_) => "keep_alive",
                     Params::<'a>::LockDifficulty(_) => "lock_difficulty",
-                    Params::<'a>::ParamsPosition(_) => "position",
+                    Params::<'a>::Position(_) => "position",
                     Params::<'a>::PositionLook(_) => "position_look",
                     Params::<'a>::Look(_) => "look",
                     Params::<'a>::Flying(_) => "flying",
@@ -14009,7 +13650,7 @@ pub mod play {
                         let w = PacketLockDifficulty::serialize(&val, w)?;
                         w
                     }
-                    Params::<'a>::ParamsPosition(val) => {
+                    Params::<'a>::Position(val) => {
                         let w = PacketPosition::serialize(&val, w)?;
                         w
                     }
@@ -14105,7 +13746,7 @@ pub mod play {
                         let w = PacketPong::serialize(&val, w)?;
                         w
                     }
-                    Params::<'a>::Default(val) => Void::serialize(val, w)?,
+                    Params::<'a>::Default => w,
                 };
 
                 Ok(w)
@@ -14344,7 +13985,7 @@ pub mod play {
                         )(input),
                         "position" => nom::combinator::map(
                             PacketPosition::deserialize,
-                            Params::<'a>::ParamsPosition,
+                            Params::<'a>::Position,
                         )(input),
                         "position_look" => nom::combinator::map(
                             PacketPositionLook::deserialize,
@@ -14436,7 +14077,7 @@ pub mod play {
                         "pong" => {
                             nom::combinator::map(PacketPong::deserialize, Params::<'a>::Pong)(input)
                         }
-                        _ => nom::combinator::map(Void::deserialize, Params::<'a>::Default)(input),
+                        _ => Ok((input, Params::<'a>::Default)),
                     })(input)?;
                     Ok((
                         input,

@@ -45,6 +45,7 @@
         ["toClient", "clientbound"],
         ["toServer", "serverbound"],
         ["u_u_i_d", "uuid"],
-        ["_i_d", "_id"]
+        ["_i_d", "_id"],
+        ["([^a-zA-Z0-9])Value([^a-zA-Z0-9])", "\\1EntityMetadata\\2"]
     ]
 }

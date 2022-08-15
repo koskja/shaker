@@ -330,15 +330,14 @@ class Switch(IType):
                 lambda x: f"{x[0]}"
                 + (
                     ""
-                    if isinstance(x[1], NativeType) and x[1].void and False #TODO
+                    if is_void(x[1])
                     else f"({x[1].name()})"
                 )
                 + ", \n",
                 self.fields.values(),
             )
         )
-        a += 'Default' + ('' if isinstance(self.default, NativeType)
-        and False and self.default.void else f'({self.default.name()})') + ', \n' #TODO
+        a += 'Default' + ('' if is_void(self.default) else f'({self.default.name()})') + ', \n'
         a += "}\n"
         b = f"""
         impl{("<'a>" if self.has_lifetime() else "")} {self.name()} {{
@@ -346,7 +345,7 @@ class Switch(IType):
                 match self {{
                     {
                         ''.join(
-                            [f'{self.ty_name()}::{a[1][0]}(_) => "{a[0]}", ' for a in self.fields.items()]
+                            [f'{self.ty_name()}::{a[1][0]}{"" if is_void(a[1][1]) else "(_)"} => "{a[0]}", ' for a in self.fields.items()]
                         )
                     }
                     _ => ""
@@ -376,20 +375,21 @@ class Switch(IType):
         compare_to = prev[-1][0]
         m = f'match &format!("{{}}", {compare_to})[..] {{\n'
         arms = ''.join(
-            [f'"{a[0]}" => nom::combinator::map({a[1][1].emit_de(previous+[(previous[-1][0], a[1][1])]) or "()"}, {self.ty_name()}::{a[1][0]})(input),\n' for a in self.fields.items()]
+            [f'"{a[0]}" => nom::combinator::map({a[1][1].emit_de(previous+[(previous[-1][0], a[1][1])]) or "()"}, {self.ty_name()}::{a[1][0]})(input),\n' if not is_void(a[1][1]) else f'"{a[0]}" => Ok((input ,{self.ty_name()}::{a[1][0]})),\n' for a in self.fields.items()]
         )
-        return f'|input| {{ {m}{arms} _ => nom::combinator::map({self.default.emit_de(previous+[(previous[-1][0], self.default)])}, {self.ty_name()}::Default)(input)}} }}'
+        return f'|input| {{ {m}{arms}' + (f'_ => nom::combinator::map({self.default.emit_de(previous+[(previous[-1][0], self.default)])}, {self.ty_name()}::Default)(input)' if not is_void(self.default) else f'_ => Ok((input, {self.ty_name()}::Default)),\n') + '} }'
+
 
     def emit_ser(self, val) -> str:
         return f'let w = {self.ty_name()}::serialize(&{val}, w)?;'
 
     def true_ser(self, val) -> str:
         arms = ''.join(map(
-            lambda x: f"{self.ty_name()}::{x[1][0]}(val) => {{ {x[1][1].emit_ser('val')} w}}, \n",
+            lambda x: f"{self.ty_name()}::{x[1][0]}" + (f"(val) => {{ {x[1][1].emit_ser('val')} w}}, \n" if not is_void(x[1][1]) else ' => w,\n'),
             self.fields.items()
         ))
         x = f"""
-        let w = match &{val} {{ {arms} {self.ty_name()}::Default(val) =>  {self.default.ty_name()}::serialize(val, w)? }};
+        let w = match &{val} {{ {arms} {self.ty_name()}::Default{'(val)' if not is_void(self.default) else ''} => {f'{self.default.ty_name()}::serialize(val, w)?' if not is_void(self.default) else 'w'} }};
         """
         return x
 
@@ -411,7 +411,7 @@ class Switch(IType):
         fields = dict(
             map(
                 lambda x: (x[0], (lambda y: (
-                    make_camelcase(y),
+                    make_camelcase(y) if x[0].isnumeric() else make_camelcase(y).replace(name, ''),
                     ctx.parse_type(x[1], y, force_name=True),
                 ))(ctx.make_unique(x[0], name, None))),
                 params["fields"].items(),
@@ -548,7 +548,7 @@ class EntityMetadataLoop(IType):
 
     @camelcased
     def construct(ctx: Context, name: str, params: Any) -> IType:
-        value = ctx.parse_type(params["type"], name, suffix = 'Item')
+        value = ctx.parse_type(params["type"], name+"Wrapper", suffix = 'Item')
         return EntityMetadataLoop(value, params['endVal'])
 
 
@@ -804,6 +804,9 @@ def make_impl(ty: IType, de: Optional[Callable[[IType, List[str]], str]] = None,
     }}\n
 }}\n
     """
+
+def is_void(ty) -> bool:
+    return isinstance(ty, NativeType) and ty.void
 
 def getVer(version: str):
     with open("/home/koskja/shaker/minecraft-data/data/dataPaths.json") as f:
