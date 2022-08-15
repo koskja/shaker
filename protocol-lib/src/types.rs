@@ -9,16 +9,17 @@ use nom::{
     branch::alt,
     bytes::complete::{tag, take},
     combinator::{map, map_opt, map_res},
-    multi::{length_count, length_data},
+    multi::{length_count, length_data, count},
     sequence::preceded,
     IResult,
 };
-use num_traits::{PrimInt, NumCast, Signed, Unsigned};
+pub use num_traits::{self, PrimInt, NumCast, Signed, Unsigned};
 use protocol_derive::SerializeFn;
 
 pub use super::varint::VInt;
 use crate::Packet;
 pub use uuid::Uuid;
+
 // FIXME: Serialize/deserialize everything as signed, even unsigned types
 
 #[derive(Debug)]
@@ -124,9 +125,7 @@ impl<'t, T: Packet<'t>, U: Packet<'t> + PrimInt> Packet<'t>
     fn serialize<W: Write>(&self, w: WriteContext<W>) -> GenResult<W> {
         let length = <U as NumCast>::from(self.0.len()).ok_or_else(|| GenError::CustomError(0))?;
         let mut w = length.serialize(w)?;
-        for i in &self.0 {
-            w = i.serialize(w)?;
-        }
+        w = self.serialize_ext(w)?;
         Ok(w)
     }
 
@@ -135,6 +134,26 @@ impl<'t, T: Packet<'t>, U: Packet<'t> + PrimInt> Packet<'t>
             length_count(map_opt(U::deserialize, |x| x.to_usize()), T::deserialize),
             |x| Self(x, PhantomData),
         )(input)
+    }
+}
+impl<'t, T: Packet<'t>, U: Packet<'t> + PrimInt> PrefixedArray<T, U> {
+    pub fn deserialize_ext(input: &'t [u8], size: U) -> IResult<&'t [u8], Self> {
+        let size = size.to_usize().ok_or(nom::Err::Error(nom::error::Error::new(
+            input,
+            nom::error::ErrorKind::TooLarge,
+        )))?;
+        map(count(T::deserialize, size), |x| Self(x, PhantomData))(input)
+    }
+    pub fn serialize_ext<W: Write>(&self, mut w: WriteContext<W>) -> GenResult<W> {
+        for i in &self.0 {
+            w = i.serialize(w)?;
+        }
+        Ok(w)
+    }
+}
+impl<T, U: PrimInt> PrefixedArray<T, U> {
+    pub fn len(&self) -> U {
+        U::from(self.0.len()).unwrap()
     }
 }
 impl<'t> Packet<'t> for uuid::Uuid {

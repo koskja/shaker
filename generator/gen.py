@@ -5,7 +5,7 @@ import re
 import regex
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
-from sympy import Integer, public
+from sympy import Integer
 
 from helpers import *
 
@@ -293,6 +293,7 @@ class Mapper(IType): # TODO: make this not suck - somehow skip intermediate str
         return f""" 
         let tag = match &{val}[..] {{
             {arms}
+            _ => panic!("invalid value")
             }};
         let tag2 = str::parse(tag).unwrap();
         {self.match_ty.emit_ser('tag2')}
@@ -351,6 +352,11 @@ class Switch(IType):
                     _ => ""
                 }}
             }}
+            pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {{
+                use protocol_lib::Packet;
+                {self.true_ser('self')}
+                Ok(w)
+            }}
         }}
         """
         return a + b
@@ -375,6 +381,9 @@ class Switch(IType):
         return f'|input| {{ {m}{arms} _ => nom::combinator::map({self.default.emit_de(previous+[(previous[-1][0], self.default)])}, {self.ty_name()}::Default)(input)}} }}'
 
     def emit_ser(self, val) -> str:
+        return f'let w = {self.ty_name()}::serialize(&{val}, w)?;'
+
+    def true_ser(self, val) -> str:
         arms = ''.join(map(
             lambda x: f"{self.ty_name()}::{x[1][0]}(val) => {{ {x[1][1].emit_ser('val')} w}}, \n",
             self.fields.items()
@@ -557,9 +566,8 @@ class TopbitTerminated(IType):
     def emit_de(self, previous) -> str:
         return f""" |mut input| {{
             let mut val = std::collections::HashMap::new();
-            let mut i = input;
             loop {{
-                let (i, (k_, v)) = nom::sequence::tuple((i8::deserialize, {self.item.ty_name()}::deserialize))(i)?;
+                let (i, (k_, v)) = nom::sequence::tuple((i8::deserialize, {self.item.ty_name()}::deserialize))(input)?;
                 input = i;
                 let k = k_ & 0x7F;
                 val.insert(k, v);
@@ -567,7 +575,6 @@ class TopbitTerminated(IType):
                     break
                 }}
             }}
-            let input = i;
             Ok((input, val)) }}
         """
 
@@ -602,33 +609,77 @@ class TopbitTerminated(IType):
 
 class ExternallyTaggedArray(IType):
     item: IType = None
-    count: str = ""
+    count: Optional[str] = ""
+    count_ty: IType
 
-    def __init__(self, item: IType, count: str) -> None:
+    def __init__(self, item: IType, count: Optional[str], count_ty: IType) -> None:
         self.item = item
         self.count = count
+        self.count_ty = count_ty
 
     def emit_extra(self) -> str:
         return ""
 
     def emit_de(self, previous) -> str:
-        return ''
+        if not self.count:
+            if not self.discriminant_level():
+                return f"""
+                    PrefixedArray::<{self.item.name()}, {self.count_ty.name()}>::deserialize
+                """
+            else:
+                return f"""
+                    |input| {{
+                        let (input, len) = {self.count_ty.emit_de(previous)}(input)?;
+                        let len = protocol_lib::types::num_traits::ToPrimitive::to_usize(&len).ok_or(nom::Err::Error(nom::error::Error::new(
+                            input,
+                            nom::error::ErrorKind::TooLarge,
+                        )))?;
+                        nom::combinator::map(nom::multi::count({self.item.emit_de(previous)}, len), |x| {self.ty_name()}(x, core::marker::PhantomData))(input)
+                    }}
+                """
+
+        else:
+            return f"""
+                |input| {{
+                    let len = {previous[-2][0] + '_' + self.count};
+                    let len = protocol_lib::types::num_traits::ToPrimitive::to_usize(&len).ok_or(nom::Err::Error(nom::error::Error::new(
+                        input,
+                        nom::error::ErrorKind::TooLarge,
+                    )))?;
+                    nom::multi::count({self.item.emit_de(previous)}, len)(input)
+                }}
+            """
 
     def emit_ser(self, val) -> str:
-        return ''
+        return (f"""
+            let w = {self.ty_name()}::len(&{val}).serialize(w)?;
+        """ if not self.count else '') + f"""
+            let mut w = w;
+            let items = {val if self.count else val+'.0'}.iter();
+            for i in items {{
+                w = {{
+                    {self.item.emit_ser('i')}
+                    w
+                }}
+            }}
+        """
 
     def name(self) -> str:
-        return f"Vec<{self.item.name()}>"
+        return f"Vec<{self.item.name()}>" if self.count else f"PrefixedArray<{self.item.name()}, {self.count_ty.name()}>"
 
     def has_lifetime(self) -> bool:
         return self.item.has_lifetime()
+    
+    def discriminant_level(self) -> Integer:
+        return max((1 if self.count else 0), self.item.discriminant_level())
 
     @camelcased
     def construct(
-        ctx: Context, name: str, params
+        ctx: Context, name: str, params: Dict
     ) -> IType:
         return ExternallyTaggedArray(
-            ctx.parse_type(params["type"], name, suffix='Item'), params["count"]
+            ctx.parse_type(params["type"], name, suffix='Item'), params.get("count"),
+            ctx.parse_type(params.get("countType") or "varint", name, suffix='Count'),
         )
 
 class TyAlias(IType):

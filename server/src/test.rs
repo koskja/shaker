@@ -92,6 +92,26 @@ impl Ident0 {
             _ => "",
         }
     }
+    pub fn serialize<W: std::io::Write>(
+        &self,
+        w: cookie_factory::WriteContext<W>,
+    ) -> cookie_factory::GenResult<W> {
+        use protocol_lib::Packet;
+
+        let w = match &self {
+            Ident0::RFalse(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Ident0::RTrue(val) => {
+                let w = RTrue::serialize(&val, w)?;
+                w
+            }
+            Ident0::Default(val) => Void::serialize(val, w)?,
+        };
+
+        Ok(w)
+    }
 }
 pub struct Slot {
     present: bool,
@@ -104,18 +124,7 @@ impl<'t> protocol_lib::Packet<'t> for Slot {
         w: cookie_factory::WriteContext<W>,
     ) -> cookie_factory::GenResult<W> {
         let w = bool::serialize(&self.present, w)?;
-
-        let w = match &self.ident0 {
-            Ident0::RFalse(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            Ident0::RTrue(val) => {
-                let w = RTrue::serialize(&val, w)?;
-                w
-            }
-            Ident0::Default(val) => Void::serialize(val, w)?,
-        };
+        let w = Ident0::serialize(&self.ident0, w)?;
 
         Ok(w)
     }
@@ -328,6 +337,26 @@ impl Destination {
             _ => "",
         }
     }
+    pub fn serialize<W: std::io::Write>(
+        &self,
+        w: cookie_factory::WriteContext<W>,
+    ) -> cookie_factory::GenResult<W> {
+        use protocol_lib::Packet;
+
+        let w = match &self {
+            Destination::Block(val) => {
+                let w = Position::serialize(&val, w)?;
+                w
+            }
+            Destination::Entity(val) => {
+                let w = VarInt::serialize(&val, w)?;
+                w
+            }
+            Destination::Default(val) => Void::serialize(val, w)?,
+        };
+
+        Ok(w)
+    }
 }
 pub struct Data36<'a> {
     origin: Position,
@@ -343,19 +372,7 @@ impl<'t: 'a, 'a> protocol_lib::Packet<'t> for Data36<'a> {
     ) -> cookie_factory::GenResult<W> {
         let w = Position::serialize(&self.origin, w)?;
         let w = PrefixedString::<'a, VarInt>::serialize(&self.position_type, w)?;
-
-        let w = match &self.destination {
-            Destination::Block(val) => {
-                let w = Position::serialize(&val, w)?;
-                w
-            }
-            Destination::Entity(val) => {
-                let w = VarInt::serialize(&val, w)?;
-                w
-            }
-            Destination::Default(val) => Void::serialize(val, w)?,
-        };
-
+        let w = Destination::serialize(&self.destination, w)?;
         let w = VarInt::serialize(&self.ticks, w)?;
 
         Ok(w)
@@ -412,20 +429,13 @@ impl<'a> Data<'a> {
             _ => "",
         }
     }
-}
-pub struct Particle<'a> {
-    particle_id: VarInt,
-    data: Data<'a>,
-}
-
-impl<'t: 'a, 'a> protocol_lib::Packet<'t> for Particle<'a> {
-    fn serialize<W: std::io::Write>(
+    pub fn serialize<W: std::io::Write>(
         &self,
         w: cookie_factory::WriteContext<W>,
     ) -> cookie_factory::GenResult<W> {
-        let w = VarInt::serialize(&self.particle_id, w)?;
+        use protocol_lib::Packet;
 
-        let w = match &self.data {
+        let w = match &self {
             Data::<'a>::Data2(val) => {
                 let w = Data2::serialize(&val, w)?;
                 w
@@ -456,6 +466,22 @@ impl<'t: 'a, 'a> protocol_lib::Packet<'t> for Particle<'a> {
             }
             Data::<'a>::Default(val) => Void::serialize(val, w)?,
         };
+
+        Ok(w)
+    }
+}
+pub struct Particle<'a> {
+    particle_id: VarInt,
+    data: Data<'a>,
+}
+
+impl<'t: 'a, 'a> protocol_lib::Packet<'t> for Particle<'a> {
+    fn serialize<W: std::io::Write>(
+        &self,
+        w: cookie_factory::WriteContext<W>,
+    ) -> cookie_factory::GenResult<W> {
+        let w = VarInt::serialize(&self.particle_id, w)?;
+        let w = Data::<'a>::serialize(&self.data, w)?;
 
         Ok(w)
     }
@@ -616,22 +642,13 @@ impl<'a> Value<'a> {
             _ => "",
         }
     }
-}
-pub struct EntityMetadata<'a> {
-    key: u8,
-    r_type: VarInt,
-    value: Value<'a>,
-}
-
-impl<'t: 'a, 'a> protocol_lib::Packet<'t> for EntityMetadata<'a> {
-    fn serialize<W: std::io::Write>(
+    pub fn serialize<W: std::io::Write>(
         &self,
         w: cookie_factory::WriteContext<W>,
     ) -> cookie_factory::GenResult<W> {
-        let w = u8::serialize(&self.key, w)?;
-        let w = VarInt::serialize(&self.r_type, w)?;
+        use protocol_lib::Packet;
 
-        let w = match &self.value {
+        let w = match &self {
             Value::<'a>::Value0(val) => {
                 let w = i8::serialize(&val, w)?;
                 w
@@ -713,6 +730,24 @@ impl<'t: 'a, 'a> protocol_lib::Packet<'t> for EntityMetadata<'a> {
 
         Ok(w)
     }
+}
+pub struct EntityMetadata<'a> {
+    key: u8,
+    r_type: VarInt,
+    value: Value<'a>,
+}
+
+impl<'t: 'a, 'a> protocol_lib::Packet<'t> for EntityMetadata<'a> {
+    fn serialize<W: std::io::Write>(
+        &self,
+        w: cookie_factory::WriteContext<W>,
+    ) -> cookie_factory::GenResult<W> {
+        let w = u8::serialize(&self.key, w)?;
+        let w = VarInt::serialize(&self.r_type, w)?;
+        let w = Value::<'a>::serialize(&self.value, w)?;
+
+        Ok(w)
+    }
 
     fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
         (|input| {
@@ -783,7 +818,18 @@ impl<'t: 'a, 'a> protocol_lib::Packet<'t> for MinecraftSmeltingFormat<'a> {
         w: cookie_factory::WriteContext<W>,
     ) -> cookie_factory::GenResult<W> {
         let w = PrefixedString::<'a, VarInt>::serialize(&self.group, w)?;
-        let w = PrefixedArray::<Slot, VarInt>::serialize(&self.ingredient, w)?;
+
+        let w = PrefixedArray::<Slot, VarInt>::len(&self.ingredient).serialize(w)?;
+
+        let mut w = w;
+        let items = self.ingredient.0.iter();
+        for i in items {
+            w = {
+                let w = Slot::serialize(&i, w)?;
+                w
+            }
+        }
+
         let w = Slot::serialize(&self.result, w)?;
         let w = f32::serialize(&self.experience, w)?;
         let w = VarInt::serialize(&self.cook_time, w)?;
@@ -822,7 +868,17 @@ impl<'t: 'a, 'a> protocol_lib::Packet<'t> for Tag<'a> {
         w: cookie_factory::WriteContext<W>,
     ) -> cookie_factory::GenResult<W> {
         let w = PrefixedString::<'a, VarInt>::serialize(&self.tag_name, w)?;
-        let w = PrefixedArray::<VarInt, VarInt>::serialize(&self.entries, w)?;
+
+        let w = PrefixedArray::<VarInt, VarInt>::len(&self.entries).serialize(w)?;
+
+        let mut w = w;
+        let items = self.entries.0.iter();
+        for i in items {
+            w = {
+                let w = VarInt::serialize(&i, w)?;
+                w
+            }
+        }
 
         Ok(w)
     }
@@ -964,6 +1020,22 @@ impl RedirectNode {
             _ => "",
         }
     }
+    pub fn serialize<W: std::io::Write>(
+        &self,
+        w: cookie_factory::WriteContext<W>,
+    ) -> cookie_factory::GenResult<W> {
+        use protocol_lib::Packet;
+
+        let w = match &self {
+            RedirectNode::RedirectNode1(val) => {
+                let w = VarInt::serialize(&val, w)?;
+                w
+            }
+            RedirectNode::Default(val) => Void::serialize(val, w)?,
+        };
+
+        Ok(w)
+    }
 }
 pub struct ExtraNodeData1<'a> {
     name: VarString<'a>,
@@ -1038,6 +1110,22 @@ impl Min {
             _ => "",
         }
     }
+    pub fn serialize<W: std::io::Write>(
+        &self,
+        w: cookie_factory::WriteContext<W>,
+    ) -> cookie_factory::GenResult<W> {
+        use protocol_lib::Packet;
+
+        let w = match &self {
+            Min::Min1(val) => {
+                let w = f32::serialize(&val, w)?;
+                w
+            }
+            Min::Default(val) => Void::serialize(val, w)?,
+        };
+
+        Ok(w)
+    }
 }
 pub enum Max {
     Max1(f32),
@@ -1050,6 +1138,22 @@ impl Max {
             Max::Max1(_) => "1",
             _ => "",
         }
+    }
+    pub fn serialize<W: std::io::Write>(
+        &self,
+        w: cookie_factory::WriteContext<W>,
+    ) -> cookie_factory::GenResult<W> {
+        use protocol_lib::Packet;
+
+        let w = match &self {
+            Max::Max1(val) => {
+                let w = f32::serialize(&val, w)?;
+                w
+            }
+            Max::Default(val) => Void::serialize(val, w)?,
+        };
+
+        Ok(w)
     }
 }
 pub struct Float {
@@ -1064,22 +1168,8 @@ impl<'t> protocol_lib::Packet<'t> for Float {
         w: cookie_factory::WriteContext<W>,
     ) -> cookie_factory::GenResult<W> {
         let w = FloatFlags::serialize(&self.flags, w)?;
-
-        let w = match &self.min {
-            Min::Min1(val) => {
-                let w = f32::serialize(&val, w)?;
-                w
-            }
-            Min::Default(val) => Void::serialize(val, w)?,
-        };
-
-        let w = match &self.max {
-            Max::Max1(val) => {
-                let w = f32::serialize(&val, w)?;
-                w
-            }
-            Max::Default(val) => Void::serialize(val, w)?,
-        };
+        let w = Min::serialize(&self.min, w)?;
+        let w = Max::serialize(&self.max, w)?;
 
         Ok(w)
     }
@@ -1158,6 +1248,22 @@ impl DoubleMin {
             _ => "",
         }
     }
+    pub fn serialize<W: std::io::Write>(
+        &self,
+        w: cookie_factory::WriteContext<W>,
+    ) -> cookie_factory::GenResult<W> {
+        use protocol_lib::Packet;
+
+        let w = match &self {
+            DoubleMin::DoubleMin1(val) => {
+                let w = f64::serialize(&val, w)?;
+                w
+            }
+            DoubleMin::Default(val) => Void::serialize(val, w)?,
+        };
+
+        Ok(w)
+    }
 }
 pub enum DoubleMax {
     DoubleMax1(f64),
@@ -1170,6 +1276,22 @@ impl DoubleMax {
             DoubleMax::DoubleMax1(_) => "1",
             _ => "",
         }
+    }
+    pub fn serialize<W: std::io::Write>(
+        &self,
+        w: cookie_factory::WriteContext<W>,
+    ) -> cookie_factory::GenResult<W> {
+        use protocol_lib::Packet;
+
+        let w = match &self {
+            DoubleMax::DoubleMax1(val) => {
+                let w = f64::serialize(&val, w)?;
+                w
+            }
+            DoubleMax::Default(val) => Void::serialize(val, w)?,
+        };
+
+        Ok(w)
     }
 }
 pub struct Double {
@@ -1184,22 +1306,8 @@ impl<'t> protocol_lib::Packet<'t> for Double {
         w: cookie_factory::WriteContext<W>,
     ) -> cookie_factory::GenResult<W> {
         let w = DoubleFlags::serialize(&self.flags, w)?;
-
-        let w = match &self.min {
-            DoubleMin::DoubleMin1(val) => {
-                let w = f64::serialize(&val, w)?;
-                w
-            }
-            DoubleMin::Default(val) => Void::serialize(val, w)?,
-        };
-
-        let w = match &self.max {
-            DoubleMax::DoubleMax1(val) => {
-                let w = f64::serialize(&val, w)?;
-                w
-            }
-            DoubleMax::Default(val) => Void::serialize(val, w)?,
-        };
+        let w = DoubleMin::serialize(&self.min, w)?;
+        let w = DoubleMax::serialize(&self.max, w)?;
 
         Ok(w)
     }
@@ -1278,6 +1386,22 @@ impl IntegerMin {
             _ => "",
         }
     }
+    pub fn serialize<W: std::io::Write>(
+        &self,
+        w: cookie_factory::WriteContext<W>,
+    ) -> cookie_factory::GenResult<W> {
+        use protocol_lib::Packet;
+
+        let w = match &self {
+            IntegerMin::IntegerMin1(val) => {
+                let w = i32::serialize(&val, w)?;
+                w
+            }
+            IntegerMin::Default(val) => Void::serialize(val, w)?,
+        };
+
+        Ok(w)
+    }
 }
 pub enum IntegerMax {
     IntegerMax1(i32),
@@ -1290,6 +1414,22 @@ impl IntegerMax {
             IntegerMax::IntegerMax1(_) => "1",
             _ => "",
         }
+    }
+    pub fn serialize<W: std::io::Write>(
+        &self,
+        w: cookie_factory::WriteContext<W>,
+    ) -> cookie_factory::GenResult<W> {
+        use protocol_lib::Packet;
+
+        let w = match &self {
+            IntegerMax::IntegerMax1(val) => {
+                let w = i32::serialize(&val, w)?;
+                w
+            }
+            IntegerMax::Default(val) => Void::serialize(val, w)?,
+        };
+
+        Ok(w)
     }
 }
 pub struct Integer {
@@ -1304,22 +1444,8 @@ impl<'t> protocol_lib::Packet<'t> for Integer {
         w: cookie_factory::WriteContext<W>,
     ) -> cookie_factory::GenResult<W> {
         let w = IntegerFlags::serialize(&self.flags, w)?;
-
-        let w = match &self.min {
-            IntegerMin::IntegerMin1(val) => {
-                let w = i32::serialize(&val, w)?;
-                w
-            }
-            IntegerMin::Default(val) => Void::serialize(val, w)?,
-        };
-
-        let w = match &self.max {
-            IntegerMax::IntegerMax1(val) => {
-                let w = i32::serialize(&val, w)?;
-                w
-            }
-            IntegerMax::Default(val) => Void::serialize(val, w)?,
-        };
+        let w = IntegerMin::serialize(&self.min, w)?;
+        let w = IntegerMax::serialize(&self.max, w)?;
 
         Ok(w)
     }
@@ -1398,6 +1524,22 @@ impl LongMin {
             _ => "",
         }
     }
+    pub fn serialize<W: std::io::Write>(
+        &self,
+        w: cookie_factory::WriteContext<W>,
+    ) -> cookie_factory::GenResult<W> {
+        use protocol_lib::Packet;
+
+        let w = match &self {
+            LongMin::LongMin1(val) => {
+                let w = i64::serialize(&val, w)?;
+                w
+            }
+            LongMin::Default(val) => Void::serialize(val, w)?,
+        };
+
+        Ok(w)
+    }
 }
 pub enum LongMax {
     LongMax1(i64),
@@ -1410,6 +1552,22 @@ impl LongMax {
             LongMax::LongMax1(_) => "1",
             _ => "",
         }
+    }
+    pub fn serialize<W: std::io::Write>(
+        &self,
+        w: cookie_factory::WriteContext<W>,
+    ) -> cookie_factory::GenResult<W> {
+        use protocol_lib::Packet;
+
+        let w = match &self {
+            LongMax::LongMax1(val) => {
+                let w = i64::serialize(&val, w)?;
+                w
+            }
+            LongMax::Default(val) => Void::serialize(val, w)?,
+        };
+
+        Ok(w)
     }
 }
 pub struct Long {
@@ -1424,22 +1582,8 @@ impl<'t> protocol_lib::Packet<'t> for Long {
         w: cookie_factory::WriteContext<W>,
     ) -> cookie_factory::GenResult<W> {
         let w = LongFlags::serialize(&self.flags, w)?;
-
-        let w = match &self.min {
-            LongMin::LongMin1(val) => {
-                let w = i64::serialize(&val, w)?;
-                w
-            }
-            LongMin::Default(val) => Void::serialize(val, w)?,
-        };
-
-        let w = match &self.max {
-            LongMax::LongMax1(val) => {
-                let w = i64::serialize(&val, w)?;
-                w
-            }
-            LongMax::Default(val) => Void::serialize(val, w)?,
-        };
+        let w = LongMin::serialize(&self.min, w)?;
+        let w = LongMax::serialize(&self.max, w)?;
 
         Ok(w)
     }
@@ -1705,6 +1849,214 @@ impl<'a> Properties<'a> {
             _ => "",
         }
     }
+    pub fn serialize<W: std::io::Write>(
+        &self,
+        w: cookie_factory::WriteContext<W>,
+    ) -> cookie_factory::GenResult<W> {
+        use protocol_lib::Packet;
+
+        let w = match &self {
+            Properties::<'a>::Bool(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::Float(val) => {
+                let w = Float::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::Double(val) => {
+                let w = Double::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::Integer(val) => {
+                let w = Integer::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::Long(val) => {
+                let w = Long::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::String(val) => {
+                let tag = match &val[..] {
+                    "SINGLE_WORD" => "0",
+                    "QUOTABLE_PHRASE" => "1",
+                    "GREEDY_PHRASE" => "2",
+
+                    _ => panic!("invalid value"),
+                };
+                let tag2 = str::parse(tag).unwrap();
+                let w = VarInt::serialize(&tag2, w)?;
+                w
+            }
+            Properties::<'a>::MinecraftEntity(val) => {
+                let w = MinecraftEntity::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::GameProfile(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::BlockPos(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::ColumnPos(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::Vec3(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::Vec2(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::BlockState(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::BlockPredicate(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::ItemStack(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::ItemPredicate(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::Color(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::Component(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::Message(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::Nbt(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::NbtPath(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::Objective(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::ObjectiveCriteria(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::Operation(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::Particle(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::Angle(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::Rotation(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::ScoreboardSlot(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::ScoreHolder(val) => {
+                let w = ScoreHolder::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::Swizzle(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::Team(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::ItemSlot(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::ResourceLocation(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::MobEffect(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::Function(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::EntityAnchor(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::Range(val) => {
+                let w = Range::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::IntRange(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::FloatRange(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::ItemEnchantment(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::EntitySummon(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::Dimension(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::NbtCompoundTag(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::Time(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::ResourceOrTag(val) => {
+                let w = ResourceOrTag::<'a>::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::Resource(val) => {
+                let w = Resource::<'a>::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::Uuid(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            Properties::<'a>::Default(val) => Void::serialize(val, w)?,
+        };
+
+        Ok(w)
+    }
 }
 pub enum SuggestionType<'a> {
     SuggestionType1(VarString<'a>),
@@ -1717,6 +2069,22 @@ impl<'a> SuggestionType<'a> {
             SuggestionType::<'a>::SuggestionType1(_) => "1",
             _ => "",
         }
+    }
+    pub fn serialize<W: std::io::Write>(
+        &self,
+        w: cookie_factory::WriteContext<W>,
+    ) -> cookie_factory::GenResult<W> {
+        use protocol_lib::Packet;
+
+        let w = match &self {
+            SuggestionType::<'a>::SuggestionType1(val) => {
+                let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
+                w
+            }
+            SuggestionType::<'a>::Default(val) => Void::serialize(val, w)?,
+        };
+
+        Ok(w)
     }
 }
 pub struct ExtraNodeData2<'a> {
@@ -1741,6 +2109,33 @@ impl<'a> ExtraNodeData<'a> {
             _ => "",
         }
     }
+    pub fn serialize<W: std::io::Write>(
+        &self,
+        w: cookie_factory::WriteContext<W>,
+    ) -> cookie_factory::GenResult<W> {
+        use protocol_lib::Packet;
+
+        let w = match &self {
+            ExtraNodeData::<'a>::ExtraNodeData0(val) => {
+                let w = Void::serialize(&val, w)?;
+                w
+            }
+            ExtraNodeData::<'a>::ExtraNodeData1(val) => {
+                let w = ExtraNodeData1::<'a>::serialize(&val, w)?;
+                w
+            }
+            ExtraNodeData::<'a>::ExtraNodeData2(val) => {
+                let w = PrefixedString::<'a, VarInt>::serialize(&val.name, w)?;
+                let w = PrefixedString::<'a, VarInt>::serialize(&val.parser, w)?;
+                let w = Properties::<'a>::serialize(&val.properties, w)?;
+                let w = SuggestionType::<'a>::serialize(&val.suggestion_type, w)?;
+                w
+            }
+            ExtraNodeData::<'a>::Default(val) => Void::serialize(val, w)?,
+        };
+
+        Ok(w)
+    }
 }
 pub struct CommandNode<'a> {
     flags: Flags,
@@ -1755,239 +2150,20 @@ impl<'t: 'a, 'a> protocol_lib::Packet<'t> for CommandNode<'a> {
         w: cookie_factory::WriteContext<W>,
     ) -> cookie_factory::GenResult<W> {
         let w = Flags::serialize(&self.flags, w)?;
-        let w = PrefixedArray::<VarInt, VarInt>::serialize(&self.children, w)?;
 
-        let w = match &self.redirect_node {
-            RedirectNode::RedirectNode1(val) => {
-                let w = VarInt::serialize(&val, w)?;
+        let w = PrefixedArray::<VarInt, VarInt>::len(&self.children).serialize(w)?;
+
+        let mut w = w;
+        let items = self.children.0.iter();
+        for i in items {
+            w = {
+                let w = VarInt::serialize(&i, w)?;
                 w
             }
-            RedirectNode::Default(val) => Void::serialize(val, w)?,
-        };
+        }
 
-        let w = match &self.extra_node_data {
-            ExtraNodeData::<'a>::ExtraNodeData0(val) => {
-                let w = Void::serialize(&val, w)?;
-                w
-            }
-            ExtraNodeData::<'a>::ExtraNodeData1(val) => {
-                let w = ExtraNodeData1::<'a>::serialize(&val, w)?;
-                w
-            }
-            ExtraNodeData::<'a>::ExtraNodeData2(val) => {
-                let w = PrefixedString::<'a, VarInt>::serialize(&val.name, w)?;
-                let w = PrefixedString::<'a, VarInt>::serialize(&val.parser, w)?;
-
-                let w = match &val.properties {
-                    Properties::<'a>::Bool(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::Float(val) => {
-                        let w = Float::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::Double(val) => {
-                        let w = Double::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::Integer(val) => {
-                        let w = Integer::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::Long(val) => {
-                        let w = Long::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::String(val) => {
-                        let tag = match &val[..] {
-                            "SINGLE_WORD" => "0",
-                            "QUOTABLE_PHRASE" => "1",
-                            "GREEDY_PHRASE" => "2",
-                        };
-                        let tag2 = str::parse(tag).unwrap();
-                        let w = VarInt::serialize(&tag2, w)?;
-                        w
-                    }
-                    Properties::<'a>::MinecraftEntity(val) => {
-                        let w = MinecraftEntity::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::GameProfile(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::BlockPos(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::ColumnPos(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::Vec3(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::Vec2(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::BlockState(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::BlockPredicate(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::ItemStack(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::ItemPredicate(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::Color(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::Component(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::Message(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::Nbt(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::NbtPath(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::Objective(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::ObjectiveCriteria(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::Operation(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::Particle(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::Angle(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::Rotation(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::ScoreboardSlot(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::ScoreHolder(val) => {
-                        let w = ScoreHolder::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::Swizzle(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::Team(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::ItemSlot(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::ResourceLocation(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::MobEffect(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::Function(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::EntityAnchor(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::Range(val) => {
-                        let w = Range::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::IntRange(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::FloatRange(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::ItemEnchantment(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::EntitySummon(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::Dimension(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::NbtCompoundTag(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::Time(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::ResourceOrTag(val) => {
-                        let w = ResourceOrTag::<'a>::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::Resource(val) => {
-                        let w = Resource::<'a>::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::Uuid(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Properties::<'a>::Default(val) => Void::serialize(val, w)?,
-                };
-
-                let w = match &val.suggestion_type {
-                    SuggestionType::<'a>::SuggestionType1(val) => {
-                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
-                        w
-                    }
-                    SuggestionType::<'a>::Default(val) => Void::serialize(val, w)?,
-                };
-
-                w
-            }
-            ExtraNodeData::<'a>::Default(val) => Void::serialize(val, w)?,
-        };
+        let w = RedirectNode::serialize(&self.redirect_node, w)?;
+        let w = ExtraNodeData::<'a>::serialize(&self.extra_node_data, w)?;
 
         Ok(w)
     }
@@ -2307,6 +2483,18 @@ pub mod handshaking {
                     _ => "",
                 }
             }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    Params::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
+            }
         }
         pub struct Packet {
             name: &'static str,
@@ -2318,9 +2506,7 @@ pub mod handshaking {
                 &self,
                 w: cookie_factory::WriteContext<W>,
             ) -> cookie_factory::GenResult<W> {
-                let w = match &self.params {
-                    Params::Default(val) => Void::serialize(val, w)?,
-                };
+                let w = Params::serialize(&self.params, w)?;
 
                 Ok(w)
             }
@@ -2417,6 +2603,26 @@ pub mod handshaking {
                     _ => "",
                 }
             }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    Params::<'a>::SetProtocol(val) => {
+                        let w = PacketSetProtocol::<'a>::serialize(&val, w)?;
+                        w
+                    }
+                    Params::<'a>::LegacyServerListPing(val) => {
+                        let w = PacketLegacyServerListPing::serialize(&val, w)?;
+                        w
+                    }
+                    Params::<'a>::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
+            }
         }
         pub struct Packet<'a> {
             name: &'static str,
@@ -2431,21 +2637,13 @@ pub mod handshaking {
                 let tag = match &self.name[..] {
                     "set_protocol" => "0x00",
                     "legacy_server_list_ping" => "0xfe",
+
+                    _ => panic!("invalid value"),
                 };
                 let tag2 = str::parse(tag).unwrap();
                 let w = VarInt::serialize(&tag2, w)?;
 
-                let w = match &self.params {
-                    Params::<'a>::SetProtocol(val) => {
-                        let w = PacketSetProtocol::<'a>::serialize(&val, w)?;
-                        w
-                    }
-                    Params::<'a>::LegacyServerListPing(val) => {
-                        let w = PacketLegacyServerListPing::serialize(&val, w)?;
-                        w
-                    }
-                    Params::<'a>::Default(val) => Void::serialize(val, w)?,
-                };
+                let w = Params::<'a>::serialize(&self.params, w)?;
 
                 Ok(w)
             }
@@ -2551,6 +2749,26 @@ pub mod status {
                     _ => "",
                 }
             }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    Params::<'a>::ServerInfo(val) => {
+                        let w = PacketServerInfo::<'a>::serialize(&val, w)?;
+                        w
+                    }
+                    Params::<'a>::Ping(val) => {
+                        let w = PacketPing::serialize(&val, w)?;
+                        w
+                    }
+                    Params::<'a>::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
+            }
         }
         pub struct Packet<'a> {
             name: &'static str,
@@ -2565,21 +2783,13 @@ pub mod status {
                 let tag = match &self.name[..] {
                     "server_info" => "0x00",
                     "ping" => "0x01",
+
+                    _ => panic!("invalid value"),
                 };
                 let tag2 = str::parse(tag).unwrap();
                 let w = VarInt::serialize(&tag2, w)?;
 
-                let w = match &self.params {
-                    Params::<'a>::ServerInfo(val) => {
-                        let w = PacketServerInfo::<'a>::serialize(&val, w)?;
-                        w
-                    }
-                    Params::<'a>::Ping(val) => {
-                        let w = PacketPing::serialize(&val, w)?;
-                        w
-                    }
-                    Params::<'a>::Default(val) => Void::serialize(val, w)?,
-                };
+                let w = Params::<'a>::serialize(&self.params, w)?;
 
                 Ok(w)
             }
@@ -2677,6 +2887,26 @@ pub mod status {
                     _ => "",
                 }
             }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    Params::PingStart(val) => {
+                        let w = PacketPingStart::serialize(&val, w)?;
+                        w
+                    }
+                    Params::Ping(val) => {
+                        let w = PacketPing::serialize(&val, w)?;
+                        w
+                    }
+                    Params::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
+            }
         }
         pub struct Packet {
             name: &'static str,
@@ -2691,21 +2921,13 @@ pub mod status {
                 let tag = match &self.name[..] {
                     "ping_start" => "0x00",
                     "ping" => "0x01",
+
+                    _ => panic!("invalid value"),
                 };
                 let tag2 = str::parse(tag).unwrap();
                 let w = VarInt::serialize(&tag2, w)?;
 
-                let w = match &self.params {
-                    Params::PingStart(val) => {
-                        let w = PacketPingStart::serialize(&val, w)?;
-                        w
-                    }
-                    Params::Ping(val) => {
-                        let w = PacketPing::serialize(&val, w)?;
-                        w
-                    }
-                    Params::Default(val) => Void::serialize(val, w)?,
-                };
+                let w = Params::serialize(&self.params, w)?;
 
                 Ok(w)
             }
@@ -2912,28 +3134,13 @@ pub mod login {
                     _ => "",
                 }
             }
-        }
-        pub struct Packet<'a> {
-            name: &'static str,
-            params: Params<'a>,
-        }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for Packet<'a> {
-            fn serialize<W: std::io::Write>(
+            pub fn serialize<W: std::io::Write>(
                 &self,
                 w: cookie_factory::WriteContext<W>,
             ) -> cookie_factory::GenResult<W> {
-                let tag = match &self.name[..] {
-                    "disconnect" => "0x00",
-                    "encryption_begin" => "0x01",
-                    "success" => "0x02",
-                    "compress" => "0x03",
-                    "login_plugin_request" => "0x04",
-                };
-                let tag2 = str::parse(tag).unwrap();
-                let w = VarInt::serialize(&tag2, w)?;
+                use protocol_lib::Packet;
 
-                let w = match &self.params {
+                let w = match &self {
                     Params::<'a>::Disconnect(val) => {
                         let w = PacketDisconnect::<'a>::serialize(&val, w)?;
                         w
@@ -2956,6 +3163,33 @@ pub mod login {
                     }
                     Params::<'a>::Default(val) => Void::serialize(val, w)?,
                 };
+
+                Ok(w)
+            }
+        }
+        pub struct Packet<'a> {
+            name: &'static str,
+            params: Params<'a>,
+        }
+
+        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for Packet<'a> {
+            fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                let tag = match &self.name[..] {
+                    "disconnect" => "0x00",
+                    "encryption_begin" => "0x01",
+                    "success" => "0x02",
+                    "compress" => "0x03",
+                    "login_plugin_request" => "0x04",
+
+                    _ => panic!("invalid value"),
+                };
+                let tag2 = str::parse(tag).unwrap();
+                let w = VarInt::serialize(&tag2, w)?;
+
+                let w = Params::<'a>::serialize(&self.params, w)?;
 
                 Ok(w)
             }
@@ -3112,6 +3346,30 @@ pub mod login {
                     _ => "",
                 }
             }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    Params::<'a>::LoginStart(val) => {
+                        let w = PacketLoginStart::<'a>::serialize(&val, w)?;
+                        w
+                    }
+                    Params::<'a>::EncryptionBegin(val) => {
+                        let w = PacketEncryptionBegin::<'a>::serialize(&val, w)?;
+                        w
+                    }
+                    Params::<'a>::LoginPluginResponse(val) => {
+                        let w = PacketLoginPluginResponse::<'a>::serialize(&val, w)?;
+                        w
+                    }
+                    Params::<'a>::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
+            }
         }
         pub struct Packet<'a> {
             name: &'static str,
@@ -3127,25 +3385,13 @@ pub mod login {
                     "login_start" => "0x00",
                     "encryption_begin" => "0x01",
                     "login_plugin_response" => "0x02",
+
+                    _ => panic!("invalid value"),
                 };
                 let tag2 = str::parse(tag).unwrap();
                 let w = VarInt::serialize(&tag2, w)?;
 
-                let w = match &self.params {
-                    Params::<'a>::LoginStart(val) => {
-                        let w = PacketLoginStart::<'a>::serialize(&val, w)?;
-                        w
-                    }
-                    Params::<'a>::EncryptionBegin(val) => {
-                        let w = PacketEncryptionBegin::<'a>::serialize(&val, w)?;
-                        w
-                    }
-                    Params::<'a>::LoginPluginResponse(val) => {
-                        let w = PacketLoginPluginResponse::<'a>::serialize(&val, w)?;
-                        w
-                    }
-                    Params::<'a>::Default(val) => Void::serialize(val, w)?,
-                };
+                let w = Params::<'a>::serialize(&self.params, w)?;
 
                 Ok(w)
             }
@@ -3571,7 +3817,17 @@ pub mod play {
                 &self,
                 w: cookie_factory::WriteContext<W>,
             ) -> cookie_factory::GenResult<W> {
-                let w = PrefixedArray::<StatisticsEntry, VarInt>::serialize(&self.entries, w)?;
+                let w =
+                    PrefixedArray::<StatisticsEntry, VarInt>::len(&self.entries).serialize(w)?;
+
+                let mut w = w;
+                let items = self.entries.0.iter();
+                for i in items {
+                    w = {
+                        let w = StatisticsEntry::serialize(&i, w)?;
+                        w
+                    }
+                }
 
                 Ok(w)
             }
@@ -3639,6 +3895,22 @@ pub mod play {
                     _ => "",
                 }
             }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    BackgroundTexture::<'a>::BackgroundTexture1(val) => {
+                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
+                        w
+                    }
+                    BackgroundTexture::<'a>::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
+            }
         }
         pub struct Ident8<'a> {
             title: VarString<'a>,
@@ -3661,15 +3933,7 @@ pub mod play {
                 let w = Slot::serialize(&self.icon, w)?;
                 let w = VarInt::serialize(&self.frame_type, w)?;
                 let w = Ident8Flags::serialize(&self.flags, w)?;
-
-                let w = match &self.background_texture {
-                    BackgroundTexture::<'a>::BackgroundTexture1(val) => {
-                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
-                        w
-                    }
-                    BackgroundTexture::<'a>::Default(val) => Void::serialize(val, w)?,
-                };
-
+                let w = BackgroundTexture::<'a>::serialize(&self.background_texture, w)?;
                 let w = f32::serialize(&self.x_cord, w)?;
                 let w = f32::serialize(&self.y_cord, w)?;
 
@@ -3755,9 +4019,40 @@ pub mod play {
             ) -> cookie_factory::GenResult<W> {
                 let w = Option::<VarString<'a>>::serialize(&self.parent_id, w)?;
                 let w = Option::<Ident8<'a>>::serialize(&self.display_data, w)?;
-                let w = PrefixedArray::<CriteriaItem<'a>, VarInt>::serialize(&self.criteria, w)?;
+
                 let w =
-                    PrefixedArray::<VarStringArray<'a>, VarInt>::serialize(&self.requirements, w)?;
+                    PrefixedArray::<CriteriaItem<'a>, VarInt>::len(&self.criteria).serialize(w)?;
+
+                let mut w = w;
+                let items = self.criteria.0.iter();
+                for i in items {
+                    w = {
+                        let w = CriteriaItem::<'a>::serialize(&i, w)?;
+                        w
+                    }
+                }
+
+                let w = PrefixedArray::<VarStringArray<'a>, VarInt>::len(&self.requirements)
+                    .serialize(w)?;
+
+                let mut w = w;
+                let items = self.requirements.0.iter();
+                for i in items {
+                    w = {
+                        let w = PrefixedArray::<VarString<'a>, VarInt>::len(&i).serialize(w)?;
+
+                        let mut w = w;
+                        let items = i.0.iter();
+                        for i in items {
+                            w = {
+                                let w = PrefixedString::<'a, VarInt>::serialize(&i, w)?;
+                                w
+                            }
+                        }
+
+                        w
+                    }
+                }
 
                 Ok(w)
             }
@@ -3850,10 +4145,18 @@ pub mod play {
                 w: cookie_factory::WriteContext<W>,
             ) -> cookie_factory::GenResult<W> {
                 let w = PrefixedString::<'a, VarInt>::serialize(&self.key, w)?;
-                let w = PrefixedArray::<ProgressMappingItemValueItem<'a>, VarInt>::serialize(
-                    &self.value,
-                    w,
-                )?;
+
+                let w = PrefixedArray::<ProgressMappingItemValueItem<'a>, VarInt>::len(&self.value)
+                    .serialize(w)?;
+
+                let mut w = w;
+                let items = self.value.0.iter();
+                for i in items {
+                    w = {
+                        let w = ProgressMappingItemValueItem::<'a>::serialize(&i, w)?;
+                        w
+                    }
+                }
 
                 Ok(w)
             }
@@ -3882,15 +4185,45 @@ pub mod play {
                 w: cookie_factory::WriteContext<W>,
             ) -> cookie_factory::GenResult<W> {
                 let w = bool::serialize(&self.reset, w)?;
-                let w = PrefixedArray::<AdvancementMappingItem<'a>, VarInt>::serialize(
+
+                let w = PrefixedArray::<AdvancementMappingItem<'a>, VarInt>::len(
                     &self.advancement_mapping,
-                    w,
-                )?;
-                let w = PrefixedArray::<VarString<'a>, VarInt>::serialize(&self.identifiers, w)?;
-                let w = PrefixedArray::<ProgressMappingItem<'a>, VarInt>::serialize(
-                    &self.progress_mapping,
-                    w,
-                )?;
+                )
+                .serialize(w)?;
+
+                let mut w = w;
+                let items = self.advancement_mapping.0.iter();
+                for i in items {
+                    w = {
+                        let w = AdvancementMappingItem::<'a>::serialize(&i, w)?;
+                        w
+                    }
+                }
+
+                let w =
+                    PrefixedArray::<VarString<'a>, VarInt>::len(&self.identifiers).serialize(w)?;
+
+                let mut w = w;
+                let items = self.identifiers.0.iter();
+                for i in items {
+                    w = {
+                        let w = PrefixedString::<'a, VarInt>::serialize(&i, w)?;
+                        w
+                    }
+                }
+
+                let w =
+                    PrefixedArray::<ProgressMappingItem<'a>, VarInt>::len(&self.progress_mapping)
+                        .serialize(w)?;
+
+                let mut w = w;
+                let items = self.progress_mapping.0.iter();
+                for i in items {
+                    w = {
+                        let w = ProgressMappingItem::<'a>::serialize(&i, w)?;
+                        w
+                    }
+                }
 
                 Ok(w)
             }
@@ -4059,6 +4392,26 @@ pub mod play {
                     _ => "",
                 }
             }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    BossBarTitle::<'a>::BossBarTitle0(val) => {
+                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
+                        w
+                    }
+                    BossBarTitle::<'a>::BossBarTitle3(val) => {
+                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
+                        w
+                    }
+                    BossBarTitle::<'a>::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
+            }
         }
         pub enum Health {
             Health0(f32),
@@ -4073,6 +4426,26 @@ pub mod play {
                     Health::Health2(_) => "2",
                     _ => "",
                 }
+            }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    Health::Health0(val) => {
+                        let w = f32::serialize(&val, w)?;
+                        w
+                    }
+                    Health::Health2(val) => {
+                        let w = f32::serialize(&val, w)?;
+                        w
+                    }
+                    Health::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
             }
         }
         pub enum Color {
@@ -4089,6 +4462,26 @@ pub mod play {
                     _ => "",
                 }
             }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    Color::Color0(val) => {
+                        let w = VarInt::serialize(&val, w)?;
+                        w
+                    }
+                    Color::Color4(val) => {
+                        let w = VarInt::serialize(&val, w)?;
+                        w
+                    }
+                    Color::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
+            }
         }
         pub enum Dividers {
             Dividers0(VarInt),
@@ -4104,6 +4497,26 @@ pub mod play {
                     _ => "",
                 }
             }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    Dividers::Dividers0(val) => {
+                        let w = VarInt::serialize(&val, w)?;
+                        w
+                    }
+                    Dividers::Dividers4(val) => {
+                        let w = VarInt::serialize(&val, w)?;
+                        w
+                    }
+                    Dividers::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
+            }
         }
         pub enum BossBarFlags {
             BossBarFlags0(u8),
@@ -4118,6 +4531,26 @@ pub mod play {
                     BossBarFlags::BossBarFlags5(_) => "5",
                     _ => "",
                 }
+            }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    BossBarFlags::BossBarFlags0(val) => {
+                        let w = u8::serialize(&val, w)?;
+                        w
+                    }
+                    BossBarFlags::BossBarFlags5(val) => {
+                        let w = u8::serialize(&val, w)?;
+                        w
+                    }
+                    BossBarFlags::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
             }
         }
         pub struct PacketBossBar<'a> {
@@ -4137,66 +4570,11 @@ pub mod play {
             ) -> cookie_factory::GenResult<W> {
                 let w = Uuid::serialize(&self.entity_uuid, w)?;
                 let w = VarInt::serialize(&self.action, w)?;
-
-                let w = match &self.title {
-                    BossBarTitle::<'a>::BossBarTitle0(val) => {
-                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
-                        w
-                    }
-                    BossBarTitle::<'a>::BossBarTitle3(val) => {
-                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
-                        w
-                    }
-                    BossBarTitle::<'a>::Default(val) => Void::serialize(val, w)?,
-                };
-
-                let w = match &self.health {
-                    Health::Health0(val) => {
-                        let w = f32::serialize(&val, w)?;
-                        w
-                    }
-                    Health::Health2(val) => {
-                        let w = f32::serialize(&val, w)?;
-                        w
-                    }
-                    Health::Default(val) => Void::serialize(val, w)?,
-                };
-
-                let w = match &self.color {
-                    Color::Color0(val) => {
-                        let w = VarInt::serialize(&val, w)?;
-                        w
-                    }
-                    Color::Color4(val) => {
-                        let w = VarInt::serialize(&val, w)?;
-                        w
-                    }
-                    Color::Default(val) => Void::serialize(val, w)?,
-                };
-
-                let w = match &self.dividers {
-                    Dividers::Dividers0(val) => {
-                        let w = VarInt::serialize(&val, w)?;
-                        w
-                    }
-                    Dividers::Dividers4(val) => {
-                        let w = VarInt::serialize(&val, w)?;
-                        w
-                    }
-                    Dividers::Default(val) => Void::serialize(val, w)?,
-                };
-
-                let w = match &self.flags {
-                    BossBarFlags::BossBarFlags0(val) => {
-                        let w = u8::serialize(&val, w)?;
-                        w
-                    }
-                    BossBarFlags::BossBarFlags5(val) => {
-                        let w = u8::serialize(&val, w)?;
-                        w
-                    }
-                    BossBarFlags::Default(val) => Void::serialize(val, w)?,
-                };
+                let w = BossBarTitle::<'a>::serialize(&self.title, w)?;
+                let w = Health::serialize(&self.health, w)?;
+                let w = Color::serialize(&self.color, w)?;
+                let w = Dividers::serialize(&self.dividers, w)?;
+                let w = BossBarFlags::serialize(&self.flags, w)?;
 
                 Ok(w)
             }
@@ -4331,7 +4709,17 @@ pub mod play {
                 let w = VarInt::serialize(&self.transaction_id, w)?;
                 let w = VarInt::serialize(&self.start, w)?;
                 let w = VarInt::serialize(&self.length, w)?;
-                let w = PrefixedArray::<Matche<'a>, VarInt>::serialize(&self.matches, w)?;
+
+                let w = PrefixedArray::<Matche<'a>, VarInt>::len(&self.matches).serialize(w)?;
+
+                let mut w = w;
+                let items = self.matches.0.iter();
+                for i in items {
+                    w = {
+                        let w = Matche::<'a>::serialize(&i, w)?;
+                        w
+                    }
+                }
 
                 Ok(w)
             }
@@ -4364,7 +4752,17 @@ pub mod play {
                 &self,
                 w: cookie_factory::WriteContext<W>,
             ) -> cookie_factory::GenResult<W> {
-                let w = PrefixedArray::<CommandNode<'a>, VarInt>::serialize(&self.nodes, w)?;
+                let w = PrefixedArray::<CommandNode<'a>, VarInt>::len(&self.nodes).serialize(w)?;
+
+                let mut w = w;
+                let items = self.nodes.0.iter();
+                for i in items {
+                    w = {
+                        let w = CommandNode::<'a>::serialize(&i, w)?;
+                        w
+                    }
+                }
+
                 let w = VarInt::serialize(&self.root_index, w)?;
 
                 Ok(w)
@@ -4393,6 +4791,22 @@ pub mod play {
                     _ => "",
                 }
             }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    FacePlayerEntityId::FacePlayerEntityIdTrue(val) => {
+                        let w = VarInt::serialize(&val, w)?;
+                        w
+                    }
+                    FacePlayerEntityId::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
+            }
         }
         pub enum EntityFeetEyes<'a> {
             EntityFeetEyesTrue(VarString<'a>),
@@ -4405,6 +4819,22 @@ pub mod play {
                     EntityFeetEyes::<'a>::EntityFeetEyesTrue(_) => "true",
                     _ => "",
                 }
+            }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    EntityFeetEyes::<'a>::EntityFeetEyesTrue(val) => {
+                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
+                        w
+                    }
+                    EntityFeetEyes::<'a>::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
             }
         }
         pub struct PacketFacePlayer<'a> {
@@ -4427,22 +4857,8 @@ pub mod play {
                 let w = f64::serialize(&self.y, w)?;
                 let w = f64::serialize(&self.z, w)?;
                 let w = bool::serialize(&self.is_entity, w)?;
-
-                let w = match &self.entity_id {
-                    FacePlayerEntityId::FacePlayerEntityIdTrue(val) => {
-                        let w = VarInt::serialize(&val, w)?;
-                        w
-                    }
-                    FacePlayerEntityId::Default(val) => Void::serialize(val, w)?,
-                };
-
-                let w = match &self.entity_feet_eyes {
-                    EntityFeetEyes::<'a>::EntityFeetEyesTrue(val) => {
-                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
-                        w
-                    }
-                    EntityFeetEyes::<'a>::Default(val) => Void::serialize(val, w)?,
-                };
+                let w = FacePlayerEntityId::serialize(&self.entity_id, w)?;
+                let w = EntityFeetEyes::<'a>::serialize(&self.entity_feet_eyes, w)?;
 
                 Ok(w)
             }
@@ -4600,7 +5016,17 @@ pub mod play {
             ) -> cookie_factory::GenResult<W> {
                 let w = ChunkCoordinates::serialize(&self.chunk_coordinates, w)?;
                 let w = bool::serialize(&self.not_trust_edges, w)?;
-                let w = PrefixedArray::<VarLong, VarInt>::serialize(&self.records, w)?;
+
+                let w = PrefixedArray::<VarLong, VarInt>::len(&self.records).serialize(w)?;
+
+                let mut w = w;
+                let items = self.records.0.iter();
+                for i in items {
+                    w = {
+                        let w = VarLong::serialize(&i, w)?;
+                        w
+                    }
+                }
 
                 Ok(w)
             }
@@ -4690,7 +5116,18 @@ pub mod play {
             ) -> cookie_factory::GenResult<W> {
                 let w = u8::serialize(&self.window_id, w)?;
                 let w = VarInt::serialize(&self.state_id, w)?;
-                let w = PrefixedArray::<Slot, VarInt>::serialize(&self.items, w)?;
+
+                let w = PrefixedArray::<Slot, VarInt>::len(&self.items).serialize(w)?;
+
+                let mut w = w;
+                let items = self.items.0.iter();
+                for i in items {
+                    w = {
+                        let w = Slot::serialize(&i, w)?;
+                        w
+                    }
+                }
+
                 let w = Slot::serialize(&self.carried_item, w)?;
 
                 Ok(w)
@@ -4981,10 +5418,20 @@ pub mod play {
                 let w = f32::serialize(&self.y, w)?;
                 let w = f32::serialize(&self.z, w)?;
                 let w = f32::serialize(&self.radius, w)?;
-                let w = PrefixedArray::<AffectedBlockOffset, VarInt>::serialize(
-                    &self.affected_block_offsets,
-                    w,
-                )?;
+
+                let w =
+                    PrefixedArray::<AffectedBlockOffset, VarInt>::len(&self.affected_block_offsets)
+                        .serialize(w)?;
+
+                let mut w = w;
+                let items = self.affected_block_offsets.0.iter();
+                for i in items {
+                    w = {
+                        let w = AffectedBlockOffset::serialize(&i, w)?;
+                        w
+                    }
+                }
+
                 let w = f32::serialize(&self.player_motion_x, w)?;
                 let w = f32::serialize(&self.player_motion_y, w)?;
                 let w = f32::serialize(&self.player_motion_z, w)?;
@@ -5151,15 +5598,109 @@ pub mod play {
                 let w = i32::serialize(&self.z, w)?;
                 let w = Nbt::serialize(&self.heightmaps, w)?;
                 let w = PrefixedBuffer::<'a, VarInt>::serialize(&self.chunk_data, w)?;
-                let w =
-                    PrefixedArray::<ChunkBlockEntity, VarInt>::serialize(&self.block_entities, w)?;
+
+                let w = PrefixedArray::<ChunkBlockEntity, VarInt>::len(&self.block_entities)
+                    .serialize(w)?;
+
+                let mut w = w;
+                let items = self.block_entities.0.iter();
+                for i in items {
+                    w = {
+                        let w = ChunkBlockEntity::serialize(&i, w)?;
+                        w
+                    }
+                }
+
                 let w = bool::serialize(&self.trust_edges, w)?;
-                let w = PrefixedArray::<i64, VarInt>::serialize(&self.sky_light_mask, w)?;
-                let w = PrefixedArray::<i64, VarInt>::serialize(&self.block_light_mask, w)?;
-                let w = PrefixedArray::<i64, VarInt>::serialize(&self.empty_sky_light_mask, w)?;
-                let w = PrefixedArray::<i64, VarInt>::serialize(&self.empty_block_light_mask, w)?;
-                let w = PrefixedArray::<VarArray<u8>, VarInt>::serialize(&self.sky_light, w)?;
-                let w = PrefixedArray::<VarArray<u8>, VarInt>::serialize(&self.block_light, w)?;
+
+                let w = PrefixedArray::<i64, VarInt>::len(&self.sky_light_mask).serialize(w)?;
+
+                let mut w = w;
+                let items = self.sky_light_mask.0.iter();
+                for i in items {
+                    w = {
+                        let w = i64::serialize(&i, w)?;
+                        w
+                    }
+                }
+
+                let w = PrefixedArray::<i64, VarInt>::len(&self.block_light_mask).serialize(w)?;
+
+                let mut w = w;
+                let items = self.block_light_mask.0.iter();
+                for i in items {
+                    w = {
+                        let w = i64::serialize(&i, w)?;
+                        w
+                    }
+                }
+
+                let w =
+                    PrefixedArray::<i64, VarInt>::len(&self.empty_sky_light_mask).serialize(w)?;
+
+                let mut w = w;
+                let items = self.empty_sky_light_mask.0.iter();
+                for i in items {
+                    w = {
+                        let w = i64::serialize(&i, w)?;
+                        w
+                    }
+                }
+
+                let w =
+                    PrefixedArray::<i64, VarInt>::len(&self.empty_block_light_mask).serialize(w)?;
+
+                let mut w = w;
+                let items = self.empty_block_light_mask.0.iter();
+                for i in items {
+                    w = {
+                        let w = i64::serialize(&i, w)?;
+                        w
+                    }
+                }
+
+                let w = PrefixedArray::<VarArray<u8>, VarInt>::len(&self.sky_light).serialize(w)?;
+
+                let mut w = w;
+                let items = self.sky_light.0.iter();
+                for i in items {
+                    w = {
+                        let w = PrefixedArray::<u8, VarInt>::len(&i).serialize(w)?;
+
+                        let mut w = w;
+                        let items = i.0.iter();
+                        for i in items {
+                            w = {
+                                let w = u8::serialize(&i, w)?;
+                                w
+                            }
+                        }
+
+                        w
+                    }
+                }
+
+                let w =
+                    PrefixedArray::<VarArray<u8>, VarInt>::len(&self.block_light).serialize(w)?;
+
+                let mut w = w;
+                let items = self.block_light.0.iter();
+                for i in items {
+                    w = {
+                        let w = PrefixedArray::<u8, VarInt>::len(&i).serialize(w)?;
+
+                        let mut w = w;
+                        let items = i.0.iter();
+                        for i in items {
+                            w = {
+                                let w = u8::serialize(&i, w)?;
+                                w
+                            }
+                        }
+
+                        w
+                    }
+                }
 
                 Ok(w)
             }
@@ -5442,6 +5983,26 @@ pub mod play {
                     _ => "",
                 }
             }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    WorldParticlesData36Destination::MinecraftBlock(val) => {
+                        let w = Position::serialize(&val, w)?;
+                        w
+                    }
+                    WorldParticlesData36Destination::WorldParticlesData36DestinationEntity(val) => {
+                        let w = VarInt::serialize(&val, w)?;
+                        w
+                    }
+                    WorldParticlesData36Destination::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
+            }
         }
         pub struct WorldParticlesData36<'a> {
             origin: Position,
@@ -5457,19 +6018,7 @@ pub mod play {
             ) -> cookie_factory::GenResult<W> {
                 let w = Position::serialize(&self.origin, w)?;
                 let w = PrefixedString::<'a, VarInt>::serialize(&self.position_type, w)?;
-
-                let w = match &self.destination {
-                    WorldParticlesData36Destination::MinecraftBlock(val) => {
-                        let w = Position::serialize(&val, w)?;
-                        w
-                    }
-                    WorldParticlesData36Destination::WorldParticlesData36DestinationEntity(val) => {
-                        let w = VarInt::serialize(&val, w)?;
-                        w
-                    }
-                    WorldParticlesData36Destination::Default(val) => Void::serialize(val, w)?,
-                };
-
+                let w = WorldParticlesData36Destination::serialize(&self.destination, w)?;
                 let w = VarInt::serialize(&self.ticks, w)?;
 
                 Ok(w)
@@ -5536,38 +6085,13 @@ pub mod play {
                     _ => "",
                 }
             }
-        }
-        pub struct PacketWorldParticles<'a> {
-            particle_id: i32,
-            long_distance: bool,
-            x: f64,
-            y: f64,
-            z: f64,
-            offset_x: f32,
-            offset_y: f32,
-            offset_z: f32,
-            particle_data: f32,
-            particles: i32,
-            data: WorldParticlesData<'a>,
-        }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketWorldParticles<'a> {
-            fn serialize<W: std::io::Write>(
+            pub fn serialize<W: std::io::Write>(
                 &self,
                 w: cookie_factory::WriteContext<W>,
             ) -> cookie_factory::GenResult<W> {
-                let w = i32::serialize(&self.particle_id, w)?;
-                let w = bool::serialize(&self.long_distance, w)?;
-                let w = f64::serialize(&self.x, w)?;
-                let w = f64::serialize(&self.y, w)?;
-                let w = f64::serialize(&self.z, w)?;
-                let w = f32::serialize(&self.offset_x, w)?;
-                let w = f32::serialize(&self.offset_y, w)?;
-                let w = f32::serialize(&self.offset_z, w)?;
-                let w = f32::serialize(&self.particle_data, w)?;
-                let w = i32::serialize(&self.particles, w)?;
+                use protocol_lib::Packet;
 
-                let w = match &self.data {
+                let w = match &self {
                     WorldParticlesData::<'a>::WorldParticlesData2(val) => {
                         let w = WorldParticlesData2::serialize(&val, w)?;
                         w
@@ -5598,6 +6122,40 @@ pub mod play {
                     }
                     WorldParticlesData::<'a>::Default(val) => Void::serialize(val, w)?,
                 };
+
+                Ok(w)
+            }
+        }
+        pub struct PacketWorldParticles<'a> {
+            particle_id: i32,
+            long_distance: bool,
+            x: f64,
+            y: f64,
+            z: f64,
+            offset_x: f32,
+            offset_y: f32,
+            offset_z: f32,
+            particle_data: f32,
+            particles: i32,
+            data: WorldParticlesData<'a>,
+        }
+
+        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketWorldParticles<'a> {
+            fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                let w = i32::serialize(&self.particle_id, w)?;
+                let w = bool::serialize(&self.long_distance, w)?;
+                let w = f64::serialize(&self.x, w)?;
+                let w = f64::serialize(&self.y, w)?;
+                let w = f64::serialize(&self.z, w)?;
+                let w = f32::serialize(&self.offset_x, w)?;
+                let w = f32::serialize(&self.offset_y, w)?;
+                let w = f32::serialize(&self.offset_z, w)?;
+                let w = f32::serialize(&self.particle_data, w)?;
+                let w = i32::serialize(&self.particles, w)?;
+                let w = WorldParticlesData::<'a>::serialize(&self.data, w)?;
 
                 Ok(w)
             }
@@ -5688,12 +6246,95 @@ pub mod play {
                 let w = VarInt::serialize(&self.chunk_x, w)?;
                 let w = VarInt::serialize(&self.chunk_z, w)?;
                 let w = bool::serialize(&self.trust_edges, w)?;
-                let w = PrefixedArray::<i64, VarInt>::serialize(&self.sky_light_mask, w)?;
-                let w = PrefixedArray::<i64, VarInt>::serialize(&self.block_light_mask, w)?;
-                let w = PrefixedArray::<i64, VarInt>::serialize(&self.empty_sky_light_mask, w)?;
-                let w = PrefixedArray::<i64, VarInt>::serialize(&self.empty_block_light_mask, w)?;
-                let w = PrefixedArray::<VarArray<u8>, VarInt>::serialize(&self.sky_light, w)?;
-                let w = PrefixedArray::<VarArray<u8>, VarInt>::serialize(&self.block_light, w)?;
+
+                let w = PrefixedArray::<i64, VarInt>::len(&self.sky_light_mask).serialize(w)?;
+
+                let mut w = w;
+                let items = self.sky_light_mask.0.iter();
+                for i in items {
+                    w = {
+                        let w = i64::serialize(&i, w)?;
+                        w
+                    }
+                }
+
+                let w = PrefixedArray::<i64, VarInt>::len(&self.block_light_mask).serialize(w)?;
+
+                let mut w = w;
+                let items = self.block_light_mask.0.iter();
+                for i in items {
+                    w = {
+                        let w = i64::serialize(&i, w)?;
+                        w
+                    }
+                }
+
+                let w =
+                    PrefixedArray::<i64, VarInt>::len(&self.empty_sky_light_mask).serialize(w)?;
+
+                let mut w = w;
+                let items = self.empty_sky_light_mask.0.iter();
+                for i in items {
+                    w = {
+                        let w = i64::serialize(&i, w)?;
+                        w
+                    }
+                }
+
+                let w =
+                    PrefixedArray::<i64, VarInt>::len(&self.empty_block_light_mask).serialize(w)?;
+
+                let mut w = w;
+                let items = self.empty_block_light_mask.0.iter();
+                for i in items {
+                    w = {
+                        let w = i64::serialize(&i, w)?;
+                        w
+                    }
+                }
+
+                let w = PrefixedArray::<VarArray<u8>, VarInt>::len(&self.sky_light).serialize(w)?;
+
+                let mut w = w;
+                let items = self.sky_light.0.iter();
+                for i in items {
+                    w = {
+                        let w = PrefixedArray::<u8, VarInt>::len(&i).serialize(w)?;
+
+                        let mut w = w;
+                        let items = i.0.iter();
+                        for i in items {
+                            w = {
+                                let w = u8::serialize(&i, w)?;
+                                w
+                            }
+                        }
+
+                        w
+                    }
+                }
+
+                let w =
+                    PrefixedArray::<VarArray<u8>, VarInt>::len(&self.block_light).serialize(w)?;
+
+                let mut w = w;
+                let items = self.block_light.0.iter();
+                for i in items {
+                    w = {
+                        let w = PrefixedArray::<u8, VarInt>::len(&i).serialize(w)?;
+
+                        let mut w = w;
+                        let items = i.0.iter();
+                        for i in items {
+                            w = {
+                                let w = u8::serialize(&i, w)?;
+                                w
+                            }
+                        }
+
+                        w
+                    }
+                }
 
                 Ok(w)
             }
@@ -5764,7 +6405,19 @@ pub mod play {
                 let w = bool::serialize(&self.is_hardcore, w)?;
                 let w = u8::serialize(&self.game_mode, w)?;
                 let w = i8::serialize(&self.previous_game_mode, w)?;
-                let w = PrefixedArray::<VarString<'a>, VarInt>::serialize(&self.world_names, w)?;
+
+                let w =
+                    PrefixedArray::<VarString<'a>, VarInt>::len(&self.world_names).serialize(w)?;
+
+                let mut w = w;
+                let items = self.world_names.0.iter();
+                for i in items {
+                    w = {
+                        let w = PrefixedString::<'a, VarInt>::serialize(&i, w)?;
+                        w
+                    }
+                }
+
                 let w = Nbt::serialize(&self.dimension_codec, w)?;
                 let w = Nbt::serialize(&self.dimension, w)?;
                 let w = PrefixedString::<'a, VarInt>::serialize(&self.world_name, w)?;
@@ -5893,6 +6546,22 @@ pub mod play {
                     _ => "",
                 }
             }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    Rows::Rows0(val) => {
+                        let w = Void::serialize(&val, w)?;
+                        w
+                    }
+                    Rows::Default(val) => u8::serialize(val, w)?,
+                };
+
+                Ok(w)
+            }
         }
         pub enum MapX {
             MapX0(Void),
@@ -5905,6 +6574,22 @@ pub mod play {
                     MapX::MapX0(_) => "0",
                     _ => "",
                 }
+            }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    MapX::MapX0(val) => {
+                        let w = Void::serialize(&val, w)?;
+                        w
+                    }
+                    MapX::Default(val) => u8::serialize(val, w)?,
+                };
+
+                Ok(w)
             }
         }
         pub enum MapY {
@@ -5919,6 +6604,22 @@ pub mod play {
                     _ => "",
                 }
             }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    MapY::MapY0(val) => {
+                        let w = Void::serialize(&val, w)?;
+                        w
+                    }
+                    MapY::Default(val) => u8::serialize(val, w)?,
+                };
+
+                Ok(w)
+            }
         }
         pub enum MapData<'a> {
             MapData0(Void),
@@ -5931,6 +6632,22 @@ pub mod play {
                     MapData::<'a>::MapData0(_) => "0",
                     _ => "",
                 }
+            }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    MapData::<'a>::MapData0(val) => {
+                        let w = Void::serialize(&val, w)?;
+                        w
+                    }
+                    MapData::<'a>::Default(val) => PrefixedBuffer::<'a, VarInt>::serialize(val, w)?,
+                };
+
+                Ok(w)
             }
         }
         pub struct PacketMap<'a> {
@@ -5955,38 +6672,10 @@ pub mod play {
                 let w = bool::serialize(&self.locked, w)?;
                 let w = Option::<PrefixedArray<Ident11<'a>, VarInt>>::serialize(&self.icons, w)?;
                 let w = u8::serialize(&self.columns, w)?;
-
-                let w = match &self.rows {
-                    Rows::Rows0(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    Rows::Default(val) => u8::serialize(val, w)?,
-                };
-
-                let w = match &self.x {
-                    MapX::MapX0(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    MapX::Default(val) => u8::serialize(val, w)?,
-                };
-
-                let w = match &self.y {
-                    MapY::MapY0(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    MapY::Default(val) => u8::serialize(val, w)?,
-                };
-
-                let w = match &self.data {
-                    MapData::<'a>::MapData0(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    MapData::<'a>::Default(val) => PrefixedBuffer::<'a, VarInt>::serialize(val, w)?,
-                };
+                let w = Rows::serialize(&self.rows, w)?;
+                let w = MapX::serialize(&self.x, w)?;
+                let w = MapY::serialize(&self.y, w)?;
+                let w = MapData::<'a>::serialize(&self.data, w)?;
 
                 Ok(w)
             }
@@ -6126,7 +6815,18 @@ pub mod play {
                 w: cookie_factory::WriteContext<W>,
             ) -> cookie_factory::GenResult<W> {
                 let w = VarInt::serialize(&self.window_id, w)?;
-                let w = PrefixedArray::<Trade, u8>::serialize(&self.trades, w)?;
+
+                let w = PrefixedArray::<Trade, u8>::len(&self.trades).serialize(w)?;
+
+                let mut w = w;
+                let items = self.trades.0.iter();
+                for i in items {
+                    w = {
+                        let w = Trade::serialize(&i, w)?;
+                        w
+                    }
+                }
+
                 let w = VarInt::serialize(&self.villager_level, w)?;
                 let w = VarInt::serialize(&self.experience, w)?;
                 let w = bool::serialize(&self.is_regular_villager, w)?;
@@ -6526,14 +7226,30 @@ pub mod play {
                     _ => "",
                 }
             }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    PlayerInfoDataItemName::<'a>::PlayerInfoDataItemName0(val) => {
+                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
+                        w
+                    }
+                    PlayerInfoDataItemName::<'a>::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
+            }
         }
-        pub struct PlayerInfoDataItemProperties0Item<'a> {
+        pub struct PlayerInfoDataItemProperties0<'a> {
             name: VarString<'a>,
             value: VarString<'a>,
             signature: Option<VarString<'a>>,
         }
 
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PlayerInfoDataItemProperties0Item<'a> {
+        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PlayerInfoDataItemProperties0<'a> {
             fn serialize<W: std::io::Write>(
                 &self,
                 w: cookie_factory::WriteContext<W>,
@@ -6552,7 +7268,7 @@ pub mod play {
                         PrefixedString::<'a, VarInt>::deserialize,
                         Option::<VarString<'a>>::deserialize,
                     )),
-                    |(name, value, signature)| PlayerInfoDataItemProperties0Item {
+                    |(name, value, signature)| PlayerInfoDataItemProperties0 {
                         name,
                         value,
                         signature,
@@ -6562,9 +7278,7 @@ pub mod play {
         }
 
         pub enum PlayerInfoDataItemProperties<'a> {
-            PlayerInfoDataItemProperties0(
-                PrefixedArray<PlayerInfoDataItemProperties0Item<'a>, VarInt>,
-            ),
+            PlayerInfoDataItemProperties0(PrefixedArray<PlayerInfoDataItemProperties0<'a>, VarInt>),
             Default(Void),
         }
 
@@ -6574,6 +7288,33 @@ pub mod play {
                     PlayerInfoDataItemProperties::<'a>::PlayerInfoDataItemProperties0(_) => "0",
                     _ => "",
                 }
+            }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    PlayerInfoDataItemProperties::<'a>::PlayerInfoDataItemProperties0(val) => {
+                        let w =
+                            PrefixedArray::<PlayerInfoDataItemProperties0<'a>, VarInt>::len(&val)
+                                .serialize(w)?;
+
+                        let mut w = w;
+                        let items = val.0.iter();
+                        for i in items {
+                            w = {
+                                let w = PlayerInfoDataItemProperties0::<'a>::serialize(&i, w)?;
+                                w
+                            }
+                        }
+                        w
+                    }
+                    PlayerInfoDataItemProperties::<'a>::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
             }
         }
         pub enum Gamemode {
@@ -6590,6 +7331,26 @@ pub mod play {
                     _ => "",
                 }
             }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    Gamemode::Gamemode0(val) => {
+                        let w = VarInt::serialize(&val, w)?;
+                        w
+                    }
+                    Gamemode::Gamemode1(val) => {
+                        let w = VarInt::serialize(&val, w)?;
+                        w
+                    }
+                    Gamemode::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
+            }
         }
         pub enum Ping {
             Ping0(VarInt),
@@ -6605,6 +7366,26 @@ pub mod play {
                     _ => "",
                 }
             }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    Ping::Ping0(val) => {
+                        let w = VarInt::serialize(&val, w)?;
+                        w
+                    }
+                    Ping::Ping2(val) => {
+                        let w = VarInt::serialize(&val, w)?;
+                        w
+                    }
+                    Ping::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
+            }
         }
         pub enum PlayerInfoDataItemDisplayName<'a> {
             PlayerInfoDataItemDisplayName0(Option<VarString<'a>>),
@@ -6619,6 +7400,26 @@ pub mod play {
                     PlayerInfoDataItemDisplayName::<'a>::PlayerInfoDataItemDisplayName3(_) => "3",
                     _ => "",
                 }
+            }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    PlayerInfoDataItemDisplayName::<'a>::PlayerInfoDataItemDisplayName0(val) => {
+                        let w = Option::<VarString<'a>>::serialize(&val, w)?;
+                        w
+                    }
+                    PlayerInfoDataItemDisplayName::<'a>::PlayerInfoDataItemDisplayName3(val) => {
+                        let w = Option::<VarString<'a>>::serialize(&val, w)?;
+                        w
+                    }
+                    PlayerInfoDataItemDisplayName::<'a>::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
             }
         }
         pub struct PlayerInfoDataItem<'a> {
@@ -6640,19 +7441,146 @@ pub mod play {
                 w: cookie_factory::WriteContext<W>,
             ) -> cookie_factory::GenResult<W> {
                 let w = VarInt::serialize(&self.action, w)?;
-                let w = PrefixedArray::<PlayerInfoDataItem<'a>, VarInt>::serialize(&self.data, w)?;
+
+                let w = PrefixedArray::<PlayerInfoDataItem<'a>, VarInt>::len(&self.data)
+                    .serialize(w)?;
+
+                let mut w = w;
+                let items = self.data.0.iter();
+                for i in items {
+                    w = {
+                        let w = Uuid::serialize(&i.uuid, w)?;
+                        let w = PlayerInfoDataItemName::<'a>::serialize(&i.name, w)?;
+                        let w = PlayerInfoDataItemProperties::<'a>::serialize(&i.properties, w)?;
+                        let w = Gamemode::serialize(&i.gamemode, w)?;
+                        let w = Ping::serialize(&i.ping, w)?;
+                        let w = PlayerInfoDataItemDisplayName::<'a>::serialize(&i.display_name, w)?;
+
+                        w
+                    }
+                }
 
                 Ok(w)
             }
 
             fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (nom::combinator::map(
-                    nom::sequence::tuple((
-                        VarInt::deserialize,
-                        PrefixedArray::<PlayerInfoDataItem<'a>, VarInt>::deserialize,
-                    )),
-                    |(action, data)| PacketPlayerInfo { action, data },
-                ))(input)
+                (|input| {
+                    let (input, self_action) = (VarInt::deserialize)(input)?;
+                    let (input, self_data) = (|input| {
+                        let (input, len) = VarInt::deserialize(input)?;
+                        let len = protocol_lib::types::num_traits::ToPrimitive::to_usize(&len)
+                            .ok_or(nom::Err::Error(nom::error::Error::new(
+                                input,
+                                nom::error::ErrorKind::TooLarge,
+                            )))?;
+                        nom::combinator::map(
+                            nom::multi::count(
+                                |input| {
+                                    let (input, self_data_uuid) = (Uuid::deserialize)(input)?;
+                                    let (input, self_data_name) = (|input| match &format!(
+                                        "{}",
+                                        self_action
+                                    )[..]
+                                    {
+                                        "0" => nom::combinator::map(
+                                            PrefixedString::<'a, VarInt>::deserialize,
+                                            PlayerInfoDataItemName::<'a>::PlayerInfoDataItemName0,
+                                        )(input),
+                                        _ => nom::combinator::map(
+                                            Void::deserialize,
+                                            PlayerInfoDataItemName::<'a>::Default,
+                                        )(input),
+                                    })(
+                                        input
+                                    )?;
+                                    let (input, self_data_properties) =
+                                        (|input| {
+                                            match &format!("{}", self_action)[..] {
+"0" => nom::combinator::map(
+                    PrefixedArray::<PlayerInfoDataItemProperties0<'a>, VarInt>::deserialize
+                , PlayerInfoDataItemProperties::<'a>::PlayerInfoDataItemProperties0)(input),
+ _ => nom::combinator::map(Void::deserialize, PlayerInfoDataItemProperties::<'a>::Default)(input)}
+                                        })(input)?;
+                                    let (input, self_data_gamemode) =
+                                        (|input| match &format!("{}", self_action)[..] {
+                                            "0" => nom::combinator::map(
+                                                VarInt::deserialize,
+                                                Gamemode::Gamemode0,
+                                            )(
+                                                input
+                                            ),
+                                            "1" => nom::combinator::map(
+                                                VarInt::deserialize,
+                                                Gamemode::Gamemode1,
+                                            )(
+                                                input
+                                            ),
+                                            _ => nom::combinator::map(
+                                                Void::deserialize,
+                                                Gamemode::Default,
+                                            )(
+                                                input
+                                            ),
+                                        })(input)?;
+                                    let (input, self_data_ping) =
+                                        (|input| match &format!("{}", self_action)[..] {
+                                            "0" => nom::combinator::map(
+                                                VarInt::deserialize,
+                                                Ping::Ping0,
+                                            )(
+                                                input
+                                            ),
+                                            "2" => nom::combinator::map(
+                                                VarInt::deserialize,
+                                                Ping::Ping2,
+                                            )(
+                                                input
+                                            ),
+                                            _ => nom::combinator::map(
+                                                Void::deserialize,
+                                                Ping::Default,
+                                            )(
+                                                input
+                                            ),
+                                        })(input)?;
+                                    let (input, self_data_display_name) = (|input| {
+                                        match &format!("{}", self_action)[..] {
+"0" => nom::combinator::map(Option::<VarString<'a>>::deserialize, PlayerInfoDataItemDisplayName::<'a>::PlayerInfoDataItemDisplayName0)(input),
+"3" => nom::combinator::map(Option::<VarString<'a>>::deserialize, PlayerInfoDataItemDisplayName::<'a>::PlayerInfoDataItemDisplayName3)(input),
+ _ => nom::combinator::map(Void::deserialize, PlayerInfoDataItemDisplayName::<'a>::Default)(input)}
+                                    })(
+                                        input
+                                    )?;
+                                    Ok((
+                                        input,
+                                        PlayerInfoDataItem {
+                                            uuid: self_data_uuid,
+                                            name: self_data_name,
+                                            properties: self_data_properties,
+                                            gamemode: self_data_gamemode,
+                                            ping: self_data_ping,
+                                            display_name: self_data_display_name,
+                                        },
+                                    ))
+                                },
+                                len,
+                            ),
+                            |x| {
+                                PrefixedArray::<PlayerInfoDataItem<'a>, VarInt>(
+                                    x,
+                                    core::marker::PhantomData,
+                                )
+                            },
+                        )(input)
+                    })(input)?;
+                    Ok((
+                        input,
+                        PacketPlayerInfo {
+                            action: self_action,
+                            data: self_data,
+                        },
+                    ))
+                })(input)
             }
         }
 
@@ -6722,6 +7650,31 @@ pub mod play {
                     _ => "",
                 }
             }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    Recipes2::<'a>::Recipes20(val) => {
+                        let w = PrefixedArray::<VarString<'a>, VarInt>::len(&val).serialize(w)?;
+
+                        let mut w = w;
+                        let items = val.0.iter();
+                        for i in items {
+                            w = {
+                                let w = PrefixedString::<'a, VarInt>::serialize(&i, w)?;
+                                w
+                            }
+                        }
+                        w
+                    }
+                    Recipes2::<'a>::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
+            }
         }
         pub struct PacketUnlockRecipes<'a> {
             action: VarInt,
@@ -6751,15 +7704,19 @@ pub mod play {
                 let w = bool::serialize(&self.filtering_blast_furnace, w)?;
                 let w = bool::serialize(&self.smoker_book_open, w)?;
                 let w = bool::serialize(&self.filtering_smoker, w)?;
-                let w = PrefixedArray::<VarString<'a>, VarInt>::serialize(&self.recipes1, w)?;
 
-                let w = match &self.recipes2 {
-                    Recipes2::<'a>::Recipes20(val) => {
-                        let w = PrefixedArray::<VarString<'a>, VarInt>::serialize(&val, w)?;
+                let w = PrefixedArray::<VarString<'a>, VarInt>::len(&self.recipes1).serialize(w)?;
+
+                let mut w = w;
+                let items = self.recipes1.0.iter();
+                for i in items {
+                    w = {
+                        let w = PrefixedString::<'a, VarInt>::serialize(&i, w)?;
                         w
                     }
-                    Recipes2::<'a>::Default(val) => Void::serialize(val, w)?,
-                };
+                }
+
+                let w = Recipes2::<'a>::serialize(&self.recipes2, w)?;
 
                 Ok(w)
             }
@@ -6815,7 +7772,16 @@ pub mod play {
                 &self,
                 w: cookie_factory::WriteContext<W>,
             ) -> cookie_factory::GenResult<W> {
-                let w = PrefixedArray::<VarInt, VarInt>::serialize(&self.entity_ids, w)?;
+                let w = PrefixedArray::<VarInt, VarInt>::len(&self.entity_ids).serialize(w)?;
+
+                let mut w = w;
+                let items = self.entity_ids.0.iter();
+                for i in items {
+                    w = {
+                        let w = VarInt::serialize(&i, w)?;
+                        w
+                    }
+                }
 
                 Ok(w)
             }
@@ -7125,86 +8091,7 @@ pub mod play {
                         .unwrap()
                         .serialize(w)?;
                     w = {
-                        let w = match &item {
-                            Value::<'a>::Value0(val) => {
-                                let w = i8::serialize(&val, w)?;
-                                w
-                            }
-                            Value::<'a>::Value1(val) => {
-                                let w = VarInt::serialize(&val, w)?;
-                                w
-                            }
-                            Value::<'a>::Value2(val) => {
-                                let w = f32::serialize(&val, w)?;
-                                w
-                            }
-                            Value::<'a>::Value3(val) => {
-                                let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
-                                w
-                            }
-                            Value::<'a>::Value4(val) => {
-                                let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
-                                w
-                            }
-                            Value::<'a>::Value5(val) => {
-                                let w = Option::<VarString<'a>>::serialize(&val, w)?;
-                                w
-                            }
-                            Value::<'a>::Value6(val) => {
-                                let w = Slot::serialize(&val, w)?;
-                                w
-                            }
-                            Value::<'a>::Value7(val) => {
-                                let w = bool::serialize(&val, w)?;
-                                w
-                            }
-                            Value::<'a>::Value8(val) => {
-                                let w = Value8::serialize(&val, w)?;
-                                w
-                            }
-                            Value::<'a>::Value9(val) => {
-                                let w = Position::serialize(&val, w)?;
-                                w
-                            }
-                            Value::<'a>::Value10(val) => {
-                                let w = Option::<Position>::serialize(&val, w)?;
-                                w
-                            }
-                            Value::<'a>::Value11(val) => {
-                                let w = VarInt::serialize(&val, w)?;
-                                w
-                            }
-                            Value::<'a>::Value12(val) => {
-                                let w = Option::<Uuid>::serialize(&val, w)?;
-                                w
-                            }
-                            Value::<'a>::Value13(val) => {
-                                let w = VarInt::serialize(&val, w)?;
-                                w
-                            }
-                            Value::<'a>::Value14(val) => {
-                                let w = Nbt::serialize(&val, w)?;
-                                w
-                            }
-                            Value::<'a>::Value15(val) => {
-                                let w = Particle::<'a>::serialize(&val, w)?;
-                                w
-                            }
-                            Value::<'a>::Value16(val) => {
-                                let w = Value16::serialize(&val, w)?;
-                                w
-                            }
-                            Value::<'a>::Value17(val) => {
-                                let w = VarInt::serialize(&val, w)?;
-                                w
-                            }
-                            Value::<'a>::Value18(val) => {
-                                let w = VarInt::serialize(&val, w)?;
-                                w
-                            }
-                            Value::<'a>::Default(val) => Void::serialize(val, w)?,
-                        };
-
+                        let w = Value::<'a>::serialize(&item, w)?;
                         w
                     }
                 }
@@ -7330,10 +8217,9 @@ pub mod play {
                 (nom::combinator::map(
                     nom::sequence::tuple((VarInt::deserialize, |mut input| {
                         let mut val = std::collections::HashMap::new();
-                        let mut i = input;
                         loop {
                             let (i, (k_, v)) =
-                                nom::sequence::tuple((i8::deserialize, Slot::deserialize))(i)?;
+                                nom::sequence::tuple((i8::deserialize, Slot::deserialize))(input)?;
                             input = i;
                             let k = k_ & 0x7F;
                             val.insert(k, v);
@@ -7341,7 +8227,6 @@ pub mod play {
                                 break;
                             }
                         }
-                        let input = i;
                         Ok((input, val))
                     })),
                     |(entity_id, equipments)| PacketEntityEquipment {
@@ -7430,6 +8315,26 @@ pub mod play {
                     _ => "",
                 }
             }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    DisplayText::<'a>::DisplayText0(val) => {
+                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
+                        w
+                    }
+                    DisplayText::<'a>::DisplayText2(val) => {
+                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
+                        w
+                    }
+                    DisplayText::<'a>::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
+            }
         }
         pub enum ScoreboardObjectiveType {
             ScoreboardObjectiveType0(VarInt),
@@ -7444,6 +8349,26 @@ pub mod play {
                     ScoreboardObjectiveType::ScoreboardObjectiveType2(_) => "2",
                     _ => "",
                 }
+            }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    ScoreboardObjectiveType::ScoreboardObjectiveType0(val) => {
+                        let w = VarInt::serialize(&val, w)?;
+                        w
+                    }
+                    ScoreboardObjectiveType::ScoreboardObjectiveType2(val) => {
+                        let w = VarInt::serialize(&val, w)?;
+                        w
+                    }
+                    ScoreboardObjectiveType::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
             }
         }
         pub struct PacketScoreboardObjective<'a> {
@@ -7460,30 +8385,8 @@ pub mod play {
             ) -> cookie_factory::GenResult<W> {
                 let w = PrefixedString::<'a, VarInt>::serialize(&self.name, w)?;
                 let w = i8::serialize(&self.action, w)?;
-
-                let w = match &self.display_text {
-                    DisplayText::<'a>::DisplayText0(val) => {
-                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
-                        w
-                    }
-                    DisplayText::<'a>::DisplayText2(val) => {
-                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
-                        w
-                    }
-                    DisplayText::<'a>::Default(val) => Void::serialize(val, w)?,
-                };
-
-                let w = match &self.r_type {
-                    ScoreboardObjectiveType::ScoreboardObjectiveType0(val) => {
-                        let w = VarInt::serialize(&val, w)?;
-                        w
-                    }
-                    ScoreboardObjectiveType::ScoreboardObjectiveType2(val) => {
-                        let w = VarInt::serialize(&val, w)?;
-                        w
-                    }
-                    ScoreboardObjectiveType::Default(val) => Void::serialize(val, w)?,
-                };
+                let w = DisplayText::<'a>::serialize(&self.display_text, w)?;
+                let w = ScoreboardObjectiveType::serialize(&self.r_type, w)?;
 
                 Ok(w)
             }
@@ -7544,7 +8447,17 @@ pub mod play {
                 w: cookie_factory::WriteContext<W>,
             ) -> cookie_factory::GenResult<W> {
                 let w = VarInt::serialize(&self.entity_id, w)?;
-                let w = PrefixedArray::<VarInt, VarInt>::serialize(&self.passengers, w)?;
+
+                let w = PrefixedArray::<VarInt, VarInt>::len(&self.passengers).serialize(w)?;
+
+                let mut w = w;
+                let items = self.passengers.0.iter();
+                for i in items {
+                    w = {
+                        let w = VarInt::serialize(&i, w)?;
+                        w
+                    }
+                }
 
                 Ok(w)
             }
@@ -7577,6 +8490,26 @@ pub mod play {
                     _ => "",
                 }
             }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    TeamsName::<'a>::TeamsName0(val) => {
+                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
+                        w
+                    }
+                    TeamsName::<'a>::TeamsName2(val) => {
+                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
+                        w
+                    }
+                    TeamsName::<'a>::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
+            }
         }
         pub enum FriendlyFire {
             FriendlyFire0(i8),
@@ -7591,6 +8524,26 @@ pub mod play {
                     FriendlyFire::FriendlyFire2(_) => "2",
                     _ => "",
                 }
+            }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    FriendlyFire::FriendlyFire0(val) => {
+                        let w = i8::serialize(&val, w)?;
+                        w
+                    }
+                    FriendlyFire::FriendlyFire2(val) => {
+                        let w = i8::serialize(&val, w)?;
+                        w
+                    }
+                    FriendlyFire::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
             }
         }
         pub enum NameTagVisibility<'a> {
@@ -7607,6 +8560,26 @@ pub mod play {
                     _ => "",
                 }
             }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    NameTagVisibility::<'a>::NameTagVisibility0(val) => {
+                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
+                        w
+                    }
+                    NameTagVisibility::<'a>::NameTagVisibility2(val) => {
+                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
+                        w
+                    }
+                    NameTagVisibility::<'a>::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
+            }
         }
         pub enum CollisionRule<'a> {
             CollisionRule0(VarString<'a>),
@@ -7621,6 +8594,26 @@ pub mod play {
                     CollisionRule::<'a>::CollisionRule2(_) => "2",
                     _ => "",
                 }
+            }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    CollisionRule::<'a>::CollisionRule0(val) => {
+                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
+                        w
+                    }
+                    CollisionRule::<'a>::CollisionRule2(val) => {
+                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
+                        w
+                    }
+                    CollisionRule::<'a>::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
             }
         }
         pub enum Formatting {
@@ -7637,6 +8630,26 @@ pub mod play {
                     _ => "",
                 }
             }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    Formatting::Formatting0(val) => {
+                        let w = VarInt::serialize(&val, w)?;
+                        w
+                    }
+                    Formatting::Formatting2(val) => {
+                        let w = VarInt::serialize(&val, w)?;
+                        w
+                    }
+                    Formatting::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
+            }
         }
         pub enum Prefix<'a> {
             Prefix0(VarString<'a>),
@@ -7652,6 +8665,26 @@ pub mod play {
                     _ => "",
                 }
             }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    Prefix::<'a>::Prefix0(val) => {
+                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
+                        w
+                    }
+                    Prefix::<'a>::Prefix2(val) => {
+                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
+                        w
+                    }
+                    Prefix::<'a>::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
+            }
         }
         pub enum Suffix<'a> {
             Suffix0(VarString<'a>),
@@ -7666,6 +8699,26 @@ pub mod play {
                     Suffix::<'a>::Suffix2(_) => "2",
                     _ => "",
                 }
+            }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    Suffix::<'a>::Suffix0(val) => {
+                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
+                        w
+                    }
+                    Suffix::<'a>::Suffix2(val) => {
+                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
+                        w
+                    }
+                    Suffix::<'a>::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
             }
         }
         pub enum Players<'a> {
@@ -7683,6 +8736,57 @@ pub mod play {
                     Players::<'a>::Players4(_) => "4",
                     _ => "",
                 }
+            }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    Players::<'a>::Players0(val) => {
+                        let w = PrefixedArray::<VarString<'a>, VarInt>::len(&val).serialize(w)?;
+
+                        let mut w = w;
+                        let items = val.0.iter();
+                        for i in items {
+                            w = {
+                                let w = PrefixedString::<'a, VarInt>::serialize(&i, w)?;
+                                w
+                            }
+                        }
+                        w
+                    }
+                    Players::<'a>::Players3(val) => {
+                        let w = PrefixedArray::<VarString<'a>, VarInt>::len(&val).serialize(w)?;
+
+                        let mut w = w;
+                        let items = val.0.iter();
+                        for i in items {
+                            w = {
+                                let w = PrefixedString::<'a, VarInt>::serialize(&i, w)?;
+                                w
+                            }
+                        }
+                        w
+                    }
+                    Players::<'a>::Players4(val) => {
+                        let w = PrefixedArray::<VarString<'a>, VarInt>::len(&val).serialize(w)?;
+
+                        let mut w = w;
+                        let items = val.0.iter();
+                        for i in items {
+                            w = {
+                                let w = PrefixedString::<'a, VarInt>::serialize(&i, w)?;
+                                w
+                            }
+                        }
+                        w
+                    }
+                    Players::<'a>::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
             }
         }
         pub struct PacketTeams<'a> {
@@ -7705,106 +8809,14 @@ pub mod play {
             ) -> cookie_factory::GenResult<W> {
                 let w = PrefixedString::<'a, VarInt>::serialize(&self.team, w)?;
                 let w = i8::serialize(&self.mode, w)?;
-
-                let w = match &self.name {
-                    TeamsName::<'a>::TeamsName0(val) => {
-                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
-                        w
-                    }
-                    TeamsName::<'a>::TeamsName2(val) => {
-                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
-                        w
-                    }
-                    TeamsName::<'a>::Default(val) => Void::serialize(val, w)?,
-                };
-
-                let w = match &self.friendly_fire {
-                    FriendlyFire::FriendlyFire0(val) => {
-                        let w = i8::serialize(&val, w)?;
-                        w
-                    }
-                    FriendlyFire::FriendlyFire2(val) => {
-                        let w = i8::serialize(&val, w)?;
-                        w
-                    }
-                    FriendlyFire::Default(val) => Void::serialize(val, w)?,
-                };
-
-                let w = match &self.name_tag_visibility {
-                    NameTagVisibility::<'a>::NameTagVisibility0(val) => {
-                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
-                        w
-                    }
-                    NameTagVisibility::<'a>::NameTagVisibility2(val) => {
-                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
-                        w
-                    }
-                    NameTagVisibility::<'a>::Default(val) => Void::serialize(val, w)?,
-                };
-
-                let w = match &self.collision_rule {
-                    CollisionRule::<'a>::CollisionRule0(val) => {
-                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
-                        w
-                    }
-                    CollisionRule::<'a>::CollisionRule2(val) => {
-                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
-                        w
-                    }
-                    CollisionRule::<'a>::Default(val) => Void::serialize(val, w)?,
-                };
-
-                let w = match &self.formatting {
-                    Formatting::Formatting0(val) => {
-                        let w = VarInt::serialize(&val, w)?;
-                        w
-                    }
-                    Formatting::Formatting2(val) => {
-                        let w = VarInt::serialize(&val, w)?;
-                        w
-                    }
-                    Formatting::Default(val) => Void::serialize(val, w)?,
-                };
-
-                let w = match &self.prefix {
-                    Prefix::<'a>::Prefix0(val) => {
-                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
-                        w
-                    }
-                    Prefix::<'a>::Prefix2(val) => {
-                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
-                        w
-                    }
-                    Prefix::<'a>::Default(val) => Void::serialize(val, w)?,
-                };
-
-                let w = match &self.suffix {
-                    Suffix::<'a>::Suffix0(val) => {
-                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
-                        w
-                    }
-                    Suffix::<'a>::Suffix2(val) => {
-                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
-                        w
-                    }
-                    Suffix::<'a>::Default(val) => Void::serialize(val, w)?,
-                };
-
-                let w = match &self.players {
-                    Players::<'a>::Players0(val) => {
-                        let w = PrefixedArray::<VarString<'a>, VarInt>::serialize(&val, w)?;
-                        w
-                    }
-                    Players::<'a>::Players3(val) => {
-                        let w = PrefixedArray::<VarString<'a>, VarInt>::serialize(&val, w)?;
-                        w
-                    }
-                    Players::<'a>::Players4(val) => {
-                        let w = PrefixedArray::<VarString<'a>, VarInt>::serialize(&val, w)?;
-                        w
-                    }
-                    Players::<'a>::Default(val) => Void::serialize(val, w)?,
-                };
+                let w = TeamsName::<'a>::serialize(&self.name, w)?;
+                let w = FriendlyFire::serialize(&self.friendly_fire, w)?;
+                let w = NameTagVisibility::<'a>::serialize(&self.name_tag_visibility, w)?;
+                let w = CollisionRule::<'a>::serialize(&self.collision_rule, w)?;
+                let w = Formatting::serialize(&self.formatting, w)?;
+                let w = Prefix::<'a>::serialize(&self.prefix, w)?;
+                let w = Suffix::<'a>::serialize(&self.suffix, w)?;
+                let w = Players::<'a>::serialize(&self.players, w)?;
 
                 Ok(w)
             }
@@ -7941,6 +8953,22 @@ pub mod play {
                     _ => "",
                 }
             }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    ScoreboardScoreValue::ScoreboardScoreValue1(val) => {
+                        let w = Void::serialize(&val, w)?;
+                        w
+                    }
+                    ScoreboardScoreValue::Default(val) => VarInt::serialize(val, w)?,
+                };
+
+                Ok(w)
+            }
         }
         pub struct PacketScoreboardScore<'a> {
             item_name: VarString<'a>,
@@ -7957,14 +8985,7 @@ pub mod play {
                 let w = PrefixedString::<'a, VarInt>::serialize(&self.item_name, w)?;
                 let w = VarInt::serialize(&self.action, w)?;
                 let w = PrefixedString::<'a, VarInt>::serialize(&self.score_name, w)?;
-
-                let w = match &self.value {
-                    ScoreboardScoreValue::ScoreboardScoreValue1(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    ScoreboardScoreValue::Default(val) => VarInt::serialize(val, w)?,
-                };
+                let w = ScoreboardScoreValue::serialize(&self.value, w)?;
 
                 Ok(w)
             }
@@ -8105,6 +9126,26 @@ pub mod play {
                     _ => "",
                 }
             }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    Source::Source3(val) => {
+                        let w = VarInt::serialize(&val, w)?;
+                        w
+                    }
+                    Source::Source1(val) => {
+                        let w = VarInt::serialize(&val, w)?;
+                        w
+                    }
+                    Source::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
+            }
         }
         pub enum Sound<'a> {
             Sound3(VarString<'a>),
@@ -8120,6 +9161,26 @@ pub mod play {
                     _ => "",
                 }
             }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    Sound::<'a>::Sound3(val) => {
+                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
+                        w
+                    }
+                    Sound::<'a>::Sound2(val) => {
+                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
+                        w
+                    }
+                    Sound::<'a>::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
+            }
         }
         pub struct PacketStopSound<'a> {
             flags: i8,
@@ -8133,30 +9194,8 @@ pub mod play {
                 w: cookie_factory::WriteContext<W>,
             ) -> cookie_factory::GenResult<W> {
                 let w = i8::serialize(&self.flags, w)?;
-
-                let w = match &self.source {
-                    Source::Source3(val) => {
-                        let w = VarInt::serialize(&val, w)?;
-                        w
-                    }
-                    Source::Source1(val) => {
-                        let w = VarInt::serialize(&val, w)?;
-                        w
-                    }
-                    Source::Default(val) => Void::serialize(val, w)?,
-                };
-
-                let w = match &self.sound {
-                    Sound::<'a>::Sound3(val) => {
-                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
-                        w
-                    }
-                    Sound::<'a>::Sound2(val) => {
-                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
-                        w
-                    }
-                    Sound::<'a>::Default(val) => Void::serialize(val, w)?,
-                };
+                let w = Source::serialize(&self.source, w)?;
+                let w = Sound::<'a>::serialize(&self.sound, w)?;
 
                 Ok(w)
             }
@@ -8396,7 +9435,17 @@ pub mod play {
             ) -> cookie_factory::GenResult<W> {
                 let w = PrefixedString::<'a, VarInt>::serialize(&self.key, w)?;
                 let w = f64::serialize(&self.value, w)?;
-                let w = PrefixedArray::<Modifier, VarInt>::serialize(&self.modifiers, w)?;
+
+                let w = PrefixedArray::<Modifier, VarInt>::len(&self.modifiers).serialize(w)?;
+
+                let mut w = w;
+                let items = self.modifiers.0.iter();
+                for i in items {
+                    w = {
+                        let w = Modifier::serialize(&i, w)?;
+                        w
+                    }
+                }
 
                 Ok(w)
             }
@@ -8428,10 +9477,19 @@ pub mod play {
                 w: cookie_factory::WriteContext<W>,
             ) -> cookie_factory::GenResult<W> {
                 let w = VarInt::serialize(&self.entity_id, w)?;
-                let w = PrefixedArray::<EntityUpdateAttrsProperty<'a>, VarInt>::serialize(
-                    &self.properties,
-                    w,
-                )?;
+
+                let w =
+                    PrefixedArray::<EntityUpdateAttrsProperty<'a>, VarInt>::len(&self.properties)
+                        .serialize(w)?;
+
+                let mut w = w;
+                let items = self.properties.0.iter();
+                for i in items {
+                    w = {
+                        let w = EntityUpdateAttrsProperty::<'a>::serialize(&i, w)?;
+                        w
+                    }
+                }
 
                 Ok(w)
             }
@@ -8528,7 +9586,29 @@ pub mod play {
                 w: cookie_factory::WriteContext<W>,
             ) -> cookie_factory::GenResult<W> {
                 let w = PrefixedString::<'a, VarInt>::serialize(&self.group, w)?;
-                let w = PrefixedArray::<VarArray<Slot>, VarInt>::serialize(&self.ingredients, w)?;
+
+                let w =
+                    PrefixedArray::<VarArray<Slot>, VarInt>::len(&self.ingredients).serialize(w)?;
+
+                let mut w = w;
+                let items = self.ingredients.0.iter();
+                for i in items {
+                    w = {
+                        let w = PrefixedArray::<Slot, VarInt>::len(&i).serialize(w)?;
+
+                        let mut w = w;
+                        let items = i.0.iter();
+                        for i in items {
+                            w = {
+                                let w = Slot::serialize(&i, w)?;
+                                w
+                            }
+                        }
+
+                        w
+                    }
+                }
+
                 let w = Slot::serialize(&self.result, w)?;
 
                 Ok(w)
@@ -8567,28 +9647,78 @@ pub mod play {
                 let w = VarInt::serialize(&self.height, w)?;
                 let w = PrefixedString::<'a, VarInt>::serialize(&self.group, w)?;
 
+                let mut w = w;
+                let items = self.ingredients.iter();
+                for i in items {
+                    w = {
+                        let mut w = w;
+                        let items = i.iter();
+                        for i in items {
+                            w = {
+                                let w = PrefixedArray::<Slot, VarInt>::len(&i).serialize(w)?;
+
+                                let mut w = w;
+                                let items = i.0.iter();
+                                for i in items {
+                                    w = {
+                                        let w = Slot::serialize(&i, w)?;
+                                        w
+                                    }
+                                }
+
+                                w
+                            }
+                        }
+
+                        w
+                    }
+                }
+
                 let w = Slot::serialize(&self.result, w)?;
 
                 Ok(w)
             }
 
             fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
-                (nom::combinator::map(
-                    nom::sequence::tuple((
-                        VarInt::deserialize,
-                        VarInt::deserialize,
-                        PrefixedString::<'a, VarInt>::deserialize,
-                        |_| todo!(),
-                        Slot::deserialize,
-                    )),
-                    |(width, height, group, ingredients, result)| CraftingShaped {
-                        width,
-                        height,
-                        group,
-                        ingredients,
-                        result,
-                    },
-                ))(input)
+                (|input| {
+                    let (input, self_width) = (VarInt::deserialize)(input)?;
+                    let (input, self_height) = (VarInt::deserialize)(input)?;
+                    let (input, self_group) = (PrefixedString::<'a, VarInt>::deserialize)(input)?;
+                    let (input, self_ingredients) = (|input| {
+                        let len = self_width;
+                        let len = protocol_lib::types::num_traits::ToPrimitive::to_usize(&len)
+                            .ok_or(nom::Err::Error(nom::error::Error::new(
+                                input,
+                                nom::error::ErrorKind::TooLarge,
+                            )))?;
+                        nom::multi::count(
+                            |input| {
+                                let len = self_height;
+                                let len =
+                                    protocol_lib::types::num_traits::ToPrimitive::to_usize(&len)
+                                        .ok_or(nom::Err::Error(nom::error::Error::new(
+                                            input,
+                                            nom::error::ErrorKind::TooLarge,
+                                        )))?;
+                                nom::multi::count(PrefixedArray::<Slot, VarInt>::deserialize, len)(
+                                    input,
+                                )
+                            },
+                            len,
+                        )(input)
+                    })(input)?;
+                    let (input, self_result) = (Slot::deserialize)(input)?;
+                    Ok((
+                        input,
+                        CraftingShaped {
+                            width: self_width,
+                            height: self_height,
+                            group: self_group,
+                            ingredients: self_ingredients,
+                            result: self_result,
+                        },
+                    ))
+                })(input)
             }
         }
 
@@ -8604,7 +9734,18 @@ pub mod play {
                 w: cookie_factory::WriteContext<W>,
             ) -> cookie_factory::GenResult<W> {
                 let w = PrefixedString::<'a, VarInt>::serialize(&self.group, w)?;
-                let w = PrefixedArray::<Slot, VarInt>::serialize(&self.ingredient, w)?;
+
+                let w = PrefixedArray::<Slot, VarInt>::len(&self.ingredient).serialize(w)?;
+
+                let mut w = w;
+                let items = self.ingredient.0.iter();
+                for i in items {
+                    w = {
+                        let w = Slot::serialize(&i, w)?;
+                        w
+                    }
+                }
+
                 let w = Slot::serialize(&self.result, w)?;
 
                 Ok(w)
@@ -8637,8 +9778,28 @@ pub mod play {
                 &self,
                 w: cookie_factory::WriteContext<W>,
             ) -> cookie_factory::GenResult<W> {
-                let w = PrefixedArray::<Slot, VarInt>::serialize(&self.base, w)?;
-                let w = PrefixedArray::<Slot, VarInt>::serialize(&self.addition, w)?;
+                let w = PrefixedArray::<Slot, VarInt>::len(&self.base).serialize(w)?;
+
+                let mut w = w;
+                let items = self.base.0.iter();
+                for i in items {
+                    w = {
+                        let w = Slot::serialize(&i, w)?;
+                        w
+                    }
+                }
+
+                let w = PrefixedArray::<Slot, VarInt>::len(&self.addition).serialize(w)?;
+
+                let mut w = w;
+                let items = self.addition.0.iter();
+                for i in items {
+                    w = {
+                        let w = Slot::serialize(&i, w)?;
+                        w
+                    }
+                }
+
                 let w = Slot::serialize(&self.result, w)?;
 
                 Ok(w)
@@ -8742,22 +9903,13 @@ pub mod play {
                     _ => "",
                 }
             }
-        }
-        pub struct RecipesItem<'a> {
-            r_type: VarString<'a>,
-            recipe_id: VarString<'a>,
-            data: RecipeData<'a>,
-        }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for RecipesItem<'a> {
-            fn serialize<W: std::io::Write>(
+            pub fn serialize<W: std::io::Write>(
                 &self,
                 w: cookie_factory::WriteContext<W>,
             ) -> cookie_factory::GenResult<W> {
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.r_type, w)?;
-                let w = PrefixedString::<'a, VarInt>::serialize(&self.recipe_id, w)?;
+                use protocol_lib::Packet;
 
-                let w = match &self.data {
+                let w = match &self {
                     RecipeData::<'a>::CraftingShapeless(val) => {
                         let w = CraftingShapeless::<'a>::serialize(&val, w)?;
                         w
@@ -8848,6 +10000,24 @@ pub mod play {
                     }
                     RecipeData::<'a>::Default(val) => Void::serialize(val, w)?,
                 };
+
+                Ok(w)
+            }
+        }
+        pub struct RecipesItem<'a> {
+            r_type: VarString<'a>,
+            recipe_id: VarString<'a>,
+            data: RecipeData<'a>,
+        }
+
+        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for RecipesItem<'a> {
+            fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                let w = PrefixedString::<'a, VarInt>::serialize(&self.r_type, w)?;
+                let w = PrefixedString::<'a, VarInt>::serialize(&self.recipe_id, w)?;
+                let w = RecipeData::<'a>::serialize(&self.data, w)?;
 
                 Ok(w)
             }
@@ -8989,7 +10159,17 @@ pub mod play {
                 &self,
                 w: cookie_factory::WriteContext<W>,
             ) -> cookie_factory::GenResult<W> {
-                let w = PrefixedArray::<RecipesItem<'a>, VarInt>::serialize(&self.recipes, w)?;
+                let w =
+                    PrefixedArray::<RecipesItem<'a>, VarInt>::len(&self.recipes).serialize(w)?;
+
+                let mut w = w;
+                let items = self.recipes.0.iter();
+                for i in items {
+                    w = {
+                        let w = RecipesItem::<'a>::serialize(&i, w)?;
+                        w
+                    }
+                }
 
                 Ok(w)
             }
@@ -9013,7 +10193,17 @@ pub mod play {
                 w: cookie_factory::WriteContext<W>,
             ) -> cookie_factory::GenResult<W> {
                 let w = PrefixedString::<'a, VarInt>::serialize(&self.tag_type, w)?;
-                let w = PrefixedArray::<Tag<'a>, VarInt>::serialize(&self.tags, w)?;
+
+                let w = PrefixedArray::<Tag<'a>, VarInt>::len(&self.tags).serialize(w)?;
+
+                let mut w = w;
+                let items = self.tags.0.iter();
+                for i in items {
+                    w = {
+                        let w = Tag::<'a>::serialize(&i, w)?;
+                        w
+                    }
+                }
 
                 Ok(w)
             }
@@ -9038,7 +10228,16 @@ pub mod play {
                 &self,
                 w: cookie_factory::WriteContext<W>,
             ) -> cookie_factory::GenResult<W> {
-                let w = PrefixedArray::<TagsTag<'a>, VarInt>::serialize(&self.tags, w)?;
+                let w = PrefixedArray::<TagsTag<'a>, VarInt>::len(&self.tags).serialize(w)?;
+
+                let mut w = w;
+                let items = self.tags.0.iter();
+                for i in items {
+                    w = {
+                        let w = TagsTag::<'a>::serialize(&i, w)?;
+                        w
+                    }
+                }
 
                 Ok(w)
             }
@@ -9107,6 +10306,28 @@ pub mod play {
                     _ => "",
                 }
             }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    SculkVibrationSignalDestination::SculkVibrationSignalDestinationBlock(val) => {
+                        let w = Position::serialize(&val, w)?;
+                        w
+                    }
+                    SculkVibrationSignalDestination::SculkVibrationSignalDestinationEntityId(
+                        val,
+                    ) => {
+                        let w = VarInt::serialize(&val, w)?;
+                        w
+                    }
+                    SculkVibrationSignalDestination::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
+            }
         }
         pub struct PacketSculkVibrationSignal<'a> {
             source_position: Position,
@@ -9122,21 +10343,7 @@ pub mod play {
             ) -> cookie_factory::GenResult<W> {
                 let w = Position::serialize(&self.source_position, w)?;
                 let w = PrefixedString::<'a, VarInt>::serialize(&self.destination_identifier, w)?;
-
-                let w = match &self.destination {
-                    SculkVibrationSignalDestination::SculkVibrationSignalDestinationBlock(val) => {
-                        let w = Position::serialize(&val, w)?;
-                        w
-                    }
-                    SculkVibrationSignalDestination::SculkVibrationSignalDestinationEntityId(
-                        val,
-                    ) => {
-                        let w = VarInt::serialize(&val, w)?;
-                        w
-                    }
-                    SculkVibrationSignalDestination::Default(val) => Void::serialize(val, w)?,
-                };
-
+                let w = SculkVibrationSignalDestination::serialize(&self.destination, w)?;
                 let w = VarInt::serialize(&self.arrival_ticks, w)?;
 
                 Ok(w)
@@ -9731,127 +10938,13 @@ pub mod play {
                     _ => "",
                 }
             }
-        }
-        pub struct Packet<'a> {
-            name: &'static str,
-            params: Params<'a>,
-        }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for Packet<'a> {
-            fn serialize<W: std::io::Write>(
+            pub fn serialize<W: std::io::Write>(
                 &self,
                 w: cookie_factory::WriteContext<W>,
             ) -> cookie_factory::GenResult<W> {
-                let tag = match &self.name[..] {
-                    "spawn_entity" => "0x00",
-                    "spawn_entity_experience_orb" => "0x01",
-                    "spawn_entity_living" => "0x02",
-                    "spawn_entity_painting" => "0x03",
-                    "named_entity_spawn" => "0x04",
-                    "sculk_vibration_signal" => "0x05",
-                    "animation" => "0x06",
-                    "statistics" => "0x07",
-                    "acknowledge_player_digging" => "0x08",
-                    "block_break_animation" => "0x09",
-                    "tile_entity_data" => "0x0a",
-                    "block_action" => "0x0b",
-                    "block_change" => "0x0c",
-                    "boss_bar" => "0x0d",
-                    "difficulty" => "0x0e",
-                    "chat" => "0x0f",
-                    "clear_titles" => "0x10",
-                    "tab_complete" => "0x11",
-                    "declare_commands" => "0x12",
-                    "close_window" => "0x13",
-                    "window_items" => "0x14",
-                    "craft_progress_bar" => "0x15",
-                    "set_slot" => "0x16",
-                    "set_cooldown" => "0x17",
-                    "custom_payload" => "0x18",
-                    "named_sound_effect" => "0x19",
-                    "kick_disconnect" => "0x1a",
-                    "entity_status" => "0x1b",
-                    "explosion" => "0x1c",
-                    "unload_chunk" => "0x1d",
-                    "game_state_change" => "0x1e",
-                    "open_horse_window" => "0x1f",
-                    "initialize_world_border" => "0x20",
-                    "keep_alive" => "0x21",
-                    "map_chunk" => "0x22",
-                    "world_event" => "0x23",
-                    "world_particles" => "0x24",
-                    "update_light" => "0x25",
-                    "login" => "0x26",
-                    "map" => "0x27",
-                    "trade_list" => "0x28",
-                    "rel_entity_move" => "0x29",
-                    "entity_move_look" => "0x2a",
-                    "entity_look" => "0x2b",
-                    "vehicle_move" => "0x2c",
-                    "open_book" => "0x2d",
-                    "open_window" => "0x2e",
-                    "open_sign_entity" => "0x2f",
-                    "ping" => "0x30",
-                    "craft_recipe_response" => "0x31",
-                    "abilities" => "0x32",
-                    "end_combat_event" => "0x33",
-                    "enter_combat_event" => "0x34",
-                    "death_combat_event" => "0x35",
-                    "player_info" => "0x36",
-                    "face_player" => "0x37",
-                    "position" => "0x38",
-                    "unlock_recipes" => "0x39",
-                    "entity_destroy" => "0x3a",
-                    "remove_entity_effect" => "0x3b",
-                    "resource_pack_send" => "0x3c",
-                    "respawn" => "0x3d",
-                    "entity_head_rotation" => "0x3e",
-                    "multi_block_change" => "0x3f",
-                    "select_advancement_tab" => "0x40",
-                    "action_bar" => "0x41",
-                    "world_border_center" => "0x42",
-                    "world_border_lerp_size" => "0x43",
-                    "world_border_size" => "0x44",
-                    "world_border_warning_delay" => "0x45",
-                    "world_border_warning_reach" => "0x46",
-                    "camera" => "0x47",
-                    "held_item_slot" => "0x48",
-                    "update_view_position" => "0x49",
-                    "update_view_distance" => "0x4a",
-                    "spawn_position" => "0x4b",
-                    "scoreboard_display_objective" => "0x4c",
-                    "entity_metadata" => "0x4d",
-                    "attach_entity" => "0x4e",
-                    "entity_velocity" => "0x4f",
-                    "entity_equipment" => "0x50",
-                    "experience" => "0x51",
-                    "update_health" => "0x52",
-                    "scoreboard_objective" => "0x53",
-                    "set_passengers" => "0x54",
-                    "teams" => "0x55",
-                    "scoreboard_score" => "0x56",
-                    "simulation_distance" => "0x57",
-                    "set_title_subtitle" => "0x58",
-                    "update_time" => "0x59",
-                    "set_title_text" => "0x5a",
-                    "set_title_time" => "0x5b",
-                    "entity_sound_effect" => "0x5c",
-                    "sound_effect" => "0x5d",
-                    "stop_sound" => "0x5e",
-                    "playerlist_header" => "0x5f",
-                    "nbt_query_response" => "0x60",
-                    "collect" => "0x61",
-                    "entity_teleport" => "0x62",
-                    "advancements" => "0x63",
-                    "entity_update_attributes" => "0x64",
-                    "entity_effect" => "0x65",
-                    "declare_recipes" => "0x66",
-                    "tags" => "0x67",
-                };
-                let tag2 = str::parse(tag).unwrap();
-                let w = VarInt::serialize(&tag2, w)?;
+                use protocol_lib::Packet;
 
-                let w = match &self.params {
+                let w = match &self {
                     Params::<'a>::SpawnEntity(val) => {
                         let w = PacketSpawnEntity::serialize(&val, w)?;
                         w
@@ -10270,6 +11363,132 @@ pub mod play {
                     }
                     Params::<'a>::Default(val) => Void::serialize(val, w)?,
                 };
+
+                Ok(w)
+            }
+        }
+        pub struct Packet<'a> {
+            name: &'static str,
+            params: Params<'a>,
+        }
+
+        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for Packet<'a> {
+            fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                let tag = match &self.name[..] {
+                    "spawn_entity" => "0x00",
+                    "spawn_entity_experience_orb" => "0x01",
+                    "spawn_entity_living" => "0x02",
+                    "spawn_entity_painting" => "0x03",
+                    "named_entity_spawn" => "0x04",
+                    "sculk_vibration_signal" => "0x05",
+                    "animation" => "0x06",
+                    "statistics" => "0x07",
+                    "acknowledge_player_digging" => "0x08",
+                    "block_break_animation" => "0x09",
+                    "tile_entity_data" => "0x0a",
+                    "block_action" => "0x0b",
+                    "block_change" => "0x0c",
+                    "boss_bar" => "0x0d",
+                    "difficulty" => "0x0e",
+                    "chat" => "0x0f",
+                    "clear_titles" => "0x10",
+                    "tab_complete" => "0x11",
+                    "declare_commands" => "0x12",
+                    "close_window" => "0x13",
+                    "window_items" => "0x14",
+                    "craft_progress_bar" => "0x15",
+                    "set_slot" => "0x16",
+                    "set_cooldown" => "0x17",
+                    "custom_payload" => "0x18",
+                    "named_sound_effect" => "0x19",
+                    "kick_disconnect" => "0x1a",
+                    "entity_status" => "0x1b",
+                    "explosion" => "0x1c",
+                    "unload_chunk" => "0x1d",
+                    "game_state_change" => "0x1e",
+                    "open_horse_window" => "0x1f",
+                    "initialize_world_border" => "0x20",
+                    "keep_alive" => "0x21",
+                    "map_chunk" => "0x22",
+                    "world_event" => "0x23",
+                    "world_particles" => "0x24",
+                    "update_light" => "0x25",
+                    "login" => "0x26",
+                    "map" => "0x27",
+                    "trade_list" => "0x28",
+                    "rel_entity_move" => "0x29",
+                    "entity_move_look" => "0x2a",
+                    "entity_look" => "0x2b",
+                    "vehicle_move" => "0x2c",
+                    "open_book" => "0x2d",
+                    "open_window" => "0x2e",
+                    "open_sign_entity" => "0x2f",
+                    "ping" => "0x30",
+                    "craft_recipe_response" => "0x31",
+                    "abilities" => "0x32",
+                    "end_combat_event" => "0x33",
+                    "enter_combat_event" => "0x34",
+                    "death_combat_event" => "0x35",
+                    "player_info" => "0x36",
+                    "face_player" => "0x37",
+                    "position" => "0x38",
+                    "unlock_recipes" => "0x39",
+                    "entity_destroy" => "0x3a",
+                    "remove_entity_effect" => "0x3b",
+                    "resource_pack_send" => "0x3c",
+                    "respawn" => "0x3d",
+                    "entity_head_rotation" => "0x3e",
+                    "multi_block_change" => "0x3f",
+                    "select_advancement_tab" => "0x40",
+                    "action_bar" => "0x41",
+                    "world_border_center" => "0x42",
+                    "world_border_lerp_size" => "0x43",
+                    "world_border_size" => "0x44",
+                    "world_border_warning_delay" => "0x45",
+                    "world_border_warning_reach" => "0x46",
+                    "camera" => "0x47",
+                    "held_item_slot" => "0x48",
+                    "update_view_position" => "0x49",
+                    "update_view_distance" => "0x4a",
+                    "spawn_position" => "0x4b",
+                    "scoreboard_display_objective" => "0x4c",
+                    "entity_metadata" => "0x4d",
+                    "attach_entity" => "0x4e",
+                    "entity_velocity" => "0x4f",
+                    "entity_equipment" => "0x50",
+                    "experience" => "0x51",
+                    "update_health" => "0x52",
+                    "scoreboard_objective" => "0x53",
+                    "set_passengers" => "0x54",
+                    "teams" => "0x55",
+                    "scoreboard_score" => "0x56",
+                    "simulation_distance" => "0x57",
+                    "set_title_subtitle" => "0x58",
+                    "update_time" => "0x59",
+                    "set_title_text" => "0x5a",
+                    "set_title_time" => "0x5b",
+                    "entity_sound_effect" => "0x5c",
+                    "sound_effect" => "0x5d",
+                    "stop_sound" => "0x5e",
+                    "playerlist_header" => "0x5f",
+                    "nbt_query_response" => "0x60",
+                    "collect" => "0x61",
+                    "entity_teleport" => "0x62",
+                    "advancements" => "0x63",
+                    "entity_update_attributes" => "0x64",
+                    "entity_effect" => "0x65",
+                    "declare_recipes" => "0x66",
+                    "tags" => "0x67",
+
+                    _ => panic!("invalid value"),
+                };
+                let tag2 = str::parse(tag).unwrap();
+                let w = VarInt::serialize(&tag2, w)?;
+
+                let w = Params::<'a>::serialize(&self.params, w)?;
 
                 Ok(w)
             }
@@ -10909,7 +12128,18 @@ pub mod play {
                 w: cookie_factory::WriteContext<W>,
             ) -> cookie_factory::GenResult<W> {
                 let w = VarInt::serialize(&self.hand, w)?;
-                let w = PrefixedArray::<VarString<'a>, VarInt>::serialize(&self.pages, w)?;
+
+                let w = PrefixedArray::<VarString<'a>, VarInt>::len(&self.pages).serialize(w)?;
+
+                let mut w = w;
+                let items = self.pages.0.iter();
+                for i in items {
+                    w = {
+                        let w = PrefixedString::<'a, VarInt>::serialize(&i, w)?;
+                        w
+                    }
+                }
+
                 let w = Option::<VarString<'a>>::serialize(&self.title, w)?;
 
                 Ok(w)
@@ -11428,7 +12658,19 @@ pub mod play {
                 let w = i16::serialize(&self.slot, w)?;
                 let w = i8::serialize(&self.mouse_button, w)?;
                 let w = VarInt::serialize(&self.mode, w)?;
-                let w = PrefixedArray::<ChangedSlot, VarInt>::serialize(&self.changed_slots, w)?;
+
+                let w =
+                    PrefixedArray::<ChangedSlot, VarInt>::len(&self.changed_slots).serialize(w)?;
+
+                let mut w = w;
+                let items = self.changed_slots.0.iter();
+                for i in items {
+                    w = {
+                        let w = ChangedSlot::serialize(&i, w)?;
+                        w
+                    }
+                }
+
                 let w = Slot::serialize(&self.cursor_item, w)?;
 
                 Ok(w)
@@ -11526,6 +12768,22 @@ pub mod play {
                     _ => "",
                 }
             }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    X::X2(val) => {
+                        let w = f32::serialize(&val, w)?;
+                        w
+                    }
+                    X::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
+            }
         }
         pub enum UseEntityY {
             UseEntityY2(f32),
@@ -11539,6 +12797,22 @@ pub mod play {
                     _ => "",
                 }
             }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    UseEntityY::UseEntityY2(val) => {
+                        let w = f32::serialize(&val, w)?;
+                        w
+                    }
+                    UseEntityY::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
+            }
         }
         pub enum Z {
             Z2(f32),
@@ -11551,6 +12825,22 @@ pub mod play {
                     Z::Z2(_) => "2",
                     _ => "",
                 }
+            }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    Z::Z2(val) => {
+                        let w = f32::serialize(&val, w)?;
+                        w
+                    }
+                    Z::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
             }
         }
         pub enum UseEntityHand {
@@ -11566,6 +12856,26 @@ pub mod play {
                     UseEntityHand::UseEntityHand2(_) => "2",
                     _ => "",
                 }
+            }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    UseEntityHand::UseEntityHand0(val) => {
+                        let w = VarInt::serialize(&val, w)?;
+                        w
+                    }
+                    UseEntityHand::UseEntityHand2(val) => {
+                        let w = VarInt::serialize(&val, w)?;
+                        w
+                    }
+                    UseEntityHand::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
             }
         }
         pub struct PacketUseEntity {
@@ -11585,43 +12895,10 @@ pub mod play {
             ) -> cookie_factory::GenResult<W> {
                 let w = VarInt::serialize(&self.target, w)?;
                 let w = VarInt::serialize(&self.mouse, w)?;
-
-                let w = match &self.x {
-                    X::X2(val) => {
-                        let w = f32::serialize(&val, w)?;
-                        w
-                    }
-                    X::Default(val) => Void::serialize(val, w)?,
-                };
-
-                let w = match &self.y {
-                    UseEntityY::UseEntityY2(val) => {
-                        let w = f32::serialize(&val, w)?;
-                        w
-                    }
-                    UseEntityY::Default(val) => Void::serialize(val, w)?,
-                };
-
-                let w = match &self.z {
-                    Z::Z2(val) => {
-                        let w = f32::serialize(&val, w)?;
-                        w
-                    }
-                    Z::Default(val) => Void::serialize(val, w)?,
-                };
-
-                let w = match &self.hand {
-                    UseEntityHand::UseEntityHand0(val) => {
-                        let w = VarInt::serialize(&val, w)?;
-                        w
-                    }
-                    UseEntityHand::UseEntityHand2(val) => {
-                        let w = VarInt::serialize(&val, w)?;
-                        w
-                    }
-                    UseEntityHand::Default(val) => Void::serialize(val, w)?,
-                };
-
+                let w = X::serialize(&self.x, w)?;
+                let w = UseEntityY::serialize(&self.y, w)?;
+                let w = Z::serialize(&self.z, w)?;
+                let w = UseEntityHand::serialize(&self.hand, w)?;
                 let w = bool::serialize(&self.sneaking, w)?;
 
                 Ok(w)
@@ -12443,6 +13720,26 @@ pub mod play {
                     _ => "",
                 }
             }
+            pub fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                use protocol_lib::Packet;
+
+                let w = match &self {
+                    TabId::<'a>::TabId0(val) => {
+                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
+                        w
+                    }
+                    TabId::<'a>::TabId1(val) => {
+                        let w = Void::serialize(&val, w)?;
+                        w
+                    }
+                    TabId::<'a>::Default(val) => Void::serialize(val, w)?,
+                };
+
+                Ok(w)
+            }
         }
         pub struct PacketAdvancementTab<'a> {
             action: VarInt,
@@ -12455,18 +13752,7 @@ pub mod play {
                 w: cookie_factory::WriteContext<W>,
             ) -> cookie_factory::GenResult<W> {
                 let w = VarInt::serialize(&self.action, w)?;
-
-                let w = match &self.tab_id {
-                    TabId::<'a>::TabId0(val) => {
-                        let w = PrefixedString::<'a, VarInt>::serialize(&val, w)?;
-                        w
-                    }
-                    TabId::<'a>::TabId1(val) => {
-                        let w = Void::serialize(&val, w)?;
-                        w
-                    }
-                    TabId::<'a>::Default(val) => Void::serialize(val, w)?,
-                };
+                let w = TabId::<'a>::serialize(&self.tab_id, w)?;
 
                 Ok(w)
             }
@@ -12620,71 +13906,13 @@ pub mod play {
                     _ => "",
                 }
             }
-        }
-        pub struct Packet<'a> {
-            name: &'static str,
-            params: Params<'a>,
-        }
-
-        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for Packet<'a> {
-            fn serialize<W: std::io::Write>(
+            pub fn serialize<W: std::io::Write>(
                 &self,
                 w: cookie_factory::WriteContext<W>,
             ) -> cookie_factory::GenResult<W> {
-                let tag = match &self.name[..] {
-                    "teleport_confirm" => "0x00",
-                    "query_block_nbt" => "0x01",
-                    "set_difficulty" => "0x02",
-                    "chat" => "0x03",
-                    "client_command" => "0x04",
-                    "settings" => "0x05",
-                    "tab_complete" => "0x06",
-                    "enchant_item" => "0x07",
-                    "window_click" => "0x08",
-                    "close_window" => "0x09",
-                    "custom_payload" => "0x0a",
-                    "edit_book" => "0x0b",
-                    "query_entity_nbt" => "0x0c",
-                    "use_entity" => "0x0d",
-                    "generate_structure" => "0x0e",
-                    "keep_alive" => "0x0f",
-                    "lock_difficulty" => "0x10",
-                    "position" => "0x11",
-                    "position_look" => "0x12",
-                    "look" => "0x13",
-                    "flying" => "0x14",
-                    "vehicle_move" => "0x15",
-                    "steer_boat" => "0x16",
-                    "pick_item" => "0x17",
-                    "craft_recipe_request" => "0x18",
-                    "abilities" => "0x19",
-                    "block_dig" => "0x1a",
-                    "entity_action" => "0x1b",
-                    "steer_vehicle" => "0x1c",
-                    "pong" => "0x1d",
-                    "recipe_book" => "0x1e",
-                    "displayed_recipe" => "0x1f",
-                    "name_item" => "0x20",
-                    "resource_pack_receive" => "0x21",
-                    "advancement_tab" => "0x22",
-                    "select_trade" => "0x23",
-                    "set_beacon_effect" => "0x24",
-                    "held_item_slot" => "0x25",
-                    "update_command_block" => "0x26",
-                    "update_command_block_minecart" => "0x27",
-                    "set_creative_slot" => "0x28",
-                    "update_jigsaw_block" => "0x29",
-                    "update_structure_block" => "0x2a",
-                    "update_sign" => "0x2b",
-                    "arm_animation" => "0x2c",
-                    "spectate" => "0x2d",
-                    "block_place" => "0x2e",
-                    "use_item" => "0x2f",
-                };
-                let tag2 = str::parse(tag).unwrap();
-                let w = VarInt::serialize(&tag2, w)?;
+                use protocol_lib::Packet;
 
-                let w = match &self.params {
+                let w = match &self {
                     Params::<'a>::TeleportConfirm(val) => {
                         let w = PacketTeleportConfirm::serialize(&val, w)?;
                         w
@@ -12879,6 +14107,76 @@ pub mod play {
                     }
                     Params::<'a>::Default(val) => Void::serialize(val, w)?,
                 };
+
+                Ok(w)
+            }
+        }
+        pub struct Packet<'a> {
+            name: &'static str,
+            params: Params<'a>,
+        }
+
+        impl<'t: 'a, 'a> protocol_lib::Packet<'t> for Packet<'a> {
+            fn serialize<W: std::io::Write>(
+                &self,
+                w: cookie_factory::WriteContext<W>,
+            ) -> cookie_factory::GenResult<W> {
+                let tag = match &self.name[..] {
+                    "teleport_confirm" => "0x00",
+                    "query_block_nbt" => "0x01",
+                    "set_difficulty" => "0x02",
+                    "chat" => "0x03",
+                    "client_command" => "0x04",
+                    "settings" => "0x05",
+                    "tab_complete" => "0x06",
+                    "enchant_item" => "0x07",
+                    "window_click" => "0x08",
+                    "close_window" => "0x09",
+                    "custom_payload" => "0x0a",
+                    "edit_book" => "0x0b",
+                    "query_entity_nbt" => "0x0c",
+                    "use_entity" => "0x0d",
+                    "generate_structure" => "0x0e",
+                    "keep_alive" => "0x0f",
+                    "lock_difficulty" => "0x10",
+                    "position" => "0x11",
+                    "position_look" => "0x12",
+                    "look" => "0x13",
+                    "flying" => "0x14",
+                    "vehicle_move" => "0x15",
+                    "steer_boat" => "0x16",
+                    "pick_item" => "0x17",
+                    "craft_recipe_request" => "0x18",
+                    "abilities" => "0x19",
+                    "block_dig" => "0x1a",
+                    "entity_action" => "0x1b",
+                    "steer_vehicle" => "0x1c",
+                    "pong" => "0x1d",
+                    "recipe_book" => "0x1e",
+                    "displayed_recipe" => "0x1f",
+                    "name_item" => "0x20",
+                    "resource_pack_receive" => "0x21",
+                    "advancement_tab" => "0x22",
+                    "select_trade" => "0x23",
+                    "set_beacon_effect" => "0x24",
+                    "held_item_slot" => "0x25",
+                    "update_command_block" => "0x26",
+                    "update_command_block_minecart" => "0x27",
+                    "set_creative_slot" => "0x28",
+                    "update_jigsaw_block" => "0x29",
+                    "update_structure_block" => "0x2a",
+                    "update_sign" => "0x2b",
+                    "arm_animation" => "0x2c",
+                    "spectate" => "0x2d",
+                    "block_place" => "0x2e",
+                    "use_item" => "0x2f",
+
+                    _ => panic!("invalid value"),
+                };
+                let tag2 = str::parse(tag).unwrap();
+                let w = VarInt::serialize(&tag2, w)?;
+
+                let w = Params::<'a>::serialize(&self.params, w)?;
 
                 Ok(w)
             }

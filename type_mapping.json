@@ -16,7 +16,6 @@
         "varlong": "VarLong",
         "pstring": "PrefixedString<'a, $countType>",
         "buffer": "PrefixedBuffer<'a, $countType>",
-        "array": "PrefixedArray<$type, $countType>",
         "option": "Option<$0>",
         "void": "Void",
         "restBuffer": "RestBuffer<'a>",
