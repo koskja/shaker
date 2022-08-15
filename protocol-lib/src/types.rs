@@ -245,6 +245,20 @@ pub fn parse_bits_unsigned<T: PrimInt + Unsigned>(len: usize) -> impl Fn((&[u8],
         nom::combinator::map(nom::bits::complete::take(len), parse_unsigned_be(len))(input)
     }
 }
+pub fn write_bits<W: Write>(values: &[(u64, usize)], mut w: WriteContext<W>) -> GenResult<W> {
+    let mut accum = vec![];
+    for (value, len) in values {
+        let mut value = *value;
+        for _ in 0..*len {
+            accum.push((value & 0x1) as u8);
+            value = value.unsigned_shl(1);
+            if accum.len() == 8 {
+                w = cookie_factory::bytes::be_u8(accum.drain(..).fold(0, |a, b| (a >> 1) | (b << 7)))(w)?;
+            }
+        }
+    }
+    Ok(w)
+}
 
 pub fn parse_signed_be<T: PrimInt + Signed>(len: usize) -> impl Fn(u64) -> T {
     move |mut val: u64| {

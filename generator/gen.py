@@ -50,7 +50,7 @@ class Context:
                 elif not self.contains(name):
                     raise RuntimeError('cringe')
             else:
-                self.types[name] = TyAlias(name, self.types[type_def])
+                self.types[name] = TyAlias(make_camelcase(name), self.types[type_def])
         else: # handle template
             assert isinstance(type_def, List)
             template, params = self.type_constructors[type_def[0]], type_def[1]
@@ -238,8 +238,13 @@ class Container(IType):
         for item in params:
             if "anon" in item:
                 item["name"] = anon_ident()
+            else:
+                item["anon"] = False
             ty = ctx.parse_type(item["type"], item["name"], prefix=name)
-            fields.append([make_snakecase(item["name"]), ty])
+            if item["anon"] and isinstance(ty, Container):
+                fields += ty.fields
+            else:
+                fields.append((make_snakecase(item["name"]), ty))
         return Container(name, fields)
 
 class Mapper(IType): # TODO: make this not suck - somehow skip intermediate str
@@ -334,7 +339,21 @@ class Switch(IType):
         a += 'Default' + ('' if isinstance(self.default, NativeType)
         and False and self.default.void else f'({self.default.name()})') + ', \n' #TODO
         a += "}\n"
-        return a
+        b = f"""
+        impl{("<'a>" if self.has_lifetime() else "")} {self.name()} {{
+            pub fn discriminant(&self) -> &'static str {{
+                match self {{
+                    {
+                        ''.join(
+                            [f'{self.ty_name()}::{a[1][0]}(_) => "{a[0]}", ' for a in self.fields.items()]
+                        )
+                    }
+                    _ => ""
+                }}
+            }}
+        }}
+        """
+        return a + b
 
     def emit_de(self, previous: List[Tuple[str, IType]]) -> str:
         compare_path = [make_snakecase(a) if a != '..' else a for a in self.compare_to.split('/')]
@@ -447,7 +466,16 @@ class Bitfield(IType):
         return f'let w = {self.ty_name()}::serialize(&{val}, w)?;'
     
     def true_ser(self, val) -> str:
-        return ''
+        fields = []
+        for field in self.fields:
+            if field['signed']:
+                fields.append(f'unsafe {{ core::mem::transmute({val}.{field["name"]} as i64) }}')
+            else:
+                fields.append(f'{val}.{field["name"]} as u64')
+            fields[-1] = f'({fields[-1]}, {field["size"]}), '
+        return f"""
+        let w = write_bits(&[{''.join(fields)}], w)?;
+        """
 
     def has_lifetime(self) -> bool:
         return False
@@ -465,28 +493,54 @@ class Bitfield(IType):
 
 
 class EntityMetadataLoop(IType):
-    item = None
-
-    def __init__(self, item: IType) -> None:
+    item: Container = None
+    end_val: Integer
+    def __init__(self, item: IType, end_val: Integer) -> None:
         self.item = item
+        self.end_val = end_val
 
     def emit_extra(self) -> str:
         return ""
 
     def emit_de(self, previous) -> str:
-        return ''
+        return f"""
+            |mut input| {{
+                let mut accum = vec![];
+                loop {{
+                    let (i, item) = {self.item.emit_de(previous)}(input)?;
+                    input = i;
+                    let index = item.key;
+                    accum.push(item.value);
+                    if index == 0xFF {{
+                        break;
+                    }}
+                }}
+                Ok((input, accum))
+            }}
+        """
     def emit_ser(self, val) -> str:
-        return ''
+        return f"""
+        let mut w = w;
+        for (index, item) in {val}.iter().enumerate() {{
+            w = u8::serialize(&if index == {val}.len() - 1 {{ 255 }} else {{ index as u8 }}, w)?;
+            w = str::parse::<{self.item.get_field_ty('r_type').name()}>(item.discriminant()).unwrap().serialize(w)?;
+            w = {{
+                {self.item.get_field_ty('value').emit_ser('item')}
+                w
+            }}
+        }}
+        """
 
     def name(self) -> str:
-        return f"Vec<{self.item.name()}>"
+        return f"Vec<{self.item.get_field_ty('value').name()}>"
 
     def has_lifetime(self) -> bool:
         return self.item.has_lifetime()
 
     @camelcased
     def construct(ctx: Context, name: str, params: Any) -> IType:
-        return EntityMetadataLoop(ctx.parse_type(params["type"][1][1]["type"], f'{name}Item'))
+        value = ctx.parse_type(params["type"], name, suffix = 'Item')
+        return EntityMetadataLoop(value, params['endVal'])
 
 
 class TopbitTerminated(IType):
@@ -501,10 +555,36 @@ class TopbitTerminated(IType):
         return ""
 
     def emit_de(self, previous) -> str:
-        return ''
+        return f""" |mut input| {{
+            let mut val = std::collections::HashMap::new();
+            let mut i = input;
+            loop {{
+                let (i, (k_, v)) = nom::sequence::tuple((i8::deserialize, {self.item.ty_name()}::deserialize))(i)?;
+                input = i;
+                let k = k_ & 0x7F;
+                val.insert(k, v);
+                if k != k_ {{
+                    break
+                }}
+            }}
+            let input = i;
+            Ok((input, val)) }}
+        """
 
     def emit_ser(self, val) -> str:
-        return ''
+        assert self.key.name() == 'i8'
+        return f"""
+            let mut w = w;
+            for (i, (k, v)) in {val}.iter().enumerate() {{
+                let k = if i == {val}.len() - 1 {{
+                    *k | (1i8 << 7)
+                }} else {{
+                    *k
+                }};
+                let ww = i8::serialize(&k, w)?;
+                w = v.serialize(ww)?;
+            }}
+        """
 
     def name(self) -> str:
         return f"std::collections::HashMap<{self.key.name()}, {self.item.name()}>"
@@ -560,7 +640,7 @@ class TyAlias(IType):
         return f'type {self.n} = {self.d.name()};'
 
     def emit_de(self, previous) -> str:
-        return ''
+        return self.d.emit_de(previous)
 
     def emit_ser(self, val) -> str:
         return self.d.emit_ser(val)
