@@ -26,6 +26,7 @@
         "global": [
             "#[allow(unused_imports)]",
             "use protocol_lib::types::*;",
+            "use nom::{combinator::map, sequence::tuple};",
             "type VarInt = VInt<i32>;",
             "type VarLong = VInt<i64>;",
             "type VarString<'a> = PrefixedString<'a, VarInt>;",
@@ -34,7 +35,8 @@
             "type VarBuffer<'a> = PrefixedBuffer<'a, VarInt>;"
         ],
         "all": [
-            "use crate::test::*;"
+            "use crate::test::*;",
+            "use nom::{combinator::map, sequence::tuple};"
         ]
     },
     "regex": [
@@ -46,6 +48,8 @@
         ["toServer", "serverbound"],
         ["u_u_i_d", "uuid"],
         ["_i_d", "_id"],
-        ["([^a-zA-Z0-9])Value([^a-zA-Z0-9])", "\\1EntityMetadata\\2"]
+        ["([^a-zA-Z0-9])Value([^a-zA-Z0-9])", "\\1EntityMetadata\\2"],
+        ["nom::combinator::map", "map"],
+        ["nom::sequence::tuple", "tuple"]
     ]
 }

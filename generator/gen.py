@@ -131,7 +131,7 @@ class IType(ABC):
         pass
 
     def ty_name(self) -> str:
-        return self.name().replace("<", "::<", 1)
+        return self.name().replace("<'a>", "").replace("<", "::<", 1)
 
     @abstractmethod
     def has_lifetime(self) -> bool:
@@ -210,7 +210,7 @@ class Container(IType):
             "|input| {"
             + "".join(fields)
             + f"Ok((input, {self.struct_name} {{ "
-            + "".join([f"{a[0]}: {field_varname(a[0])}, " for a in self.fields])
+            + "".join([f"{a[0]}: {field_varname(a[0])}, \n" for a in self.fields])
             + " })) }"
         )
 
@@ -421,7 +421,7 @@ class Switch(IType):
             map(
                 lambda x: f"{self.ty_name()}::{x[1][0]}"
                 + (
-                    f"(val) => {{ {x[1][1].emit_ser('val')} w}}, \n"
+                    f"(val) => {valued_ser(x[1][1], 'val')}, \n"
                     if not is_void(x[1][1])
                     else " => w,\n"
                 ),
@@ -597,10 +597,10 @@ class EntityMetadataLoop(IType):
         for (index, item) in {val}.iter().enumerate() {{
             w = u8::serialize(&if index == {val}.len() - 1 {{ 255 }} else {{ index as u8 }}, w)?;
             w = str::parse::<{self.item.get_field_ty('r_type').name()}>(item.discriminant()).unwrap().serialize(w)?;
-            w = {{
-                {self.item.get_field_ty('value').emit_ser('item')}
-                w
-            }}
+            w = 
+                {valued_ser(self.item.get_field_ty('value'), 'item')}
+                
+            
         }}
         """
 
@@ -727,10 +727,8 @@ class ExternallyTaggedArray(IType):
             let mut w = w;
             let items = {val if self.count else val+'.0'}.iter();
             for i in items {{
-                w = {{
-                    {self.item.emit_ser('i')}
-                    w
-                }}
+                w = 
+                    {valued_ser(self.item, 'i')}
             }}
         """
         )
@@ -895,6 +893,14 @@ def make_impl(
 
 def is_void(ty) -> bool:
     return isinstance(ty, NativeType) and ty.void
+
+
+def valued_ser(ty: IType, val: str) -> str:
+    s = ty.emit_ser(val)
+    if len(s.split('\n')) == 1: # let w = ...;
+        return s[7:-1]
+    else:
+        return f'{{ {s} w }}'
 
 
 def getVer(version: str):
