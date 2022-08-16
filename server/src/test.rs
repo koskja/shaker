@@ -65,11 +65,11 @@ impl Ident0 {
         Ok(w)
     }
 }
+
 pub struct Slot {
     present: bool,
     ident0: Ident0,
 }
-
 impl<'t> protocol_lib::Packet<'t> for Slot {
     fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
         let w = bool::serialize(&self.present, w)?;
@@ -154,13 +154,13 @@ impl Destination {
         Ok(w)
     }
 }
+
 pub struct Data36<'a> {
     origin: Position,
     position_type: VarString<'a>,
     destination: Destination,
     ticks: VarInt,
 }
-
 impl<'t: 'a, 'a> protocol_lib::Packet<'t> for Data36<'a> {
     fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
         let w = Position::serialize(&self.origin, w)?;
@@ -233,11 +233,11 @@ impl<'a> Data<'a> {
         Ok(w)
     }
 }
+
 pub struct Particle<'a> {
     particle_id: VarInt,
     data: Data<'a>,
 }
-
 impl<'t: 'a, 'a> protocol_lib::Packet<'t> for Particle<'a> {
     fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
         let w = VarInt::serialize(&self.particle_id, w)?;
@@ -362,12 +362,12 @@ impl<'a> EntityMetadata<'a> {
         Ok(w)
     }
 }
+
 pub struct EntityMetadataWrapper<'a> {
     key: u8,
     r_type: VarInt,
     value: EntityMetadata<'a>,
 }
-
 impl<'t: 'a, 'a> protocol_lib::Packet<'t> for EntityMetadataWrapper<'a> {
     fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
         let w = u8::serialize(&self.key, w)?;
@@ -578,12 +578,12 @@ impl Max {
         Ok(w)
     }
 }
+
 pub struct Float {
     flags: FloatFlags,
     min: Min,
     max: Max,
 }
-
 impl<'t> protocol_lib::Packet<'t> for Float {
     fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
         let w = FloatFlags::serialize(&self.flags, w)?;
@@ -679,12 +679,12 @@ impl DoubleMax {
         Ok(w)
     }
 }
+
 pub struct Double {
     flags: DoubleFlags,
     min: DoubleMin,
     max: DoubleMax,
 }
-
 impl<'t> protocol_lib::Packet<'t> for Double {
     fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
         let w = DoubleFlags::serialize(&self.flags, w)?;
@@ -780,12 +780,12 @@ impl IntegerMax {
         Ok(w)
     }
 }
+
 pub struct Integer {
     flags: IntegerFlags,
     min: IntegerMin,
     max: IntegerMax,
 }
-
 impl<'t> protocol_lib::Packet<'t> for Integer {
     fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
         let w = IntegerFlags::serialize(&self.flags, w)?;
@@ -881,12 +881,12 @@ impl LongMax {
         Ok(w)
     }
 }
+
 pub struct Long {
     flags: LongFlags,
     min: LongMin,
     max: LongMax,
 }
-
 impl<'t> protocol_lib::Packet<'t> for Long {
     fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
         let w = LongFlags::serialize(&self.flags, w)?;
@@ -1167,6 +1167,7 @@ impl<'a> SuggestionType<'a> {
         Ok(w)
     }
 }
+
 pub struct ExtraNodeData2<'a> {
     name: VarString<'a>,
     parser: VarString<'a>,
@@ -1206,13 +1207,13 @@ impl<'a> ExtraNodeData<'a> {
         Ok(w)
     }
 }
+
 pub struct CommandNode<'a> {
     flags: Flags,
     children: VarArray<VarInt>,
     redirect_node: RedirectNode,
     extra_node_data: ExtraNodeData<'a>,
 }
-
 impl<'t: 'a, 'a> protocol_lib::Packet<'t> for CommandNode<'a> {
     fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
         let w = Flags::serialize(&self.flags, w)?;
@@ -1364,11 +1365,11 @@ pub mod handshaking {
                 Ok(w)
             }
         }
+
         pub struct ToClient {
             name: &'static str,
             params: Params,
         }
-
         impl<'t> protocol_lib::Packet<'t> for ToClient {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let w = Params::serialize(&self.params, w)?;
@@ -1426,11 +1427,11 @@ pub mod handshaking {
                 Ok(w)
             }
         }
+
         pub struct ToServer<'a> {
             name: &'static str,
             params: Params<'a>,
         }
-
         impl<'t: 'a, 'a> protocol_lib::Packet<'t> for ToServer<'a> {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let tag = match &self.name[..] {
@@ -1508,11 +1509,11 @@ pub mod status {
                 Ok(w)
             }
         }
+
         pub struct ToClient<'a> {
             name: &'static str,
             params: Params<'a>,
         }
-
         impl<'t: 'a, 'a> protocol_lib::Packet<'t> for ToClient<'a> {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let tag = match &self.name[..] {
@@ -1586,11 +1587,11 @@ pub mod status {
                 Ok(w)
             }
         }
+
         pub struct ToServer {
             name: &'static str,
             params: Params,
         }
-
         impl<'t> protocol_lib::Packet<'t> for ToServer {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let tag = match &self.name[..] {
@@ -1694,11 +1695,11 @@ pub mod login {
                 Ok(w)
             }
         }
+
         pub struct ToClient<'a> {
             name: &'static str,
             params: Params<'a>,
         }
-
         impl<'t: 'a, 'a> protocol_lib::Packet<'t> for ToClient<'a> {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let tag = match &self.name[..] {
@@ -1792,11 +1793,11 @@ pub mod login {
                 Ok(w)
             }
         }
+
         pub struct ToServer<'a> {
             name: &'static str,
             params: Params<'a>,
         }
-
         impl<'t: 'a, 'a> protocol_lib::Packet<'t> for ToServer<'a> {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let tag = match &self.name[..] {
@@ -1967,6 +1968,7 @@ pub mod play {
                 Ok(w)
             }
         }
+
         pub struct Ident8<'a> {
             title: VarString<'a>,
             description: VarString<'a>,
@@ -1977,7 +1979,6 @@ pub mod play {
             x_cord: f32,
             y_cord: f32,
         }
-
         impl<'t: 'a, 'a> protocol_lib::Packet<'t> for Ident8<'a> {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let w = PrefixedString::<'a, VarInt>::serialize(&self.title, w)?;
@@ -2200,6 +2201,7 @@ pub mod play {
                 Ok(w)
             }
         }
+
         pub struct PacketBossBar<'a> {
             entity_uuid: Uuid,
             action: VarInt,
@@ -2209,7 +2211,6 @@ pub mod play {
             dividers: Dividers,
             flags: BossBarFlags,
         }
-
         impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketBossBar<'a> {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let w = Uuid::serialize(&self.entity_uuid, w)?;
@@ -2332,6 +2333,7 @@ pub mod play {
                 Ok(w)
             }
         }
+
         pub struct PacketFacePlayer<'a> {
             feet_eyes: VarInt,
             x: f64,
@@ -2341,7 +2343,6 @@ pub mod play {
             entity_id: FacePlayerEntityId,
             entity_feet_eyes: EntityFeetEyes<'a>,
         }
-
         impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketFacePlayer<'a> {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let w = VarInt::serialize(&self.feet_eyes, w)?;
@@ -2607,13 +2608,13 @@ pub mod play {
                 Ok(w)
             }
         }
+
         pub struct WorldParticlesData36<'a> {
             origin: Position,
             position_type: VarString<'a>,
             destination: WorldParticlesData36Destination,
             ticks: VarInt,
         }
-
         impl<'t: 'a, 'a> protocol_lib::Packet<'t> for WorldParticlesData36<'a> {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let w = Position::serialize(&self.origin, w)?;
@@ -2686,6 +2687,7 @@ pub mod play {
                 Ok(w)
             }
         }
+
         pub struct PacketWorldParticles<'a> {
             particle_id: i32,
             long_distance: bool,
@@ -2699,7 +2701,6 @@ pub mod play {
             particles: i32,
             data: WorldParticlesData<'a>,
         }
-
         impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketWorldParticles<'a> {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let w = i32::serialize(&self.particle_id, w)?;
@@ -2882,6 +2883,7 @@ pub mod play {
                 Ok(w)
             }
         }
+
         pub struct PacketMap<'a> {
             item_damage: VarInt,
             scale: i8,
@@ -2893,7 +2895,6 @@ pub mod play {
             y: MapY,
             data: MapData<'a>,
         }
-
         impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketMap<'a> {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let w = VarInt::serialize(&self.item_damage, w)?;
@@ -3166,6 +3167,7 @@ pub mod play {
                 Ok(w)
             }
         }
+
         pub struct PlayerInfoDataItem<'a> {
             uuid: Uuid,
             name: PlayerInfoDataItemName<'a>,
@@ -3178,7 +3180,6 @@ pub mod play {
             action: VarInt,
             data: VarArray<PlayerInfoDataItem<'a>>,
         }
-
         impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketPlayerInfo<'a> {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let w = VarInt::serialize(&self.action, w)?;
@@ -3301,6 +3302,7 @@ pub mod play {
                 Ok(w)
             }
         }
+
         pub struct PacketUnlockRecipes<'a> {
             action: VarInt,
             crafting_book_open: bool,
@@ -3314,7 +3316,6 @@ pub mod play {
             recipes1: VarStringArray<'a>,
             recipes2: Recipes2<'a>,
         }
-
         impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketUnlockRecipes<'a> {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let w = VarInt::serialize(&self.action, w)?;
@@ -3510,13 +3511,13 @@ pub mod play {
                 Ok(w)
             }
         }
+
         pub struct PacketScoreboardObjective<'a> {
             name: VarString<'a>,
             action: i8,
             display_text: DisplayText<'a>,
             r_type: ScoreboardObjectiveType,
         }
-
         impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketScoreboardObjective<'a> {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let w = PrefixedString::<'a, VarInt>::serialize(&self.name, w)?;
@@ -3781,6 +3782,7 @@ pub mod play {
                 Ok(w)
             }
         }
+
         pub struct PacketTeams<'a> {
             team: VarString<'a>,
             mode: i8,
@@ -3793,7 +3795,6 @@ pub mod play {
             suffix: Suffix<'a>,
             players: Players<'a>,
         }
-
         impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketTeams<'a> {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let w = PrefixedString::<'a, VarInt>::serialize(&self.team, w)?;
@@ -3895,13 +3896,13 @@ pub mod play {
                 Ok(w)
             }
         }
+
         pub struct PacketScoreboardScore<'a> {
             item_name: VarString<'a>,
             action: VarInt,
             score_name: VarString<'a>,
             value: ScoreboardScoreValue,
         }
-
         impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketScoreboardScore<'a> {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let w = PrefixedString::<'a, VarInt>::serialize(&self.item_name, w)?;
@@ -4000,12 +4001,12 @@ pub mod play {
                 Ok(w)
             }
         }
+
         pub struct PacketStopSound<'a> {
             flags: i8,
             source: Source,
             sound: Sound<'a>,
         }
-
         impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketStopSound<'a> {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let w = i8::serialize(&self.flags, w)?;
@@ -4113,7 +4114,6 @@ pub mod play {
             ingredients: Vec<Vec<VarArray<Slot>>>,
             result: Slot,
         }
-
         impl<'t: 'a, 'a> protocol_lib::Packet<'t> for CraftingShaped<'a> {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let w = VarInt::serialize(&self.width, w)?;
@@ -4275,12 +4275,12 @@ pub mod play {
                 Ok(w)
             }
         }
+
         pub struct RecipesItem<'a> {
             r_type: VarString<'a>,
             recipe_id: VarString<'a>,
             data: RecipeData<'a>,
         }
-
         impl<'t: 'a, 'a> protocol_lib::Packet<'t> for RecipesItem<'a> {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let w = PrefixedString::<'a, VarInt>::serialize(&self.r_type, w)?;
@@ -4375,13 +4375,13 @@ pub mod play {
                 Ok(w)
             }
         }
+
         pub struct PacketSculkVibrationSignal<'a> {
             source_position: Position,
             destination_identifier: VarString<'a>,
             destination: SculkVibrationSignalDestination,
             arrival_ticks: VarInt,
         }
-
         impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketSculkVibrationSignal<'a> {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let w = Position::serialize(&self.source_position, w)?;
@@ -4831,6 +4831,7 @@ pub mod play {
                 Ok(w)
             }
         }
+
         pub struct ToClient<'a> {
             name: &'static str,
             params: Params<'a>,
@@ -5053,6 +5054,7 @@ pub mod play {
                 Ok(w)
             }
         }
+
         pub struct PacketUseEntity {
             target: VarInt,
             mouse: VarInt,
@@ -5062,7 +5064,6 @@ pub mod play {
             hand: UseEntityHand,
             sneaking: bool,
         }
-
         impl<'t> protocol_lib::Packet<'t> for PacketUseEntity {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let w = VarInt::serialize(&self.target, w)?;
@@ -5281,11 +5282,11 @@ pub mod play {
                 Ok(w)
             }
         }
+
         pub struct PacketAdvancementTab<'a> {
             action: VarInt,
             tab_id: TabId<'a>,
         }
-
         impl<'t: 'a, 'a> protocol_lib::Packet<'t> for PacketAdvancementTab<'a> {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let w = VarInt::serialize(&self.action, w)?;
@@ -5479,11 +5480,11 @@ pub mod play {
                 Ok(w)
             }
         }
+
         pub struct ToServer<'a> {
             name: &'static str,
             params: Params<'a>,
         }
-
         impl<'t: 'a, 'a> protocol_lib::Packet<'t> for ToServer<'a> {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let tag = match &self.name[..] {

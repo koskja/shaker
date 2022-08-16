@@ -37,7 +37,7 @@ class Container(IType):
         return (
             f"""
             pub struct {self.name()} {{
-                {"".join([f"{a[0]}: {a[1].name()}, \n" for a in self.fields])}
+                {"".join([f"{a[0]}: {a[1].name()}, {chr(10)}" for a in self.fields])}
             }}"""
         )
 

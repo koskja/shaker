@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 import json
 import re
-from typing import Any, Callable, Dict, List, Optional, Set, Union
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
 
 from sympy import Integer
 
@@ -11,10 +11,11 @@ from helpers import *
 
 
 class Context:
+    """ Stores the context for parsing types from the protocol. Stores already parsed types and constructors."""
     types: Dict[str, "IType"]
     type_constructors: Dict[str, "ITypeConstructor"]
     native_typemap: Dict[str, str]
-    used_idents: Set[str]
+    used_idents: Set[str] # set of all names in the output program
 
     def __init__(self, native: Dict[str, str]) -> None:
         self.types = {}
@@ -26,6 +27,7 @@ class Context:
         return deepcopy(self)
 
     def insert(self, name: str, ty: Union["IType", "ITypeConstructor"]):
+        """ Insert a type or a type constructor."""
         if isinstance(ty, IType):
             if name in self.types:
                 raise RuntimeError("Cannot override type")
@@ -44,6 +46,7 @@ class Context:
         return type in self.types or type in self.type_constructors
 
     def parse(self, name: str, type_def: str | List):
+        """ Parse and store a `type_def`. `type_def` can be a type name or a template instantiation list (e.g. ['container', [...]]"""
         def parse_external(s: str) -> Union['NativeType', 'Template']:
             if len(Template(s).generics()) == 0:
                 return NativeType(s)
@@ -53,7 +56,7 @@ class Context:
             if type_def == "native":
                 if name in self.native_typemap:
                     self.insert(name, parse_external(self.native_typemap[name]))
-                    if name == "void":
+                    if name == "void": 
                         self.types["void"].void = True
                 elif not self.contains(name):
                     raise RuntimeError("cringe")
@@ -62,8 +65,8 @@ class Context:
         else:  # handle template
             assert isinstance(type_def, List)
             template, params = self.type_constructors[type_def[0]], type_def[1]
-            if DelayedContructor.check(params):
-                ty = DelayedContructor(template, params)
+            if DelayedConstructor.check(params):
+                ty = DelayedConstructor(template, params)
             else:
                 ty = template.ctor(self, name, params)
             self.insert(name, ty)
@@ -76,17 +79,18 @@ class Context:
         suffix=None,
         force_name=False,
     ) -> "IType":
-        name = name if force_name else self.make_unique(name, prefix, suffix)
-        if name not in self.types:
-            if isinstance(type_def, str) and type_def in self.types:
-                return self.types[type_def]
-            self.parse(name, type_def)
+        """ Parse a `type_def` and return the resulting type. Returns already parsed types when passed a `str` for `type_def`."""
+        if isinstance(type_def, str) and type_def in self.types:
+            return self.types[type_def]
+        name = name if force_name else self.make_unique(name, prefix, suffix) 
+        self.parse(name, type_def)
         return self.types[name]
 
     def reserve_ident(self, name: str):
         self.used_idents.add(name)
 
     def make_unique(self, n: str, p: str | None, s: str | None):
+        """ Produces a unique identifier(one that was not yet used in this context) by pre/appending `p` or `s`."""
         p = p or ""
         s = s or ""
         values = [[n], [p, n], [n, s], [p, n, s]]
@@ -99,7 +103,7 @@ class Context:
                 last = ""
                 while last != val:
                     last = val
-                    opts = list(demangle_name(val, len(val.split("_"))))
+                    opts = list(demangle_name(val, len(val.split("_")))) #TODO
                     new_opt = next(
                         filter(lambda x: x != val and x not in self.used_idents, opts),
                         None,
@@ -119,36 +123,55 @@ def camelcased(func):
 
 
 class IType(ABC):
+    """ A generic type. Can be serialized or deserialized. """
     @abstractmethod
     def emit_ser(self, val: str) -> str:
+        """ Returns a piece of code that serializes `val` by writing to `w: WriteContext<W: Write>` - e.g. \\
+        `let w = {val}.serialize(w)?;"""
         pass
 
     @abstractmethod
-    def emit_de(self, previous: List[str]) -> str:
+    def emit_de(self, previous: List[Tuple[str, 'IType']]) -> str:
+        """ Returns a callable function of the type `Fn(&[u8]) -> nom::IResult<&[u8], Self>`. 
+        This function may capture other variables for its execution. 
+
+        `previous` serves as a way to 'track' the call stack, allowing types that require other fields to refer to them,\\
+        even if they are higher up. The list consists of `(variable_name_prefix, variable_type)`.
+        """
         pass
 
     @abstractmethod
     def emit_extra(self) -> str:
+        """ Returns a list of top level definitions required for this type."""
         pass
 
     @abstractmethod
     def name(self) -> str:
+        """ This type's output name."""
         pass
 
     def ty_name(self) -> str:
+        """ This type's output name in turbofish format."""
         return self.name().replace("<'a>", "").replace("<", "::<", 1)
 
     @abstractmethod
     def has_lifetime(self) -> bool:
+        """ Whether this type has a generic liftime parameter."""
         pass
 
     def discriminant_level(self) -> Integer:
+        """ How many levels up in the `emit_de` call chain are required to produce a correct deserialization function. 
+        """
         return 0
     
     def is_trivial(self) -> bool:
+        """ This type implements `Packet` and thus has a `discriminant_level` of zero."""
         return False
 
 class NativeType(IType):
+    """ Represents the simplest, no-strings-attached type. 
+    Defined intrinsically or explicitly by type mappings. 
+    Represented as `native` in the protocol."""
     _name = ""
     void = False
 
@@ -174,12 +197,14 @@ class NativeType(IType):
         return True
 
 class ITypeConstructor(ABC):
+    """ Constructs a type in a given context, given some instance-specific parameters."""
     @abstractmethod
-    def ctor(self, ctx: Context, name: str, params) -> IType:
+    def ctor(self, ctx: Context, name: str, params: Any) -> IType:
         pass
 
 
 class TypeConstructorDelegate(ITypeConstructor):
+    """ Wraps a callable object and delegates its `ctor` to it."""
     func: Callable[[Context, str, Any], IType] = None
 
     def __init__(self, func) -> None:
@@ -189,7 +214,9 @@ class TypeConstructorDelegate(ITypeConstructor):
         return self.func(ctx, name, params)
 
 
-class DelayedContructor(ITypeConstructor):
+class DelayedConstructor(ITypeConstructor):
+    """ 'Delays' a type's construction until its template parameters are provided. 
+        Can be used for template switch types with `compareTo` as their template param."""
     inner: ITypeConstructor = None
     params: str = None
 
@@ -198,6 +225,7 @@ class DelayedContructor(ITypeConstructor):
         self.params = json.dumps(params)
 
     def check(value: Any) -> bool:
+        """ Checks whether a type's definition contains any `$`, indicating template parameters"""
         return "$" in json.dumps(value)
 
     def ctor(self, ctx: Context, name: str, params) -> IType:
@@ -206,6 +234,7 @@ class DelayedContructor(ITypeConstructor):
         )
 
 class TyAlias(IType):
+    """ Serves as a transparent type alias."""
     def __init__(self, name: str, alias: IType) -> None:
         self.n = name
         self.d = alias
@@ -231,6 +260,8 @@ class TyAlias(IType):
 
 
 class ConstructorList(ITypeConstructor):
+    """ Uses a fallback type constructor if the first throws a `ValueError`. 
+    Useful for templated types with optional parameters."""
     a: ITypeConstructor = None
     b: ITypeConstructor = None
 
@@ -246,6 +277,8 @@ class ConstructorList(ITypeConstructor):
 
 
 class Template(ITypeConstructor):
+    """ The 'simplest' type constructor. Does a find-and-replace 
+    of `$ty1`-style template parameters in a given string and declares the result a `NativeType`."""
     value = ""
 
     def __init__(self, s: str) -> None:
@@ -266,6 +299,7 @@ class Template(ITypeConstructor):
         return NativeType(self.emit(params))
 
     def emit(self, generics: str | Dict[str, str]) -> str:
+        """ Replace all template arguments according to ``generics``."""
         if isinstance(generics, str):  # handle funny `option` type
             return self.value.replace("$0", generics)
 
@@ -292,6 +326,7 @@ def make_impl(
     de: Optional[Callable[[IType, List[str]], str]] = None,
     ser: Optional[Callable[[IType, str], str]] = None,
 ) -> str:
+    """ Create a `Packet` implementation using `ty: IType`. Serialization and deserialization can be overriden with `de` and `ser`."""
     de = de or ty.emit_de
     ser = ser or ty.emit_ser
     impl = (
@@ -318,8 +353,9 @@ def is_void(ty) -> bool:
 
 
 def valued_ser(ty: IType, val: str) -> str:
+    """ Outputs a serialization expression block that returns w."""
     s = ty.emit_ser(val)
-    if len(s.split('\n')) == 1: # let w = ...;
-        return s[7:-1]
+    if len(s.split('\n')) == 1: # Optimize single-line serialization
+        return s[7:-1] # let w = ...;
     else:
         return f'{{ {s} w }}'
