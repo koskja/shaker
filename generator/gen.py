@@ -139,6 +139,9 @@ class IType(ABC):
 
     def discriminant_level(self) -> Integer:
         return 0
+    
+    def is_trivial(self) -> bool:
+        return False
 
 
 class ITypeConstructor(ABC):
@@ -182,19 +185,7 @@ class Container(IType):
         self.struct_name = name
         self.fields = fields
 
-    def emit_de(self, previous: List[Tuple[str, IType]]) -> str:
-        if self.discriminant_level() == 0:
-            return f"{self.ty_name()}::deserialize"
-        else:
-            return self.true_de(previous)
-
-    def emit_ser(self, val) -> str:
-        if self.discriminant_level() == 0:
-            return f"let w = {self.ty_name()}::serialize(&{val}, w)?;"
-        else:
-            return self.true_ser(val)
-
-    def true_de(self, previous) -> str:
+    def emit_de(self, previous) -> str:
         last = previous[-1][0]
         field_varname = lambda x: f"{last}_{x}"
         field_de = lambda ty, varname: ty.emit_de(previous + [(varname, ty)])
@@ -212,27 +203,18 @@ class Container(IType):
             + " })) }"
         )
 
-    def true_ser(self, val) -> str:
+    def emit_ser(self, val) -> str:
         o = ""
         for name, ty in self.fields:
             o += ty.emit_ser(f"{val}.{name}") + "\n"
         return o
 
     def emit_extra(self) -> str:
-        lifetime = ""
-        if self.has_lifetime():
-            lifetime = "<'a>"
-        derive = '#[derive(protocol_lib::Packet)]\n' if max([a[1].discriminant_level() for a in self.fields] or [0]) == 0 else ''
         return (
-            derive + 
-            f"pub struct {self.struct_name}{lifetime} {{\n"
-            + "".join(map(lambda a: f"{a[0]}: {a[1].name()}, \n", self.fields))
-            + "}\n"
-            + ((
-                make_impl(self, de=Container.true_de, ser=Container.true_ser)
-                if self.discriminant_level() == 0
-                else ""
-            ) if max([a[1].discriminant_level() for a in self.fields] or [0]) != 0 else '')
+            f"""
+            pub struct {self.name()} {{
+                {"".join([f"{a[0]}: {a[1].name()}, \n" for a in self.fields])}
+            }}"""
         )
 
     def name(self) -> str:
@@ -247,6 +229,17 @@ class Container(IType):
     def get_field_ty(self, name: str) -> Optional[IType]:
         return next(iter([a[1] for a in self.fields if a[0] == name] or [None]))
 
+    def is_trivial(self) -> bool:
+        return max([a[1].discriminant_level() for a in self.fields] or [0]) == 0
+
+    def specialize(self) -> Union['Container' , 'SufficientContainer' , 'TrivialContainer']:
+        if self.discriminant_level() == 0:
+            if self.is_trivial():
+                return TrivialContainer(self.struct_name, self.fields)
+            return SufficientContainer(self.struct_name, self.fields)
+        else:
+            return Container(self.struct_name, self.fields)
+
     @camelcased
     def construct(ctx: Context, name: str, params: Any) -> "Container":
         fields = []
@@ -260,8 +253,19 @@ class Container(IType):
                 fields += ty.fields
             else:
                 fields.append((make_snakecase(item["name"]), ty))
-        return Container(name, fields)
+        return Container(name, fields).specialize()
 
+class SufficientContainer(Container):
+    def emit_extra(self) -> str:
+        return Container.emit_extra(self) + make_impl(self, de=Container.emit_de, ser=Container.emit_ser)
+    def emit_ser(self, val: str) -> str:
+        return f'let w = {self.ty_name()}::serialize(&{val}, w)?;'
+    def emit_de(self, previous) -> str:
+        return f'{self.ty_name()}::deserialize'
+
+class TrivialContainer(SufficientContainer):
+    def emit_extra(self) -> str:
+        return '#[derive(protocol_lib::Packet)]' + Container.emit_extra(self)
 
 class Mapper(IType):  # TODO: make this not suck - somehow skip intermediate str
     ty_name = ""
@@ -539,6 +543,9 @@ class Bitfield(IType):
             )
         )
 
+    def is_trivial(self) -> bool:
+        return True
+
     @camelcased
     def construct(ctx: Context, name: str, params: Any) -> IType:
         params = deepcopy(params)
@@ -737,6 +744,9 @@ class ExternallyTaggedArray(IType):
     def discriminant_level(self) -> Integer:
         return max((1 if self.count else 0), self.item.discriminant_level())
 
+    def is_trivial(self) -> bool:
+        return not self.count and not self.discriminant_level()
+
     @camelcased
     def construct(ctx: Context, name: str, params: Dict) -> IType:
         return ExternallyTaggedArray(
@@ -766,6 +776,8 @@ class TyAlias(IType):
     def has_lifetime(self) -> bool:
         return self.d.has_lifetime()
 
+    def is_trivial(self) -> bool:
+        return self.d.is_trivial()
 
 class NativeType(IType):
     _name = ""
@@ -789,6 +801,9 @@ class NativeType(IType):
 
     def has_lifetime(self) -> bool:
         return "'a" in self._name
+    
+    def is_trivial(self) -> bool:
+        return True
 
 
 class ConstructorList(ITypeConstructor):
