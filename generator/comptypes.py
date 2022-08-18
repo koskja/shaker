@@ -143,29 +143,45 @@ class Mapper(IType):  # TODO: make this not suck - somehow skip intermediate str
         match_ty = ctx.types[params["type"]]
         return Mapper(name, match_ty, params["mappings"])
 
-
 class Switch(IType):
-    fields: List[Tuple[str, Tuple[str, IType]]]
-    def __init__(self, name, compare_to, fields, default) -> None:
+    class Field:
+        discriminant: Optional[str]
+        name: str
+        value: Optional[IType]
+        parent: 'Switch'
+        def __init__(self, discriminant: Optional[str], name: str, value: Optional[IType], parent: 'Switch'):
+            self.discriminant = discriminant
+            self.name = name
+            self.value = value if value and not is_void(value) else None
+            self.parent = parent
+        def is_empty(self) -> bool:
+            return self.value is None
+        def variant(self, item: str) -> str:
+            return self.name + ("" if self.is_empty() else f"({item})")
+        def tagged(self, item: str) -> str:
+            return f"{self.parent.ty_name()}::{self.variant(item)}"
+        def definition(self) -> str:
+            return self.variant(None if self.is_empty() else self.value.name())
+        def full_name(self) -> str:
+            return f"{self.parent.ty_name()}::{self.name}"
+        def de(self, previous: List[Tuple[str, IType]]) -> str:
+            arm = f"map({self.value.emit_de(previous)}, {self.full_name()})(input)" if self.value else f"Ok((input, {self.full_name()}))"
+            pattern = f'"{self.discriminant}"' if self.discriminant else "_"
+            return f"{pattern} => {arm}"
+        def ser(self) -> str:
+            pattern = self.tagged('val')
+            arm = f"{valued_ser(self.value, 'val')}" if self.value else "w"
+            return f"{pattern} => {arm}"
+    fields: List[Field]
+    def __init__(self, name, compare_to, fields) -> None:
         self._name = name
         self.compare_to: str = compare_to
         self.fields = fields
-        self.default = default
-
-    def variant(x: Tuple[str, IType], name) -> str:
-        return f'{x[0]}({name})' if not is_void(x[1]) else f'{x[0]}'
-    def tagged_variant(self, x, name) -> str:
-        return f'{self.ty_name()}::{Switch.variant(x, name)}'
 
     def emit_extra(self) -> str:
         a = f"pub enum {self.name()} {{\n"
         a += "".join(
-            [f"{Switch.variant(x, x[1].name())}, \n" for x in self.fields.values()]
-        )
-        a += (
-            "Default"
-            + ("" if is_void(self.default) else f"({self.default.name()})")
-            + ", \n"
+            [f"{x.definition()}, \n" for x in self.fields]
         )
         a += "}\n"
         b = f"""
@@ -174,10 +190,9 @@ class Switch(IType):
                 match self {{
                     {
                         ''.join(
-                            [f'{self.tagged_variant(a[1], "_")} => "{a[0]}", ' for a in self.fields.items()]
+                            [f'{a.tagged("_")} => "{a.discriminant or ""}", ' for a in self.fields]
                         )
                     }
-                    _ => ""
                 }}
             }}
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {{
@@ -205,40 +220,20 @@ class Switch(IType):
         compare_to = prev[-1][0]
         m = f'match &format!("{{}}", {compare_to})[..] {{\n'
         arms = "".join(
-            [
-                f'"{a[0]}" => nom::combinator::map({a[1][1].emit_de(previous+[(previous[-1][0], a[1][1])]) or "()"}, {self.ty_name()}::{a[1][0]})(input),\n'
-                if not is_void(a[1][1])
-                else f'"{a[0]}" => Ok((input ,{self.ty_name()}::{a[1][0]})),\n'
-                for a in self.fields.items()
-            ]
+            [f"{a.de(previous + [(f'{previous[-1][0]}_{a.name}', a.value)])}, \n" for a in self.fields]
         )
-        return (
-            f"|input| {{ {m}{arms}"
-            + (
-                f"_ => nom::combinator::map({self.default.emit_de(previous+[(previous[-1][0], self.default)])}, {self.ty_name()}::Default)(input)"
-                if not is_void(self.default)
-                else f"_ => Ok((input, {self.ty_name()}::Default)),\n"
-            )
-            + "} }"
-        )
+        return f"|input| {{ {m}{arms} }} }}"
+        
 
     def emit_ser(self, val) -> str:
         return f"let w = {self.ty_name()}::serialize(&{val}, w)?;"
 
     def true_ser(self, val) -> str:
         arms = "".join(
-            map(
-                lambda x: f"{self.ty_name()}::{x[1][0]}"
-                + (
-                    f"(val) => {valued_ser(x[1][1], 'val')}, \n"
-                    if not is_void(x[1][1])
-                    else " => w,\n"
-                ),
-                self.fields.items(),
-            )
+            [f"{a.ser()}, " for a in self.fields]
         )
         x = f"""
-        let w = match &{val} {{ {arms} {self.ty_name()}::Default{'(val)' if not is_void(self.default) else ''} => {f'{self.default.ty_name()}::serialize(val, w)?' if not is_void(self.default) else 'w'} }};
+        let w = match &{val} {{ {arms} }};
         """
         return x
 
@@ -246,13 +241,11 @@ class Switch(IType):
         return self._name + ("<'a>" if self.has_lifetime() else "")
 
     def has_lifetime(self) -> bool:
-        return (
-            any(map(lambda x: x[1].has_lifetime(), self.fields.values()))
-            | self.default.has_lifetime()
-        )
+        return any([a.value.has_lifetime() for a in self.fields if a.value])
+        
 
     def discriminant_level(self) -> Integer:
-        levels = [a[1][1].discriminant_level() for a in self.fields.items()] or [0]
+        levels = [a.value.discriminant_level() for a in self.fields if a.value] or [0]
         return max(max(levels) - 1, self.compare_to.count("..") + 1)
 
     @camelcased
@@ -260,34 +253,27 @@ class Switch(IType):
         if "default" not in params:
             params["default"] = "void"
         # breakpoint()
-        fields = dict(
-            map(
-                lambda x: (
-                    x[0],
-                    (
-                        lambda y: (
-                            make_camelcase(y)
-                            if x[0].isnumeric()
-                            else make_camelcase(y).replace(name, ""),
-                            ctx.parse_type(x[1], y, force_name=True),
-                        )
-                    )(ctx.make_unique(x[0], name, None)),
-                ),
-                params["fields"].items(),
-            )
-        )
+        def make_variant(d, ty):
+            vn = ctx.make_unique(d, name, None)
+            ty2 = ctx.parse_type(ty, vn, force_name=True)
+            n = make_camelcase(vn) if d.isdigit() else make_camelcase(vn).replace(name, "")
+            return (d, n, ty2)
+        fields = [make_variant(a[0], a[1]) for a in params["fields"].items()]
         # fv = list(fields.values())
         # if len(fv) == 2:
         #    if (isinstance(fv[0], NativeType) and fv[0].void):
         #        return NativeType(f'Option<{fv[1].name()}>')
         #    elif (isinstance(fv[1], NativeType) and fv[1].void):
         #        return NativeType(f'Option<{fv[0].name()}>')
-        return Switch(
+        s = Switch(
             name,
             params["compareTo"],
-            fields,
-            ctx.parse_type(params["default"], f"Default", prefix=name),
+            []
         )
+        default = Switch.Field(None, "Default", ctx.parse_type(params["default"], "Default"),s)
+        s.fields = [Switch.Field(*a, s) for a in fields] + [default]
+
+        return s
 
 
 # class DelegatedOption: `Switch` with `Some`/`None` variants, depending on an arbitrary field

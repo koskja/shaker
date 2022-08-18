@@ -51,7 +51,7 @@ impl Ident0 {
         match self {
             Ident0::RFalse => "false",
             Ident0::RTrue(_) => "true",
-            _ => "",
+            Ident0::Default => "",
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -139,7 +139,7 @@ impl Destination {
         match self {
             Destination::Block(_) => "minecraft:block",
             Destination::Entity(_) => "minecraft:entity",
-            _ => "",
+            Destination::Default => "",
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -212,7 +212,7 @@ impl<'a> Data<'a> {
             Data::Data24(_) => "24",
             Data::Data35(_) => "35",
             Data::Data36(_) => "36",
-            _ => "",
+            Data::Default => "",
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -328,7 +328,7 @@ impl<'a> EntityMetadata<'a> {
             EntityMetadata::Value16(_) => "16",
             EntityMetadata::Value17(_) => "17",
             EntityMetadata::Value18(_) => "18",
-            _ => "",
+            EntityMetadata::Default => "",
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -492,7 +492,7 @@ impl RedirectNode {
     pub fn discriminant(&self) -> &'static str {
         match self {
             RedirectNode::RedirectNode1(_) => "1",
-            _ => "",
+            RedirectNode::Default => "",
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -537,7 +537,7 @@ impl Min {
     pub fn discriminant(&self) -> &'static str {
         match self {
             Min::Min1(_) => "1",
-            _ => "",
+            Min::Default => "",
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -558,7 +558,7 @@ impl Max {
     pub fn discriminant(&self) -> &'static str {
         match self {
             Max::Max1(_) => "1",
-            _ => "",
+            Max::Default => "",
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -636,7 +636,7 @@ impl DoubleMin {
     pub fn discriminant(&self) -> &'static str {
         match self {
             DoubleMin::DoubleMin1(_) => "1",
-            _ => "",
+            DoubleMin::Default => "",
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -657,7 +657,7 @@ impl DoubleMax {
     pub fn discriminant(&self) -> &'static str {
         match self {
             DoubleMax::DoubleMax1(_) => "1",
-            _ => "",
+            DoubleMax::Default => "",
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -735,7 +735,7 @@ impl IntegerMin {
     pub fn discriminant(&self) -> &'static str {
         match self {
             IntegerMin::IntegerMin1(_) => "1",
-            _ => "",
+            IntegerMin::Default => "",
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -756,7 +756,7 @@ impl IntegerMax {
     pub fn discriminant(&self) -> &'static str {
         match self {
             IntegerMax::IntegerMax1(_) => "1",
-            _ => "",
+            IntegerMax::Default => "",
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -834,7 +834,7 @@ impl LongMin {
     pub fn discriminant(&self) -> &'static str {
         match self {
             LongMin::LongMin1(_) => "1",
-            _ => "",
+            LongMin::Default => "",
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -855,7 +855,7 @@ impl LongMax {
     pub fn discriminant(&self) -> &'static str {
         match self {
             LongMax::LongMax1(_) => "1",
-            _ => "",
+            LongMax::Default => "",
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -1060,7 +1060,7 @@ impl<'a> Properties<'a> {
             Properties::ResourceOrTag(_) => "minecraft:resource_or_tag",
             Properties::Resource(_) => "minecraft:resource",
             Properties::Uuid => "minecraft:uuid",
-            _ => "",
+            Properties::Default => "",
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -1138,7 +1138,7 @@ impl<'a> SuggestionType<'a> {
     pub fn discriminant(&self) -> &'static str {
         match self {
             SuggestionType::SuggestionType1(_) => "1",
-            _ => "",
+            SuggestionType::Default => "",
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -1170,7 +1170,7 @@ impl<'a> ExtraNodeData<'a> {
             ExtraNodeData::ExtraNodeData0 => "0",
             ExtraNodeData::ExtraNodeData1(_) => "1",
             ExtraNodeData::ExtraNodeData2(_) => "2",
-            _ => "",
+            ExtraNodeData::Default => "",
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -1228,9 +1228,9 @@ impl<'t: 'a, 'a> Packet<'t> for CommandNode<'a> {
                 "1" => map(ExtraNodeData1::deserialize, ExtraNodeData::ExtraNodeData1)(input),
                 "2" => map(
                     |input| {
-                        let (input, self_extra_node_data_name) = (PrefixedString::<'a, VarInt>::deserialize)(input)?;
-                        let (input, self_extra_node_data_parser) = (PrefixedString::<'a, VarInt>::deserialize)(input)?;
-                        let (input, self_extra_node_data_properties) = (|input| match &format!("{}", self_extra_node_data_parser)[..] {
+                        let (input, self_extra_node_data_ExtraNodeData2_name) = (PrefixedString::<'a, VarInt>::deserialize)(input)?;
+                        let (input, self_extra_node_data_ExtraNodeData2_parser) = (PrefixedString::<'a, VarInt>::deserialize)(input)?;
+                        let (input, self_extra_node_data_ExtraNodeData2_properties) = (|input| match &format!("{}", self_extra_node_data_ExtraNodeData2_parser)[..] {
                             "brigadier:bool" => Ok((input, Properties::Bool)),
                             "brigadier:float" => map(Float::deserialize, Properties::Float)(input),
                             "brigadier:double" => map(Double::deserialize, Properties::Double)(input),
@@ -1294,17 +1294,17 @@ impl<'t: 'a, 'a> Packet<'t> for CommandNode<'a> {
                             "minecraft:uuid" => Ok((input, Properties::Uuid)),
                             _ => Ok((input, Properties::Default)),
                         })(input)?;
-                        let (input, self_extra_node_data_suggestion_type) = (|input| match &format!("{}", self_flags.has_custom_suggestions)[..] {
+                        let (input, self_extra_node_data_ExtraNodeData2_suggestion_type) = (|input| match &format!("{}", self_flags.has_custom_suggestions)[..] {
                             "1" => map(PrefixedString::<'a, VarInt>::deserialize, SuggestionType::SuggestionType1)(input),
                             _ => Ok((input, SuggestionType::Default)),
                         })(input)?;
                         Ok((
                             input,
                             ExtraNodeData2 {
-                                name: self_extra_node_data_name,
-                                parser: self_extra_node_data_parser,
-                                properties: self_extra_node_data_properties,
-                                suggestion_type: self_extra_node_data_suggestion_type,
+                                name: self_extra_node_data_ExtraNodeData2_name,
+                                parser: self_extra_node_data_ExtraNodeData2_parser,
+                                properties: self_extra_node_data_ExtraNodeData2_properties,
+                                suggestion_type: self_extra_node_data_ExtraNodeData2_suggestion_type,
                             },
                         ))
                     },
@@ -1336,7 +1336,7 @@ pub mod handshaking {
         impl Params {
             pub fn discriminant(&self) -> &'static str {
                 match self {
-                    _ => "",
+                    Params::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -1396,7 +1396,7 @@ pub mod handshaking {
                 match self {
                     Params::SetProtocol(_) => "set_protocol",
                     Params::LegacyServerListPing(_) => "legacy_server_list_ping",
-                    _ => "",
+                    Params::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -1478,7 +1478,7 @@ pub mod status {
                 match self {
                     Params::ServerInfo(_) => "server_info",
                     Params::Ping(_) => "ping",
-                    _ => "",
+                    Params::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -1556,7 +1556,7 @@ pub mod status {
                 match self {
                     Params::PingStart(_) => "ping_start",
                     Params::Ping(_) => "ping",
-                    _ => "",
+                    Params::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -1661,7 +1661,7 @@ pub mod login {
                     Params::Success(_) => "success",
                     Params::Compress(_) => "compress",
                     Params::LoginPluginRequest(_) => "login_plugin_request",
-                    _ => "",
+                    Params::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -1761,7 +1761,7 @@ pub mod login {
                     Params::LoginStart(_) => "login_start",
                     Params::EncryptionBegin(_) => "encryption_begin",
                     Params::LoginPluginResponse(_) => "login_plugin_response",
-                    _ => "",
+                    Params::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -1937,7 +1937,7 @@ pub mod play {
             pub fn discriminant(&self) -> &'static str {
                 match self {
                     BackgroundTexture::BackgroundTexture1(_) => "1",
-                    _ => "",
+                    BackgroundTexture::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -2072,7 +2072,7 @@ pub mod play {
                 match self {
                     Title::Title0(_) => "0",
                     Title::Title3(_) => "3",
-                    _ => "",
+                    Title::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -2096,7 +2096,7 @@ pub mod play {
                 match self {
                     Health::Health0(_) => "0",
                     Health::Health2(_) => "2",
-                    _ => "",
+                    Health::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -2120,7 +2120,7 @@ pub mod play {
                 match self {
                     Color::Color0(_) => "0",
                     Color::Color4(_) => "4",
-                    _ => "",
+                    Color::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -2144,7 +2144,7 @@ pub mod play {
                 match self {
                     Dividers::Dividers0(_) => "0",
                     Dividers::Dividers4(_) => "4",
-                    _ => "",
+                    Dividers::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -2168,7 +2168,7 @@ pub mod play {
                 match self {
                     BossBarFlags::BossBarFlags0(_) => "0",
                     BossBarFlags::BossBarFlags5(_) => "5",
-                    _ => "",
+                    BossBarFlags::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -2279,7 +2279,7 @@ pub mod play {
             pub fn discriminant(&self) -> &'static str {
                 match self {
                     EntityId::True(_) => "true",
-                    _ => "",
+                    EntityId::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -2300,7 +2300,7 @@ pub mod play {
             pub fn discriminant(&self) -> &'static str {
                 match self {
                     EntityFeetEyes::True(_) => "true",
-                    _ => "",
+                    EntityFeetEyes::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -2572,7 +2572,7 @@ pub mod play {
                 match self {
                     WorldParticlesData36Destination::MinecraftBlock(_) => "minecraft:block",
                     WorldParticlesData36Destination::Entity(_) => "minecraft:entity",
-                    _ => "",
+                    WorldParticlesData36Destination::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -2645,7 +2645,7 @@ pub mod play {
                     WorldParticlesData::WorldParticlesData24(_) => "24",
                     WorldParticlesData::WorldParticlesData35(_) => "35",
                     WorldParticlesData::WorldParticlesData36(_) => "36",
-                    _ => "",
+                    WorldParticlesData::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -2783,13 +2783,13 @@ pub mod play {
             pub fn discriminant(&self) -> &'static str {
                 match self {
                     Rows::Rows0 => "0",
-                    _ => "",
+                    Rows::Default(_) => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let w = match &self {
                     Rows::Rows0 => w,
-                    Rows::Default(val) => u8::serialize(val, w)?,
+                    Rows::Default(val) => u8::serialize(&val, w)?,
                 };
 
                 Ok(w)
@@ -2804,13 +2804,13 @@ pub mod play {
             pub fn discriminant(&self) -> &'static str {
                 match self {
                     X::X0 => "0",
-                    _ => "",
+                    X::Default(_) => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let w = match &self {
                     X::X0 => w,
-                    X::Default(val) => u8::serialize(val, w)?,
+                    X::Default(val) => u8::serialize(&val, w)?,
                 };
 
                 Ok(w)
@@ -2825,13 +2825,13 @@ pub mod play {
             pub fn discriminant(&self) -> &'static str {
                 match self {
                     Y::Y0 => "0",
-                    _ => "",
+                    Y::Default(_) => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let w = match &self {
                     Y::Y0 => w,
-                    Y::Default(val) => u8::serialize(val, w)?,
+                    Y::Default(val) => u8::serialize(&val, w)?,
                 };
 
                 Ok(w)
@@ -2846,13 +2846,13 @@ pub mod play {
             pub fn discriminant(&self) -> &'static str {
                 match self {
                     MapData::MapData0 => "0",
-                    _ => "",
+                    MapData::Default(_) => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let w = match &self {
                     MapData::MapData0 => w,
-                    MapData::Default(val) => PrefixedBuffer::<'a, VarInt>::serialize(val, w)?,
+                    MapData::Default(val) => PrefixedBuffer::<'a, VarInt>::serialize(&val, w)?,
                 };
 
                 Ok(w)
@@ -3021,7 +3021,7 @@ pub mod play {
             pub fn discriminant(&self) -> &'static str {
                 match self {
                     Name::Name0(_) => "0",
-                    _ => "",
+                    Name::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3048,7 +3048,7 @@ pub mod play {
             pub fn discriminant(&self) -> &'static str {
                 match self {
                     PlayerInfoDataItemProperties::PlayerInfoDataItemProperties0(_) => "0",
-                    _ => "",
+                    PlayerInfoDataItemProperties::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3080,7 +3080,7 @@ pub mod play {
                 match self {
                     Gamemode::Gamemode0(_) => "0",
                     Gamemode::Gamemode1(_) => "1",
-                    _ => "",
+                    Gamemode::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3104,7 +3104,7 @@ pub mod play {
                 match self {
                     Ping::Ping0(_) => "0",
                     Ping::Ping2(_) => "2",
-                    _ => "",
+                    Ping::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3128,7 +3128,7 @@ pub mod play {
                 match self {
                     PlayerInfoDataItemDisplayName::PlayerInfoDataItemDisplayName0(_) => "0",
                     PlayerInfoDataItemDisplayName::PlayerInfoDataItemDisplayName3(_) => "3",
-                    _ => "",
+                    PlayerInfoDataItemDisplayName::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3254,7 +3254,7 @@ pub mod play {
             pub fn discriminant(&self) -> &'static str {
                 match self {
                     Recipes2::Recipes20(_) => "0",
-                    _ => "",
+                    Recipes2::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3526,7 +3526,7 @@ pub mod play {
                 match self {
                     DisplayText::DisplayText0(_) => "0",
                     DisplayText::DisplayText2(_) => "2",
-                    _ => "",
+                    DisplayText::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3550,7 +3550,7 @@ pub mod play {
                 match self {
                     RType::RType0(_) => "0",
                     RType::RType2(_) => "2",
-                    _ => "",
+                    RType::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3622,7 +3622,7 @@ pub mod play {
                 match self {
                     TeamsName::TeamsName0(_) => "0",
                     TeamsName::TeamsName2(_) => "2",
-                    _ => "",
+                    TeamsName::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3646,7 +3646,7 @@ pub mod play {
                 match self {
                     FriendlyFire::FriendlyFire0(_) => "0",
                     FriendlyFire::FriendlyFire2(_) => "2",
-                    _ => "",
+                    FriendlyFire::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3670,7 +3670,7 @@ pub mod play {
                 match self {
                     NameTagVisibility::NameTagVisibility0(_) => "0",
                     NameTagVisibility::NameTagVisibility2(_) => "2",
-                    _ => "",
+                    NameTagVisibility::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3694,7 +3694,7 @@ pub mod play {
                 match self {
                     CollisionRule::CollisionRule0(_) => "0",
                     CollisionRule::CollisionRule2(_) => "2",
-                    _ => "",
+                    CollisionRule::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3718,7 +3718,7 @@ pub mod play {
                 match self {
                     Formatting::Formatting0(_) => "0",
                     Formatting::Formatting2(_) => "2",
-                    _ => "",
+                    Formatting::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3742,7 +3742,7 @@ pub mod play {
                 match self {
                     Prefix::Prefix0(_) => "0",
                     Prefix::Prefix2(_) => "2",
-                    _ => "",
+                    Prefix::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3766,7 +3766,7 @@ pub mod play {
                 match self {
                     Suffix::Suffix0(_) => "0",
                     Suffix::Suffix2(_) => "2",
-                    _ => "",
+                    Suffix::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3792,7 +3792,7 @@ pub mod play {
                     Players::Players0(_) => "0",
                     Players::Players3(_) => "3",
                     Players::Players4(_) => "4",
-                    _ => "",
+                    Players::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3934,13 +3934,13 @@ pub mod play {
             pub fn discriminant(&self) -> &'static str {
                 match self {
                     ScoreboardScoreValue::ScoreboardScoreValue1 => "1",
-                    _ => "",
+                    ScoreboardScoreValue::Default(_) => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
                 let w = match &self {
                     ScoreboardScoreValue::ScoreboardScoreValue1 => w,
-                    ScoreboardScoreValue::Default(val) => VarInt::serialize(val, w)?,
+                    ScoreboardScoreValue::Default(val) => VarInt::serialize(&val, w)?,
                 };
 
                 Ok(w)
@@ -4013,7 +4013,7 @@ pub mod play {
                 match self {
                     Source::Source3(_) => "3",
                     Source::Source1(_) => "1",
-                    _ => "",
+                    Source::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -4037,7 +4037,7 @@ pub mod play {
                 match self {
                     Sound::Sound3(_) => "3",
                     Sound::Sound2(_) => "2",
-                    _ => "",
+                    Sound::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -4289,7 +4289,7 @@ pub mod play {
                     RecipeData::CampfireCooking(_) => "minecraft:campfire_cooking",
                     RecipeData::Stonecutting(_) => "minecraft:stonecutting",
                     RecipeData::Smithing(_) => "minecraft:smithing",
-                    _ => "",
+                    RecipeData::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -4408,7 +4408,7 @@ pub mod play {
                 match self {
                     SculkVibrationSignalDestination::Block(_) => "block",
                     SculkVibrationSignalDestination::EntityId(_) => "entityId",
-                    _ => "",
+                    SculkVibrationSignalDestination::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -4739,7 +4739,7 @@ pub mod play {
                     Params::SetTitleSubtitle(_) => "set_title_subtitle",
                     Params::SetTitleText(_) => "set_title_text",
                     Params::SetTitleTime(_) => "set_title_time",
-                    _ => "",
+                    Params::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -5343,7 +5343,7 @@ pub mod play {
             pub fn discriminant(&self) -> &'static str {
                 match self {
                     X::X2(_) => "2",
-                    _ => "",
+                    X::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -5364,7 +5364,7 @@ pub mod play {
             pub fn discriminant(&self) -> &'static str {
                 match self {
                     Y::Y2(_) => "2",
-                    _ => "",
+                    Y::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -5385,7 +5385,7 @@ pub mod play {
             pub fn discriminant(&self) -> &'static str {
                 match self {
                     Z::Z2(_) => "2",
-                    _ => "",
+                    Z::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -5408,7 +5408,7 @@ pub mod play {
                 match self {
                     Hand::Hand0(_) => "0",
                     Hand::Hand2(_) => "2",
-                    _ => "",
+                    Hand::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -5635,7 +5635,7 @@ pub mod play {
                 match self {
                     TabId::TabId0(_) => "0",
                     TabId::TabId1 => "1",
-                    _ => "",
+                    TabId::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -5786,7 +5786,7 @@ pub mod play {
                     Params::UseItem(_) => "use_item",
                     Params::AdvancementTab(_) => "advancement_tab",
                     Params::Pong(_) => "pong",
-                    _ => "",
+                    Params::Default => "",
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
