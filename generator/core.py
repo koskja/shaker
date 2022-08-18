@@ -59,7 +59,7 @@ class Context:
                     if name == "void": 
                         self.types["void"].void = True
                 elif not self.contains(name):
-                    raise RuntimeError("cringe")
+                    raise RuntimeError(f"Type {name} defined as `native` but not present in native typemap")
             else:
                 self.types[name] = TyAlias(make_camelcase(name), self.types[type_def])
         else:  # handle template
@@ -100,16 +100,7 @@ class Context:
                 continue
             val = make_snakecase(joined)
             if val not in self.used_idents:
-                last = ""
-                while last != val:
-                    last = val
-                    opts = list(demangle_name(val, len(val.split("_")))) #TODO
-                    new_opt = next(
-                        filter(lambda x: x != val and x not in self.used_idents, opts),
-                        None,
-                    )
-                    if new_opt is not None:
-                        val = new_opt
+                val = demangle_name(val, len(val.split('_')), lambda x: x not in self.used_idents)
                 self.used_idents.add(val)
                 return val
         return anon_ident()
@@ -329,22 +320,22 @@ def make_impl(
     """ Create a `Packet` implementation using `ty: IType`. Serialization and deserialization can be overriden with `de` and `ser`."""
     de = de or ty.emit_de
     ser = ser or ty.emit_ser
-    impl = (
-        f"impl<'t: 'a, 'a> protocol_lib::Packet<'t>"
+    impl_params = (
+        f"'t: 'a, 'a"
         if ty.has_lifetime()
-        else f"impl<'t> protocol_lib::Packet<'t>"
+        else f"'t"
     )
     return f"""
-{impl} for {ty.name()} {{\n
-    fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {{\n
-        {ser(ty, 'self')}\n
-        Ok(w)
-    }}\n
-\n
-    fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {{\n
-        ({de(ty, [('self', ty)])})(input)\n
-    }}\n
-}}\n
+        impl<{impl_params}> Packet<'t> for {ty.name()} {{
+            fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {{
+                {ser(ty, 'self')}
+                Ok(w)
+            }}
+
+            fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {{
+                ({de(ty, [('self', ty)])})(input)
+            }}
+        }}
     """
 
 

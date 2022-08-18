@@ -50,7 +50,7 @@ class EntityMetadataLoop(IType):
         return self.item.has_lifetime()
     
     def discriminant_level(self) -> Integer:
-        return 1000000
+        return 0
 
     @camelcased
     def construct(ctx: Context, name: str, params: Any) -> IType:
@@ -106,7 +106,7 @@ class TopbitTerminated(IType):
         return self.item.has_lifetime()
 
     def discriminant_level(self) -> Integer:
-        return 1000000
+        return 0
 
     @camelcased
     def construct(ctx: Context, name: str, params: Any) -> IType:

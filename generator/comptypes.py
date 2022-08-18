@@ -54,11 +54,11 @@ class Container(IType):
         return next(iter([a[1] for a in self.fields if a[0] == name] or [None]))
 
     def is_trivial(self) -> bool:
-        return max([a[1].discriminant_level() for a in self.fields] or [0]) == 0
+        return self.discriminant_level() == 0
 
     def specialize(self) -> Union['Container' , 'SufficientContainer' , 'TrivialContainer']:
         if self.discriminant_level() == 0:
-            if self.is_trivial():
+            if all([a[1].is_trivial() for a in self.fields]): # all fields impl `Packet` that can be delegated to
                 return TrivialContainer(self.struct_name, self.fields)
             return SufficientContainer(self.struct_name, self.fields)
         else:
@@ -100,7 +100,6 @@ class Mapper(IType):  # TODO: make this not suck - somehow skip intermediate str
         self.ty_name = ty_name
         self.match_ty = match_ty
         self.arms = arms
-        super().__init__()
 
     def emit_extra(self) -> str:
         return ""
@@ -146,25 +145,22 @@ class Mapper(IType):  # TODO: make this not suck - somehow skip intermediate str
 
 
 class Switch(IType):
+    fields: List[Tuple[str, Tuple[str, IType]]]
     def __init__(self, name, compare_to, fields, default) -> None:
         self._name = name
         self.compare_to: str = compare_to
         self.fields = fields
         self.default = default
-        super().__init__()
+
+    def variant(x: Tuple[str, IType], name) -> str:
+        return f'{x[0]}({name})' if not is_void(x[1]) else f'{x[0]}'
+    def tagged_variant(self, x, name) -> str:
+        return f'{self.ty_name()}::{Switch.variant(x, name)}'
 
     def emit_extra(self) -> str:
-        lifetime = ""
-        if self.has_lifetime():
-            lifetime = "<'a>"
-        a = f"pub enum {self._name}{lifetime} {{\n"
+        a = f"pub enum {self.name()} {{\n"
         a += "".join(
-            map(
-                lambda x: f"{x[0]}"
-                + ("" if is_void(x[1]) else f"({x[1].name()})")
-                + ", \n",
-                self.fields.values(),
-            )
+            [f"{Switch.variant(x, x[1].name())}, \n" for x in self.fields.values()]
         )
         a += (
             "Default"
@@ -178,7 +174,7 @@ class Switch(IType):
                 match self {{
                     {
                         ''.join(
-                            [f'{self.ty_name()}::{a[1][0]}{"" if is_void(a[1][1]) else "(_)"} => "{a[0]}", ' for a in self.fields.items()]
+                            [f'{self.tagged_variant(a[1], "_")} => "{a[0]}", ' for a in self.fields.items()]
                         )
                     }
                     _ => ""

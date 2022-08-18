@@ -1,6 +1,7 @@
 from copy import deepcopy
+from numbers import Number
 import re
-from typing import List
+from typing import Callable, List
 
 import sys
 
@@ -14,7 +15,7 @@ def split_words(s: str) -> List[str]:
     return list(flat_map(lambda x: re.findall("[a-zA-Z0-9][^A-Z]*", x), s.split("_")))
 
 
-def demangle_name(s: str, level):
+def demangle_name(val: str, level: Number, pred: Callable[[int], bool]) -> str:
     rules = [
         [r"ies_item", r"y"],
         [r"s_item", r""],
@@ -25,9 +26,18 @@ def demangle_name(s: str, level):
         rules.append([r"^packet_", r""])
     if level > 3:
         rules += [[r"attribute", r"attr"]]
-    for find, replace in rules:
-        v = re.sub(find, replace, s)
-        yield v
+    def gen(s: str):
+        for find, replace in rules:
+            v = re.sub(find, replace, s)
+            yield v
+    last = ""
+    while last != val:
+        last = val
+        opts = [x for x in gen(val) if x != val and pred(x)]
+        if opts:
+            val = opts[0]
+    return val
+    
 
 
 def make_camelcase(s: str) -> str:
