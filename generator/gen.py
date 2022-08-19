@@ -152,6 +152,8 @@ for name in protocol["types"].keys():
 
 for name, df in protocol["types"].items():
     ctx.parse(name, df)
+import optpass
+optpass.run_all(ctx)
 for n, l in ctx.types.items():
     o += l.emit_extra()
 
@@ -167,6 +169,7 @@ for i, j in protocol.items():
             ctx.reserve_ident(name)
         for name, df in l["types"].items():
             ctx.parse(name if name != 'packet' else k, df)
+        optpass.run_all(ctx)
         for m in filter(lambda x: x not in base_ctx.types.keys(), ctx.types.keys()):
             xdd = ctx.types[m].emit_extra()
             o += xdd

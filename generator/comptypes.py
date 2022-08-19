@@ -92,12 +92,12 @@ class TrivialContainer(SufficientContainer):
         return '#[derive(protocol_lib::Packet)]' + Container.emit_extra(self)
 
 class Mapper(IType):  # TODO: make this not suck - somehow skip intermediate str
-    ty_name = ""
+    _name = ""
     match_ty = None
     arms = {}
 
     def __init__(self, ty_name, match_ty, arms) -> None:
-        self.ty_name = ty_name
+        self._name = ty_name
         self.match_ty = match_ty
         self.arms = arms
 
@@ -172,7 +172,13 @@ class Switch(IType):
             pattern = self.tagged('val')
             arm = f"{valued_ser(self.value, 'val')}" if self.value else "w"
             return f"{pattern} => {arm}"
+        def disc(self) -> str:
+            if not self.discriminant:
+                return f"{self.parent.dty.ty_name()}::default()"
+            return self.parent.dty.make_literal(self.discriminant)
+            
     fields: List[Field]
+    dty: IType | None # filled in during an optimizer pass
     def __init__(self, name, compare_to, fields) -> None:
         self._name = name
         self.compare_to: str = compare_to

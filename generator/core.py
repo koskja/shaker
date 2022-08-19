@@ -31,7 +31,7 @@ class Context:
         if isinstance(ty, IType):
             if name in self.types:
                 raise RuntimeError("Cannot override type")
-            self.types[name] = ty
+            self.types[name] = TypeProxy(ty) # use a TypeProxy shim to allow replacing types
         elif isinstance(ty, ITypeConstructor):
             if name in self.type_constructors:
                 self.type_constructors[name] = ConstructorList(
@@ -112,7 +112,6 @@ def camelcased(func):
     """
     return lambda a, b, c: func(a, make_camelcase(b), c)
 
-
 class IType(ABC):
     """ A generic type. Can be serialized or deserialized. """
     @abstractmethod
@@ -158,6 +157,7 @@ class IType(ABC):
     def is_trivial(self) -> bool:
         """ This type implements `Packet` and thus has a `discriminant_level` of zero."""
         return False
+    
 
 class NativeType(IType):
     """ Represents the simplest, no-strings-attached type. 
@@ -186,7 +186,7 @@ class NativeType(IType):
     
     def is_trivial(self) -> bool:
         return True
-
+    
 class ITypeConstructor(ABC):
     """ Constructs a type in a given context, given some instance-specific parameters."""
     @abstractmethod
@@ -350,3 +350,30 @@ def valued_ser(ty: IType, val: str) -> str:
         return s[7:-1] # let w = ...;
     else:
         return f'{{ {s} w }}'
+
+class TypeProxy:
+    __slots__ = ["_obj", "__weakref__"]
+
+    def __init__(self, obj: IType) -> None:
+        object.__setattr__(self, "_obj", obj)
+    
+    def __getattribute__(self, name):
+        if name == 'proxy_replace': # delegate all attributes, except proxy_replace, to the proxied type
+            return lambda obj: object.__setattr__(self, "_obj", obj) # proxy_replace(self, ty) replaces the inner type
+        else:
+            return getattr(object.__getattribute__(self, "_obj"), name)
+    def __delattr__(self, name):
+        delattr(object.__getattribute__(self, "_obj"), name)
+    def __setattr__(self, name, value):
+        setattr(object.__getattribute__(self, "_obj"), name, value)
+    
+    def __nonzero__(self):
+        return bool(object.__getattribute__(self, "_obj"))
+    def __str__(self):
+        return str(object.__getattribute__(self, "_obj"))
+    def __repr__(self):
+        return repr(object.__getattribute__(self, "_obj"))
+    
+    @property
+    def __class__(self): # shamelessly lie about what class this is
+        return self._obj.__class__
