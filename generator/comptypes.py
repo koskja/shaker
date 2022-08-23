@@ -185,18 +185,21 @@ class Switch(IType):
         self.fields = fields
 
     def emit_extra(self) -> str:
+        if not literal_of(self.dty):
+            raise ValueError("discriminant type is not a literal")
         a = f"pub enum {self.name()} {{\n"
         a += "".join(
             [f"{x.definition()}, \n" for x in self.fields]
         )
         a += "}\n"
+        q = '"'
         b = f"""
         impl{("<'a>" if self.has_lifetime() else "")} {self.name()} {{
-            pub fn discriminant(&self) -> &'static str {{
+            pub fn discriminant(&self) -> {literal_of(self.dty).inner} {{
                 match self {{
                     {
                         ''.join(
-                            [f'{a.tagged("_")} => "{a.discriminant or ""}", ' for a in self.fields]
+                            [f'{a.tagged("_")} => {"todo!()" if not a.discriminant else (f"{q}{a.discriminant}{q}" if literal_of(self.dty).inner == "&str" else a.discriminant)}, ' for a in self.fields]
                         )
                     }
                 }}
@@ -350,7 +353,7 @@ class Bitfield(IType):
     def get_field_ty(self, name: str) -> Optional[IType]:
         return next(
             iter(
-                [NativeType(x["ty"]) for x in self.fields if x["name"] == name]
+                [x["ty"] for x in self.fields if x["name"] == name]
                 or [None]
             )
         )
@@ -363,7 +366,7 @@ class Bitfield(IType):
         params = deepcopy(params)
         for x in params:
             x["name"] = make_snakecase(x["name"])
-            x["ty"] = Bitfield.nearest_type(x["size"], x["signed"])
+            x["ty"] = ctx.types[Bitfield.nearest_type(x["size"], x["signed"])]
         return Bitfield(name, params)
 
 class ExternallyTaggedArray(IType):

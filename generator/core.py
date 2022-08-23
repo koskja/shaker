@@ -15,13 +15,20 @@ class Context:
     types: Dict[str, "IType"]
     type_constructors: Dict[str, "ITypeConstructor"]
     native_typemap: Dict[str, str]
+    literals: Dict[str, 'Literal']
     used_idents: Set[str] # set of all names in the output program
 
-    def __init__(self, native: Dict[str, str]) -> None:
+    def __init__(self, native: Dict[str, str], literals: Dict[str, Dict[str, str]]) -> None:
         self.types = {}
         self.type_constructors = {}
         self.used_idents = set()
         self.native_typemap = native
+        self.literals = { a: Literal(b['inner'], b['lit'], b['new'], b['unwrap']) for a, b in literals.items()}
+        for ty in ["u8", "i8", "u16", "i16", "u32", "i32", "u64", "i64", "f32", "f64"]:
+            if ty not in self.literals:
+                self.literals[ty] = Literal(ty, f"{{}}{ty}", "{}", "{}")
+        if 'bool' not in self.literals:
+            self.literals["bool"] = Literal("bool", "{}", "{}", "{}")
 
     def clone(self) -> "Context":
         return deepcopy(self)
@@ -56,6 +63,8 @@ class Context:
             if type_def == "native":
                 if name in self.native_typemap:
                     self.insert(name, parse_external(self.native_typemap[name]))
+                    if name in self.literals:
+                        self.types[name].__dict__['literal'] = self.literals[name]
                     if name == "void": 
                         self.types["void"].void = True
                 elif not self.contains(name):
@@ -69,6 +78,8 @@ class Context:
                 ty = DelayedConstructor(template, params)
             else:
                 ty = template.ctor(self, name, params)
+            if name in self.literals:
+                ty.__dict__['literal'] = self.literals[name]
             self.insert(name, ty)
 
     def parse_type(
@@ -338,10 +349,25 @@ def make_impl(
         }}
     """
 
+class Literal:
+    inner: str
+    lit: str
+    new: str
+    unwrap: str
+    def __init__(self, inner: str, lit: str, new: str, unwrap: str) -> None:
+        self.inner = inner
+        self.lit = lit
+        self.new = new
+        self.unwrap = unwrap
 
 def is_void(ty) -> bool:
     return isinstance(ty, NativeType) and ty.void
 
+def literal_of(ty: IType) -> Optional[Literal]:
+    if 'literal' in ty.__dict__:
+        return ty.literal
+    else:
+        return None
 
 def valued_ser(ty: IType, val: str) -> str:
     """ Outputs a serialization expression block that returns w."""

@@ -22,6 +22,26 @@
         "nbt": "Nbt",
         "optionalNbt": "OptionalNbt"
     },
+    "literals": {
+        "varint": {
+            "inner": "i32",
+            "lit": "{}i32",
+            "new": "VInt::<i32>({})",
+            "unwrap": "{}.0"
+        },
+        "varlong": {
+            "inner": "i64",
+            "lit": "{}i64",
+            "new": "VInt::<i64>({})",
+            "unwrap": "{}.0"
+        },
+        "string": {
+            "inner": "&str",
+            "lit": "\"{}\"",
+            "new": "PrefixedString::<'static, VarInt>({}, core::marker::PhantomData)",
+            "unwrap": "{}.0"
+        }
+    },
     "prelude": {
         "global": [
             "#[allow(unused_imports)]",

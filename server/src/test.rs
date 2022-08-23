@@ -47,11 +47,11 @@ pub enum Ident0 {
 }
 
 impl Ident0 {
-    pub fn discriminant(&self) -> &'static str {
+    pub fn discriminant(&self) -> bool {
         match self {
-            Ident0::RFalse => "false",
-            Ident0::RTrue(_) => "true",
-            Ident0::Default => "",
+            Ident0::RFalse => false,
+            Ident0::RTrue(_) => true,
+            Ident0::Default => todo!(),
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -135,11 +135,11 @@ pub enum Destination {
 }
 
 impl Destination {
-    pub fn discriminant(&self) -> &'static str {
+    pub fn discriminant(&self) -> &str {
         match self {
             Destination::Block(_) => "minecraft:block",
             Destination::Entity(_) => "minecraft:entity",
-            Destination::Default => "",
+            Destination::Default => todo!(),
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -203,16 +203,16 @@ pub enum Data<'a> {
 }
 
 impl<'a> Data<'a> {
-    pub fn discriminant(&self) -> &'static str {
+    pub fn discriminant(&self) -> i32 {
         match self {
-            Data::Data2(_) => "2",
-            Data::Data3(_) => "3",
-            Data::Data14(_) => "14",
-            Data::Data15(_) => "15",
-            Data::Data24(_) => "24",
-            Data::Data35(_) => "35",
-            Data::Data36(_) => "36",
-            Data::Default => "",
+            Data::Data2(_) => 2,
+            Data::Data3(_) => 3,
+            Data::Data14(_) => 14,
+            Data::Data15(_) => 15,
+            Data::Data24(_) => 24,
+            Data::Data35(_) => 35,
+            Data::Data36(_) => 36,
+            Data::Default => todo!(),
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -307,28 +307,28 @@ pub enum EntityMetadata<'a> {
 }
 
 impl<'a> EntityMetadata<'a> {
-    pub fn discriminant(&self) -> &'static str {
+    pub fn discriminant(&self) -> i32 {
         match self {
-            EntityMetadata::Value0(_) => "0",
-            EntityMetadata::Value1(_) => "1",
-            EntityMetadata::Value2(_) => "2",
-            EntityMetadata::Value3(_) => "3",
-            EntityMetadata::Value4(_) => "4",
-            EntityMetadata::Value5(_) => "5",
-            EntityMetadata::Value6(_) => "6",
-            EntityMetadata::Value7(_) => "7",
-            EntityMetadata::Value8(_) => "8",
-            EntityMetadata::Value9(_) => "9",
-            EntityMetadata::Value10(_) => "10",
-            EntityMetadata::Value11(_) => "11",
-            EntityMetadata::Value12(_) => "12",
-            EntityMetadata::Value13(_) => "13",
-            EntityMetadata::Value14(_) => "14",
-            EntityMetadata::Value15(_) => "15",
-            EntityMetadata::Value16(_) => "16",
-            EntityMetadata::Value17(_) => "17",
-            EntityMetadata::Value18(_) => "18",
-            EntityMetadata::Default => "",
+            EntityMetadata::Value0(_) => 0,
+            EntityMetadata::Value1(_) => 1,
+            EntityMetadata::Value2(_) => 2,
+            EntityMetadata::Value3(_) => 3,
+            EntityMetadata::Value4(_) => 4,
+            EntityMetadata::Value5(_) => 5,
+            EntityMetadata::Value6(_) => 6,
+            EntityMetadata::Value7(_) => 7,
+            EntityMetadata::Value8(_) => 8,
+            EntityMetadata::Value9(_) => 9,
+            EntityMetadata::Value10(_) => 10,
+            EntityMetadata::Value11(_) => 11,
+            EntityMetadata::Value12(_) => 12,
+            EntityMetadata::Value13(_) => 13,
+            EntityMetadata::Value14(_) => 14,
+            EntityMetadata::Value15(_) => 15,
+            EntityMetadata::Value16(_) => 16,
+            EntityMetadata::Value17(_) => 17,
+            EntityMetadata::Value18(_) => 18,
+            EntityMetadata::Default => todo!(),
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -489,10 +489,10 @@ pub enum RedirectNode {
 }
 
 impl RedirectNode {
-    pub fn discriminant(&self) -> &'static str {
+    pub fn discriminant(&self) -> u8 {
         match self {
-            RedirectNode::RedirectNode1(_) => "1",
-            RedirectNode::Default => "",
+            RedirectNode::RedirectNode1(_) => 1,
+            RedirectNode::Default => todo!(),
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -534,10 +534,10 @@ pub enum Min {
 }
 
 impl Min {
-    pub fn discriminant(&self) -> &'static str {
+    pub fn discriminant(&self) -> u8 {
         match self {
-            Min::Min1(_) => "1",
-            Min::Default => "",
+            Min::Min1(_) => 1,
+            Min::Default => todo!(),
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -555,10 +555,10 @@ pub enum Max {
 }
 
 impl Max {
-    pub fn discriminant(&self) -> &'static str {
+    pub fn discriminant(&self) -> u8 {
         match self {
-            Max::Max1(_) => "1",
-            Max::Default => "",
+            Max::Max1(_) => 1,
+            Max::Default => todo!(),
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -633,10 +633,10 @@ pub enum DoubleMin {
 }
 
 impl DoubleMin {
-    pub fn discriminant(&self) -> &'static str {
+    pub fn discriminant(&self) -> u8 {
         match self {
-            DoubleMin::DoubleMin1(_) => "1",
-            DoubleMin::Default => "",
+            DoubleMin::DoubleMin1(_) => 1,
+            DoubleMin::Default => todo!(),
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -654,10 +654,10 @@ pub enum DoubleMax {
 }
 
 impl DoubleMax {
-    pub fn discriminant(&self) -> &'static str {
+    pub fn discriminant(&self) -> u8 {
         match self {
-            DoubleMax::DoubleMax1(_) => "1",
-            DoubleMax::Default => "",
+            DoubleMax::DoubleMax1(_) => 1,
+            DoubleMax::Default => todo!(),
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -732,10 +732,10 @@ pub enum IntegerMin {
 }
 
 impl IntegerMin {
-    pub fn discriminant(&self) -> &'static str {
+    pub fn discriminant(&self) -> u8 {
         match self {
-            IntegerMin::IntegerMin1(_) => "1",
-            IntegerMin::Default => "",
+            IntegerMin::IntegerMin1(_) => 1,
+            IntegerMin::Default => todo!(),
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -753,10 +753,10 @@ pub enum IntegerMax {
 }
 
 impl IntegerMax {
-    pub fn discriminant(&self) -> &'static str {
+    pub fn discriminant(&self) -> u8 {
         match self {
-            IntegerMax::IntegerMax1(_) => "1",
-            IntegerMax::Default => "",
+            IntegerMax::IntegerMax1(_) => 1,
+            IntegerMax::Default => todo!(),
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -831,10 +831,10 @@ pub enum LongMin {
 }
 
 impl LongMin {
-    pub fn discriminant(&self) -> &'static str {
+    pub fn discriminant(&self) -> u8 {
         match self {
-            LongMin::LongMin1(_) => "1",
-            LongMin::Default => "",
+            LongMin::LongMin1(_) => 1,
+            LongMin::Default => todo!(),
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -852,10 +852,10 @@ pub enum LongMax {
 }
 
 impl LongMax {
-    pub fn discriminant(&self) -> &'static str {
+    pub fn discriminant(&self) -> u8 {
         match self {
-            LongMax::LongMax1(_) => "1",
-            LongMax::Default => "",
+            LongMax::LongMax1(_) => 1,
+            LongMax::Default => todo!(),
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -1011,7 +1011,7 @@ pub enum Properties<'a> {
 }
 
 impl<'a> Properties<'a> {
-    pub fn discriminant(&self) -> &'static str {
+    pub fn discriminant(&self) -> &str {
         match self {
             Properties::Bool => "brigadier:bool",
             Properties::Float(_) => "brigadier:float",
@@ -1060,7 +1060,7 @@ impl<'a> Properties<'a> {
             Properties::ResourceOrTag(_) => "minecraft:resource_or_tag",
             Properties::Resource(_) => "minecraft:resource",
             Properties::Uuid => "minecraft:uuid",
-            Properties::Default => "",
+            Properties::Default => todo!(),
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -1135,10 +1135,10 @@ pub enum SuggestionType<'a> {
 }
 
 impl<'a> SuggestionType<'a> {
-    pub fn discriminant(&self) -> &'static str {
+    pub fn discriminant(&self) -> u8 {
         match self {
-            SuggestionType::SuggestionType1(_) => "1",
-            SuggestionType::Default => "",
+            SuggestionType::SuggestionType1(_) => 1,
+            SuggestionType::Default => todo!(),
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -1165,12 +1165,12 @@ pub enum ExtraNodeData<'a> {
 }
 
 impl<'a> ExtraNodeData<'a> {
-    pub fn discriminant(&self) -> &'static str {
+    pub fn discriminant(&self) -> u8 {
         match self {
-            ExtraNodeData::ExtraNodeData0 => "0",
-            ExtraNodeData::ExtraNodeData1(_) => "1",
-            ExtraNodeData::ExtraNodeData2(_) => "2",
-            ExtraNodeData::Default => "",
+            ExtraNodeData::ExtraNodeData0 => 0,
+            ExtraNodeData::ExtraNodeData1(_) => 1,
+            ExtraNodeData::ExtraNodeData2(_) => 2,
+            ExtraNodeData::Default => todo!(),
         }
     }
     pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -1334,9 +1334,9 @@ pub mod handshaking {
         }
 
         impl Params {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i32 {
                 match self {
-                    Params::Default => "",
+                    Params::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -1393,11 +1393,11 @@ pub mod handshaking {
         }
 
         impl<'a> Params<'a> {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i32 {
                 match self {
-                    Params::SetProtocol(_) => "0x00",
-                    Params::LegacyServerListPing(_) => "0xfe",
-                    Params::Default => "",
+                    Params::SetProtocol(_) => 0x00,
+                    Params::LegacyServerListPing(_) => 0xfe,
+                    Params::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -1457,11 +1457,11 @@ pub mod status {
         }
 
         impl<'a> Params<'a> {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i32 {
                 match self {
-                    Params::ServerInfo(_) => "0x00",
-                    Params::Ping(_) => "0x01",
-                    Params::Default => "",
+                    Params::ServerInfo(_) => 0x00,
+                    Params::Ping(_) => 0x01,
+                    Params::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -1517,11 +1517,11 @@ pub mod status {
         }
 
         impl Params {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i32 {
                 match self {
-                    Params::PingStart(_) => "0x00",
-                    Params::Ping(_) => "0x01",
-                    Params::Default => "",
+                    Params::PingStart(_) => 0x00,
+                    Params::Ping(_) => 0x01,
+                    Params::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -1601,14 +1601,14 @@ pub mod login {
         }
 
         impl<'a> Params<'a> {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i32 {
                 match self {
-                    Params::Disconnect(_) => "0x00",
-                    Params::EncryptionBegin(_) => "0x01",
-                    Params::Success(_) => "0x02",
-                    Params::Compress(_) => "0x03",
-                    Params::LoginPluginRequest(_) => "0x04",
-                    Params::Default => "",
+                    Params::Disconnect(_) => 0x00,
+                    Params::EncryptionBegin(_) => 0x01,
+                    Params::Success(_) => 0x02,
+                    Params::Compress(_) => 0x03,
+                    Params::LoginPluginRequest(_) => 0x04,
+                    Params::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -1679,12 +1679,12 @@ pub mod login {
         }
 
         impl<'a> Params<'a> {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i32 {
                 match self {
-                    Params::LoginStart(_) => "0x00",
-                    Params::EncryptionBegin(_) => "0x01",
-                    Params::LoginPluginResponse(_) => "0x02",
-                    Params::Default => "",
+                    Params::LoginStart(_) => 0x00,
+                    Params::EncryptionBegin(_) => 0x01,
+                    Params::LoginPluginResponse(_) => 0x02,
+                    Params::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -1837,10 +1837,10 @@ pub mod play {
         }
 
         impl<'a> BackgroundTexture<'a> {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> u8 {
                 match self {
-                    BackgroundTexture::BackgroundTexture1(_) => "1",
-                    BackgroundTexture::Default => "",
+                    BackgroundTexture::BackgroundTexture1(_) => 1,
+                    BackgroundTexture::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -1971,11 +1971,11 @@ pub mod play {
         }
 
         impl<'a> Title<'a> {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i32 {
                 match self {
-                    Title::Title0(_) => "0",
-                    Title::Title3(_) => "3",
-                    Title::Default => "",
+                    Title::Title0(_) => 0,
+                    Title::Title3(_) => 3,
+                    Title::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -1995,11 +1995,11 @@ pub mod play {
         }
 
         impl Health {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i32 {
                 match self {
-                    Health::Health0(_) => "0",
-                    Health::Health2(_) => "2",
-                    Health::Default => "",
+                    Health::Health0(_) => 0,
+                    Health::Health2(_) => 2,
+                    Health::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -2019,11 +2019,11 @@ pub mod play {
         }
 
         impl Color {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i32 {
                 match self {
-                    Color::Color0(_) => "0",
-                    Color::Color4(_) => "4",
-                    Color::Default => "",
+                    Color::Color0(_) => 0,
+                    Color::Color4(_) => 4,
+                    Color::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -2043,11 +2043,11 @@ pub mod play {
         }
 
         impl Dividers {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i32 {
                 match self {
-                    Dividers::Dividers0(_) => "0",
-                    Dividers::Dividers4(_) => "4",
-                    Dividers::Default => "",
+                    Dividers::Dividers0(_) => 0,
+                    Dividers::Dividers4(_) => 4,
+                    Dividers::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -2067,11 +2067,11 @@ pub mod play {
         }
 
         impl BossBarFlags {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i32 {
                 match self {
-                    BossBarFlags::BossBarFlags0(_) => "0",
-                    BossBarFlags::BossBarFlags5(_) => "5",
-                    BossBarFlags::Default => "",
+                    BossBarFlags::BossBarFlags0(_) => 0,
+                    BossBarFlags::BossBarFlags5(_) => 5,
+                    BossBarFlags::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -2179,10 +2179,10 @@ pub mod play {
         }
 
         impl EntityId {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> bool {
                 match self {
-                    EntityId::True(_) => "true",
-                    EntityId::Default => "",
+                    EntityId::True(_) => true,
+                    EntityId::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -2200,10 +2200,10 @@ pub mod play {
         }
 
         impl<'a> EntityFeetEyes<'a> {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> bool {
                 match self {
-                    EntityFeetEyes::True(_) => "true",
-                    EntityFeetEyes::Default => "",
+                    EntityFeetEyes::True(_) => true,
+                    EntityFeetEyes::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -2471,11 +2471,11 @@ pub mod play {
         }
 
         impl WorldParticlesData36Destination {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> &str {
                 match self {
                     WorldParticlesData36Destination::MinecraftBlock(_) => "minecraft:block",
                     WorldParticlesData36Destination::Entity(_) => "minecraft:entity",
-                    WorldParticlesData36Destination::Default => "",
+                    WorldParticlesData36Destination::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -2539,16 +2539,16 @@ pub mod play {
         }
 
         impl<'a> WorldParticlesData<'a> {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i32 {
                 match self {
-                    WorldParticlesData::WorldParticlesData2(_) => "2",
-                    WorldParticlesData::WorldParticlesData3(_) => "3",
-                    WorldParticlesData::WorldParticlesData14(_) => "14",
-                    WorldParticlesData::WorldParticlesData15(_) => "15",
-                    WorldParticlesData::WorldParticlesData24(_) => "24",
-                    WorldParticlesData::WorldParticlesData35(_) => "35",
-                    WorldParticlesData::WorldParticlesData36(_) => "36",
-                    WorldParticlesData::Default => "",
+                    WorldParticlesData::WorldParticlesData2(_) => 2,
+                    WorldParticlesData::WorldParticlesData3(_) => 3,
+                    WorldParticlesData::WorldParticlesData14(_) => 14,
+                    WorldParticlesData::WorldParticlesData15(_) => 15,
+                    WorldParticlesData::WorldParticlesData24(_) => 24,
+                    WorldParticlesData::WorldParticlesData35(_) => 35,
+                    WorldParticlesData::WorldParticlesData36(_) => 36,
+                    WorldParticlesData::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -2683,10 +2683,10 @@ pub mod play {
         }
 
         impl Rows {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> u8 {
                 match self {
-                    Rows::Rows0 => "0",
-                    Rows::Default(_) => "",
+                    Rows::Rows0 => 0,
+                    Rows::Default(_) => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -2704,10 +2704,10 @@ pub mod play {
         }
 
         impl X {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> u8 {
                 match self {
-                    X::X0 => "0",
-                    X::Default(_) => "",
+                    X::X0 => 0,
+                    X::Default(_) => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -2725,10 +2725,10 @@ pub mod play {
         }
 
         impl Y {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> u8 {
                 match self {
-                    Y::Y0 => "0",
-                    Y::Default(_) => "",
+                    Y::Y0 => 0,
+                    Y::Default(_) => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -2746,10 +2746,10 @@ pub mod play {
         }
 
         impl<'a> MapData<'a> {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> u8 {
                 match self {
-                    MapData::MapData0 => "0",
-                    MapData::Default(_) => "",
+                    MapData::MapData0 => 0,
+                    MapData::Default(_) => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -2921,10 +2921,10 @@ pub mod play {
         }
 
         impl<'a> Name<'a> {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i32 {
                 match self {
-                    Name::Name0(_) => "0",
-                    Name::Default => "",
+                    Name::Name0(_) => 0,
+                    Name::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -2948,10 +2948,10 @@ pub mod play {
         }
 
         impl<'a> PlayerInfoDataItemProperties<'a> {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i32 {
                 match self {
-                    PlayerInfoDataItemProperties::PlayerInfoDataItemProperties0(_) => "0",
-                    PlayerInfoDataItemProperties::Default => "",
+                    PlayerInfoDataItemProperties::PlayerInfoDataItemProperties0(_) => 0,
+                    PlayerInfoDataItemProperties::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -2979,11 +2979,11 @@ pub mod play {
         }
 
         impl Gamemode {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i32 {
                 match self {
-                    Gamemode::Gamemode0(_) => "0",
-                    Gamemode::Gamemode1(_) => "1",
-                    Gamemode::Default => "",
+                    Gamemode::Gamemode0(_) => 0,
+                    Gamemode::Gamemode1(_) => 1,
+                    Gamemode::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3003,11 +3003,11 @@ pub mod play {
         }
 
         impl Ping {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i32 {
                 match self {
-                    Ping::Ping0(_) => "0",
-                    Ping::Ping2(_) => "2",
-                    Ping::Default => "",
+                    Ping::Ping0(_) => 0,
+                    Ping::Ping2(_) => 2,
+                    Ping::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3027,11 +3027,11 @@ pub mod play {
         }
 
         impl<'a> PlayerInfoDataItemDisplayName<'a> {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i32 {
                 match self {
-                    PlayerInfoDataItemDisplayName::PlayerInfoDataItemDisplayName0(_) => "0",
-                    PlayerInfoDataItemDisplayName::PlayerInfoDataItemDisplayName3(_) => "3",
-                    PlayerInfoDataItemDisplayName::Default => "",
+                    PlayerInfoDataItemDisplayName::PlayerInfoDataItemDisplayName0(_) => 0,
+                    PlayerInfoDataItemDisplayName::PlayerInfoDataItemDisplayName3(_) => 3,
+                    PlayerInfoDataItemDisplayName::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3154,10 +3154,10 @@ pub mod play {
         }
 
         impl<'a> Recipes2<'a> {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i32 {
                 match self {
-                    Recipes2::Recipes20(_) => "0",
-                    Recipes2::Default => "",
+                    Recipes2::Recipes20(_) => 0,
+                    Recipes2::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3317,7 +3317,7 @@ pub mod play {
                 let mut w = w;
                 for (index, item) in self.metadata.iter().enumerate() {
                     w = u8::serialize(&if index == self.metadata.len() - 1 { 255 } else { index as u8 }, w)?;
-                    w = str::parse::<VarInt>(item.discriminant()).unwrap().serialize(w)?;
+                    w = item.discriminant().serialize(w)?;
                     w = EntityMetadata::serialize(&item, w)?
                 }
 
@@ -3425,11 +3425,11 @@ pub mod play {
         }
 
         impl<'a> DisplayText<'a> {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i8 {
                 match self {
-                    DisplayText::DisplayText0(_) => "0",
-                    DisplayText::DisplayText2(_) => "2",
-                    DisplayText::Default => "",
+                    DisplayText::DisplayText0(_) => 0,
+                    DisplayText::DisplayText2(_) => 2,
+                    DisplayText::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3449,11 +3449,11 @@ pub mod play {
         }
 
         impl RType {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i8 {
                 match self {
-                    RType::RType0(_) => "0",
-                    RType::RType2(_) => "2",
-                    RType::Default => "",
+                    RType::RType0(_) => 0,
+                    RType::RType2(_) => 2,
+                    RType::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3521,11 +3521,11 @@ pub mod play {
         }
 
         impl<'a> TeamsName<'a> {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i8 {
                 match self {
-                    TeamsName::TeamsName0(_) => "0",
-                    TeamsName::TeamsName2(_) => "2",
-                    TeamsName::Default => "",
+                    TeamsName::TeamsName0(_) => 0,
+                    TeamsName::TeamsName2(_) => 2,
+                    TeamsName::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3545,11 +3545,11 @@ pub mod play {
         }
 
         impl FriendlyFire {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i8 {
                 match self {
-                    FriendlyFire::FriendlyFire0(_) => "0",
-                    FriendlyFire::FriendlyFire2(_) => "2",
-                    FriendlyFire::Default => "",
+                    FriendlyFire::FriendlyFire0(_) => 0,
+                    FriendlyFire::FriendlyFire2(_) => 2,
+                    FriendlyFire::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3569,11 +3569,11 @@ pub mod play {
         }
 
         impl<'a> NameTagVisibility<'a> {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i8 {
                 match self {
-                    NameTagVisibility::NameTagVisibility0(_) => "0",
-                    NameTagVisibility::NameTagVisibility2(_) => "2",
-                    NameTagVisibility::Default => "",
+                    NameTagVisibility::NameTagVisibility0(_) => 0,
+                    NameTagVisibility::NameTagVisibility2(_) => 2,
+                    NameTagVisibility::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3593,11 +3593,11 @@ pub mod play {
         }
 
         impl<'a> CollisionRule<'a> {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i8 {
                 match self {
-                    CollisionRule::CollisionRule0(_) => "0",
-                    CollisionRule::CollisionRule2(_) => "2",
-                    CollisionRule::Default => "",
+                    CollisionRule::CollisionRule0(_) => 0,
+                    CollisionRule::CollisionRule2(_) => 2,
+                    CollisionRule::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3617,11 +3617,11 @@ pub mod play {
         }
 
         impl Formatting {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i8 {
                 match self {
-                    Formatting::Formatting0(_) => "0",
-                    Formatting::Formatting2(_) => "2",
-                    Formatting::Default => "",
+                    Formatting::Formatting0(_) => 0,
+                    Formatting::Formatting2(_) => 2,
+                    Formatting::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3641,11 +3641,11 @@ pub mod play {
         }
 
         impl<'a> Prefix<'a> {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i8 {
                 match self {
-                    Prefix::Prefix0(_) => "0",
-                    Prefix::Prefix2(_) => "2",
-                    Prefix::Default => "",
+                    Prefix::Prefix0(_) => 0,
+                    Prefix::Prefix2(_) => 2,
+                    Prefix::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3665,11 +3665,11 @@ pub mod play {
         }
 
         impl<'a> Suffix<'a> {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i8 {
                 match self {
-                    Suffix::Suffix0(_) => "0",
-                    Suffix::Suffix2(_) => "2",
-                    Suffix::Default => "",
+                    Suffix::Suffix0(_) => 0,
+                    Suffix::Suffix2(_) => 2,
+                    Suffix::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3690,12 +3690,12 @@ pub mod play {
         }
 
         impl<'a> Players<'a> {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i8 {
                 match self {
-                    Players::Players0(_) => "0",
-                    Players::Players3(_) => "3",
-                    Players::Players4(_) => "4",
-                    Players::Default => "",
+                    Players::Players0(_) => 0,
+                    Players::Players3(_) => 3,
+                    Players::Players4(_) => 4,
+                    Players::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3834,10 +3834,10 @@ pub mod play {
         }
 
         impl ScoreboardScoreValue {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i32 {
                 match self {
-                    ScoreboardScoreValue::ScoreboardScoreValue1 => "1",
-                    ScoreboardScoreValue::Default(_) => "",
+                    ScoreboardScoreValue::ScoreboardScoreValue1 => 1,
+                    ScoreboardScoreValue::Default(_) => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3912,11 +3912,11 @@ pub mod play {
         }
 
         impl Source {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i8 {
                 match self {
-                    Source::Source3(_) => "3",
-                    Source::Source1(_) => "1",
-                    Source::Default => "",
+                    Source::Source3(_) => 3,
+                    Source::Source1(_) => 1,
+                    Source::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -3936,11 +3936,11 @@ pub mod play {
         }
 
         impl<'a> Sound<'a> {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i8 {
                 match self {
-                    Sound::Sound3(_) => "3",
-                    Sound::Sound2(_) => "2",
-                    Sound::Default => "",
+                    Sound::Sound3(_) => 3,
+                    Sound::Sound2(_) => 2,
+                    Sound::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -4168,7 +4168,7 @@ pub mod play {
         }
 
         impl<'a> RecipeData<'a> {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> &str {
                 match self {
                     RecipeData::CraftingShapeless(_) => "minecraft:crafting_shapeless",
                     RecipeData::CraftingShaped(_) => "minecraft:crafting_shaped",
@@ -4192,7 +4192,7 @@ pub mod play {
                     RecipeData::CampfireCooking(_) => "minecraft:campfire_cooking",
                     RecipeData::Stonecutting(_) => "minecraft:stonecutting",
                     RecipeData::Smithing(_) => "minecraft:smithing",
-                    RecipeData::Default => "",
+                    RecipeData::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -4307,11 +4307,11 @@ pub mod play {
         }
 
         impl SculkVibrationSignalDestination {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> &str {
                 match self {
                     SculkVibrationSignalDestination::Block(_) => "block",
                     SculkVibrationSignalDestination::EntityId(_) => "entityId",
-                    SculkVibrationSignalDestination::Default => "",
+                    SculkVibrationSignalDestination::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -4536,113 +4536,113 @@ pub mod play {
         }
 
         impl<'a> Params<'a> {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i32 {
                 match self {
-                    Params::SpawnEntity(_) => "0x00",
-                    Params::SpawnEntityExperienceOrb(_) => "0x01",
-                    Params::SpawnEntityLiving(_) => "0x02",
-                    Params::SpawnEntityPainting(_) => "0x03",
-                    Params::NamedEntitySpawn(_) => "0x04",
-                    Params::SculkVibrationSignal(_) => "0x05",
-                    Params::Animation(_) => "0x06",
-                    Params::Statistics(_) => "0x07",
-                    Params::AcknowledgePlayerDigging(_) => "0x08",
-                    Params::BlockBreakAnimation(_) => "0x09",
-                    Params::TileEntityData(_) => "0x0a",
-                    Params::BlockAction(_) => "0x0b",
-                    Params::BlockChange(_) => "0x0c",
-                    Params::BossBar(_) => "0x0d",
-                    Params::Difficulty(_) => "0x0e",
-                    Params::Chat(_) => "0x0f",
-                    Params::ClearTitles(_) => "0x10",
-                    Params::TabComplete(_) => "0x11",
-                    Params::DeclareCommands(_) => "0x12",
-                    Params::CloseWindow(_) => "0x13",
-                    Params::WindowItems(_) => "0x14",
-                    Params::CraftProgressBar(_) => "0x15",
-                    Params::SetSlot(_) => "0x16",
-                    Params::SetCooldown(_) => "0x17",
-                    Params::CustomPayload(_) => "0x18",
-                    Params::NamedSoundEffect(_) => "0x19",
-                    Params::KickDisconnect(_) => "0x1a",
-                    Params::EntityStatus(_) => "0x1b",
-                    Params::Explosion(_) => "0x1c",
-                    Params::UnloadChunk(_) => "0x1d",
-                    Params::GameStateChange(_) => "0x1e",
-                    Params::OpenHorseWindow(_) => "0x1f",
-                    Params::InitializeWorldBorder(_) => "0x20",
-                    Params::KeepAlive(_) => "0x21",
-                    Params::MapChunk(_) => "0x22",
-                    Params::WorldEvent(_) => "0x23",
-                    Params::WorldParticles(_) => "0x24",
-                    Params::UpdateLight(_) => "0x25",
-                    Params::Login(_) => "0x26",
-                    Params::Map(_) => "0x27",
-                    Params::TradeList(_) => "0x28",
-                    Params::RelEntityMove(_) => "0x29",
-                    Params::EntityMoveLook(_) => "0x2a",
-                    Params::EntityLook(_) => "0x2b",
-                    Params::VehicleMove(_) => "0x2c",
-                    Params::OpenBook(_) => "0x2d",
-                    Params::OpenWindow(_) => "0x2e",
-                    Params::OpenSignEntity(_) => "0x2f",
-                    Params::Ping(_) => "0x30",
-                    Params::CraftRecipeResponse(_) => "0x31",
-                    Params::Abilities(_) => "0x32",
-                    Params::EndCombatEvent(_) => "0x33",
-                    Params::EnterCombatEvent(_) => "0x34",
-                    Params::DeathCombatEvent(_) => "0x35",
-                    Params::PlayerInfo(_) => "0x36",
-                    Params::FacePlayer(_) => "0x37",
-                    Params::Position(_) => "0x38",
-                    Params::UnlockRecipes(_) => "0x39",
-                    Params::EntityDestroy(_) => "0x3a",
-                    Params::RemoveEntityEffect(_) => "0x3b",
-                    Params::ResourcePackSend(_) => "0x3c",
-                    Params::Respawn(_) => "0x3d",
-                    Params::EntityHeadRotation(_) => "0x3e",
-                    Params::MultiBlockChange(_) => "0x3f",
-                    Params::SelectAdvancementTab(_) => "0x40",
-                    Params::ActionBar(_) => "0x41",
-                    Params::WorldBorderCenter(_) => "0x42",
-                    Params::WorldBorderLerpSize(_) => "0x43",
-                    Params::WorldBorderSize(_) => "0x44",
-                    Params::WorldBorderWarningDelay(_) => "0x45",
-                    Params::WorldBorderWarningReach(_) => "0x46",
-                    Params::Camera(_) => "0x47",
-                    Params::HeldItemSlot(_) => "0x48",
-                    Params::UpdateViewPosition(_) => "0x49",
-                    Params::UpdateViewDistance(_) => "0x4a",
-                    Params::SpawnPosition(_) => "0x4b",
-                    Params::ScoreboardDisplayObjective(_) => "0x4c",
-                    Params::EntityMetadata(_) => "0x4d",
-                    Params::AttachEntity(_) => "0x4e",
-                    Params::EntityVelocity(_) => "0x4f",
-                    Params::EntityEquipment(_) => "0x50",
-                    Params::Experience(_) => "0x51",
-                    Params::UpdateHealth(_) => "0x52",
-                    Params::ScoreboardObjective(_) => "0x53",
-                    Params::SetPassengers(_) => "0x54",
-                    Params::Teams(_) => "0x55",
-                    Params::ScoreboardScore(_) => "0x56",
-                    Params::SimulationDistance(_) => "0x57",
-                    Params::SetTitleSubtitle(_) => "0x58",
-                    Params::UpdateTime(_) => "0x59",
-                    Params::SetTitleText(_) => "0x5a",
-                    Params::SetTitleTime(_) => "0x5b",
-                    Params::EntitySoundEffect(_) => "0x5c",
-                    Params::SoundEffect(_) => "0x5d",
-                    Params::StopSound(_) => "0x5e",
-                    Params::PlayerlistHeader(_) => "0x5f",
-                    Params::NbtQueryResponse(_) => "0x60",
-                    Params::Collect(_) => "0x61",
-                    Params::EntityTeleport(_) => "0x62",
-                    Params::Advancements(_) => "0x63",
-                    Params::EntityUpdateAttributes(_) => "0x64",
-                    Params::EntityEffect(_) => "0x65",
-                    Params::DeclareRecipes(_) => "0x66",
-                    Params::Tags(_) => "0x67",
-                    Params::Default => "",
+                    Params::SpawnEntity(_) => 0x00,
+                    Params::SpawnEntityExperienceOrb(_) => 0x01,
+                    Params::SpawnEntityLiving(_) => 0x02,
+                    Params::SpawnEntityPainting(_) => 0x03,
+                    Params::NamedEntitySpawn(_) => 0x04,
+                    Params::SculkVibrationSignal(_) => 0x05,
+                    Params::Animation(_) => 0x06,
+                    Params::Statistics(_) => 0x07,
+                    Params::AcknowledgePlayerDigging(_) => 0x08,
+                    Params::BlockBreakAnimation(_) => 0x09,
+                    Params::TileEntityData(_) => 0x0a,
+                    Params::BlockAction(_) => 0x0b,
+                    Params::BlockChange(_) => 0x0c,
+                    Params::BossBar(_) => 0x0d,
+                    Params::Difficulty(_) => 0x0e,
+                    Params::Chat(_) => 0x0f,
+                    Params::ClearTitles(_) => 0x10,
+                    Params::TabComplete(_) => 0x11,
+                    Params::DeclareCommands(_) => 0x12,
+                    Params::CloseWindow(_) => 0x13,
+                    Params::WindowItems(_) => 0x14,
+                    Params::CraftProgressBar(_) => 0x15,
+                    Params::SetSlot(_) => 0x16,
+                    Params::SetCooldown(_) => 0x17,
+                    Params::CustomPayload(_) => 0x18,
+                    Params::NamedSoundEffect(_) => 0x19,
+                    Params::KickDisconnect(_) => 0x1a,
+                    Params::EntityStatus(_) => 0x1b,
+                    Params::Explosion(_) => 0x1c,
+                    Params::UnloadChunk(_) => 0x1d,
+                    Params::GameStateChange(_) => 0x1e,
+                    Params::OpenHorseWindow(_) => 0x1f,
+                    Params::InitializeWorldBorder(_) => 0x20,
+                    Params::KeepAlive(_) => 0x21,
+                    Params::MapChunk(_) => 0x22,
+                    Params::WorldEvent(_) => 0x23,
+                    Params::WorldParticles(_) => 0x24,
+                    Params::UpdateLight(_) => 0x25,
+                    Params::Login(_) => 0x26,
+                    Params::Map(_) => 0x27,
+                    Params::TradeList(_) => 0x28,
+                    Params::RelEntityMove(_) => 0x29,
+                    Params::EntityMoveLook(_) => 0x2a,
+                    Params::EntityLook(_) => 0x2b,
+                    Params::VehicleMove(_) => 0x2c,
+                    Params::OpenBook(_) => 0x2d,
+                    Params::OpenWindow(_) => 0x2e,
+                    Params::OpenSignEntity(_) => 0x2f,
+                    Params::Ping(_) => 0x30,
+                    Params::CraftRecipeResponse(_) => 0x31,
+                    Params::Abilities(_) => 0x32,
+                    Params::EndCombatEvent(_) => 0x33,
+                    Params::EnterCombatEvent(_) => 0x34,
+                    Params::DeathCombatEvent(_) => 0x35,
+                    Params::PlayerInfo(_) => 0x36,
+                    Params::FacePlayer(_) => 0x37,
+                    Params::Position(_) => 0x38,
+                    Params::UnlockRecipes(_) => 0x39,
+                    Params::EntityDestroy(_) => 0x3a,
+                    Params::RemoveEntityEffect(_) => 0x3b,
+                    Params::ResourcePackSend(_) => 0x3c,
+                    Params::Respawn(_) => 0x3d,
+                    Params::EntityHeadRotation(_) => 0x3e,
+                    Params::MultiBlockChange(_) => 0x3f,
+                    Params::SelectAdvancementTab(_) => 0x40,
+                    Params::ActionBar(_) => 0x41,
+                    Params::WorldBorderCenter(_) => 0x42,
+                    Params::WorldBorderLerpSize(_) => 0x43,
+                    Params::WorldBorderSize(_) => 0x44,
+                    Params::WorldBorderWarningDelay(_) => 0x45,
+                    Params::WorldBorderWarningReach(_) => 0x46,
+                    Params::Camera(_) => 0x47,
+                    Params::HeldItemSlot(_) => 0x48,
+                    Params::UpdateViewPosition(_) => 0x49,
+                    Params::UpdateViewDistance(_) => 0x4a,
+                    Params::SpawnPosition(_) => 0x4b,
+                    Params::ScoreboardDisplayObjective(_) => 0x4c,
+                    Params::EntityMetadata(_) => 0x4d,
+                    Params::AttachEntity(_) => 0x4e,
+                    Params::EntityVelocity(_) => 0x4f,
+                    Params::EntityEquipment(_) => 0x50,
+                    Params::Experience(_) => 0x51,
+                    Params::UpdateHealth(_) => 0x52,
+                    Params::ScoreboardObjective(_) => 0x53,
+                    Params::SetPassengers(_) => 0x54,
+                    Params::Teams(_) => 0x55,
+                    Params::ScoreboardScore(_) => 0x56,
+                    Params::SimulationDistance(_) => 0x57,
+                    Params::SetTitleSubtitle(_) => 0x58,
+                    Params::UpdateTime(_) => 0x59,
+                    Params::SetTitleText(_) => 0x5a,
+                    Params::SetTitleTime(_) => 0x5b,
+                    Params::EntitySoundEffect(_) => 0x5c,
+                    Params::SoundEffect(_) => 0x5d,
+                    Params::StopSound(_) => 0x5e,
+                    Params::PlayerlistHeader(_) => 0x5f,
+                    Params::NbtQueryResponse(_) => 0x60,
+                    Params::Collect(_) => 0x61,
+                    Params::EntityTeleport(_) => 0x62,
+                    Params::Advancements(_) => 0x63,
+                    Params::EntityUpdateAttributes(_) => 0x64,
+                    Params::EntityEffect(_) => 0x65,
+                    Params::DeclareRecipes(_) => 0x66,
+                    Params::Tags(_) => 0x67,
+                    Params::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -5021,10 +5021,10 @@ pub mod play {
         }
 
         impl X {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i32 {
                 match self {
-                    X::X2(_) => "2",
-                    X::Default => "",
+                    X::X2(_) => 2,
+                    X::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -5042,10 +5042,10 @@ pub mod play {
         }
 
         impl Y {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i32 {
                 match self {
-                    Y::Y2(_) => "2",
-                    Y::Default => "",
+                    Y::Y2(_) => 2,
+                    Y::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -5063,10 +5063,10 @@ pub mod play {
         }
 
         impl Z {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i32 {
                 match self {
-                    Z::Z2(_) => "2",
-                    Z::Default => "",
+                    Z::Z2(_) => 2,
+                    Z::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -5085,11 +5085,11 @@ pub mod play {
         }
 
         impl Hand {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i32 {
                 match self {
-                    Hand::Hand0(_) => "0",
-                    Hand::Hand2(_) => "2",
-                    Hand::Default => "",
+                    Hand::Hand0(_) => 0,
+                    Hand::Hand2(_) => 2,
+                    Hand::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -5312,11 +5312,11 @@ pub mod play {
         }
 
         impl<'a> TabId<'a> {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i32 {
                 match self {
-                    TabId::TabId0(_) => "0",
-                    TabId::TabId1 => "1",
-                    TabId::Default => "",
+                    TabId::TabId0(_) => 0,
+                    TabId::TabId1 => 1,
+                    TabId::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -5417,57 +5417,57 @@ pub mod play {
         }
 
         impl<'a> Params<'a> {
-            pub fn discriminant(&self) -> &'static str {
+            pub fn discriminant(&self) -> i32 {
                 match self {
-                    Params::TeleportConfirm(_) => "0x00",
-                    Params::QueryBlockNbt(_) => "0x01",
-                    Params::SetDifficulty(_) => "0x02",
-                    Params::Chat(_) => "0x03",
-                    Params::ClientCommand(_) => "0x04",
-                    Params::Settings(_) => "0x05",
-                    Params::TabComplete(_) => "0x06",
-                    Params::EnchantItem(_) => "0x07",
-                    Params::WindowClick(_) => "0x08",
-                    Params::CloseWindow(_) => "0x09",
-                    Params::CustomPayload(_) => "0x0a",
-                    Params::EditBook(_) => "0x0b",
-                    Params::QueryEntityNbt(_) => "0x0c",
-                    Params::UseEntity(_) => "0x0d",
-                    Params::GenerateStructure(_) => "0x0e",
-                    Params::KeepAlive(_) => "0x0f",
-                    Params::LockDifficulty(_) => "0x10",
-                    Params::Position(_) => "0x11",
-                    Params::PositionLook(_) => "0x12",
-                    Params::Look(_) => "0x13",
-                    Params::Flying(_) => "0x14",
-                    Params::VehicleMove(_) => "0x15",
-                    Params::SteerBoat(_) => "0x16",
-                    Params::PickItem(_) => "0x17",
-                    Params::CraftRecipeRequest(_) => "0x18",
-                    Params::Abilities(_) => "0x19",
-                    Params::BlockDig(_) => "0x1a",
-                    Params::EntityAction(_) => "0x1b",
-                    Params::SteerVehicle(_) => "0x1c",
-                    Params::Pong(_) => "0x1d",
-                    Params::RecipeBook(_) => "0x1e",
-                    Params::DisplayedRecipe(_) => "0x1f",
-                    Params::NameItem(_) => "0x20",
-                    Params::ResourcePackReceive(_) => "0x21",
-                    Params::AdvancementTab(_) => "0x22",
-                    Params::SelectTrade(_) => "0x23",
-                    Params::SetBeaconEffect(_) => "0x24",
-                    Params::HeldItemSlot(_) => "0x25",
-                    Params::UpdateCommandBlock(_) => "0x26",
-                    Params::UpdateCommandBlockMinecart(_) => "0x27",
-                    Params::SetCreativeSlot(_) => "0x28",
-                    Params::UpdateJigsawBlock(_) => "0x29",
-                    Params::UpdateStructureBlock(_) => "0x2a",
-                    Params::UpdateSign(_) => "0x2b",
-                    Params::ArmAnimation(_) => "0x2c",
-                    Params::Spectate(_) => "0x2d",
-                    Params::BlockPlace(_) => "0x2e",
-                    Params::UseItem(_) => "0x2f",
-                    Params::Default => "",
+                    Params::TeleportConfirm(_) => 0x00,
+                    Params::QueryBlockNbt(_) => 0x01,
+                    Params::SetDifficulty(_) => 0x02,
+                    Params::Chat(_) => 0x03,
+                    Params::ClientCommand(_) => 0x04,
+                    Params::Settings(_) => 0x05,
+                    Params::TabComplete(_) => 0x06,
+                    Params::EnchantItem(_) => 0x07,
+                    Params::WindowClick(_) => 0x08,
+                    Params::CloseWindow(_) => 0x09,
+                    Params::CustomPayload(_) => 0x0a,
+                    Params::EditBook(_) => 0x0b,
+                    Params::QueryEntityNbt(_) => 0x0c,
+                    Params::UseEntity(_) => 0x0d,
+                    Params::GenerateStructure(_) => 0x0e,
+                    Params::KeepAlive(_) => 0x0f,
+                    Params::LockDifficulty(_) => 0x10,
+                    Params::Position(_) => 0x11,
+                    Params::PositionLook(_) => 0x12,
+                    Params::Look(_) => 0x13,
+                    Params::Flying(_) => 0x14,
+                    Params::VehicleMove(_) => 0x15,
+                    Params::SteerBoat(_) => 0x16,
+                    Params::PickItem(_) => 0x17,
+                    Params::CraftRecipeRequest(_) => 0x18,
+                    Params::Abilities(_) => 0x19,
+                    Params::BlockDig(_) => 0x1a,
+                    Params::EntityAction(_) => 0x1b,
+                    Params::SteerVehicle(_) => 0x1c,
+                    Params::Pong(_) => 0x1d,
+                    Params::RecipeBook(_) => 0x1e,
+                    Params::DisplayedRecipe(_) => 0x1f,
+                    Params::NameItem(_) => 0x20,
+                    Params::ResourcePackReceive(_) => 0x21,
+                    Params::AdvancementTab(_) => 0x22,
+                    Params::SelectTrade(_) => 0x23,
+                    Params::SetBeaconEffect(_) => 0x24,
+                    Params::HeldItemSlot(_) => 0x25,
+                    Params::UpdateCommandBlock(_) => 0x26,
+                    Params::UpdateCommandBlockMinecart(_) => 0x27,
+                    Params::SetCreativeSlot(_) => 0x28,
+                    Params::UpdateJigsawBlock(_) => 0x29,
+                    Params::UpdateStructureBlock(_) => 0x2a,
+                    Params::UpdateSign(_) => 0x2b,
+                    Params::ArmAnimation(_) => 0x2c,
+                    Params::Spectate(_) => 0x2d,
+                    Params::BlockPlace(_) => 0x2e,
+                    Params::UseItem(_) => 0x2f,
+                    Params::Default => todo!(),
                 }
             }
             pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {

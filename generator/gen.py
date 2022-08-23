@@ -35,7 +35,7 @@ class EntityMetadataLoop(IType):
         let mut w = w;
         for (index, item) in {val}.iter().enumerate() {{
             w = u8::serialize(&if index == {val}.len() - 1 {{ 255 }} else {{ index as u8 }}, w)?;
-            w = str::parse::<{self.item.get_field_ty('r_type').name()}>(item.discriminant()).unwrap().serialize(w)?;
+            w = item.discriminant().serialize(w)?;
             w = 
                 {valued_ser(self.item.get_field_ty('value'), 'item')}
                 
@@ -129,7 +129,7 @@ def getVer(version: str):
 
 protocol = json.loads(getVer("1.18"))
 external_mapping = json.load(open("/home/koskja/shaker/type_mapping.json"))
-ctx = Context(external_mapping["native"])
+ctx = Context(external_mapping["native"], external_mapping["literals"])
 
 specials = {
     "container": Container,
