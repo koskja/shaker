@@ -80,9 +80,9 @@ impl<'t> Packet<'t> for Slot {
     fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
         (|input| {
             let (input, self_present) = (bool::deserialize)(input)?;
-            let (input, self_ident0) = (|input| match &format!("{}", self_present)[..] {
-                "false" => Ok((input, Ident0::RFalse)),
-                "true" => map(RTrue::deserialize, Ident0::RTrue)(input),
+            let (input, self_ident0) = (|input| match self_present {
+                false => Ok((input, Ident0::RFalse)),
+                true => map(RTrue::deserialize, Ident0::RTrue)(input),
                 _ => Ok((input, Ident0::Default)),
             })(input)?;
             Ok((
@@ -173,7 +173,7 @@ impl<'t: 'a, 'a> Packet<'t> for Data36<'a> {
         (|input| {
             let (input, self_origin) = (Position::deserialize)(input)?;
             let (input, self_position_type) = (PrefixedString::<'a, VarInt>::deserialize)(input)?;
-            let (input, self_destination) = (|input| match &format!("{}", self_position_type)[..] {
+            let (input, self_destination) = (|input| match self_position_type.0 {
                 "minecraft:block" => map(Position::deserialize, Destination::Block)(input),
                 "minecraft:entity" => map(VarInt::deserialize, Destination::Entity)(input),
                 _ => Ok((input, Destination::Default)),
@@ -246,14 +246,14 @@ impl<'t: 'a, 'a> Packet<'t> for Particle<'a> {
     fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
         (|input| {
             let (input, self_particle_id) = (VarInt::deserialize)(input)?;
-            let (input, self_data) = (|input| match &format!("{}", self_particle_id)[..] {
-                "2" => map(Data2::deserialize, Data::Data2)(input),
-                "3" => map(Data3::deserialize, Data::Data3)(input),
-                "14" => map(Data14::deserialize, Data::Data14)(input),
-                "15" => map(Data15::deserialize, Data::Data15)(input),
-                "24" => map(Data24::deserialize, Data::Data24)(input),
-                "35" => map(Data35::deserialize, Data::Data35)(input),
-                "36" => map(Data36::deserialize, Data::Data36)(input),
+            let (input, self_data) = (|input| match self_particle_id.0 {
+                2i32 => map(Data2::deserialize, Data::Data2)(input),
+                3i32 => map(Data3::deserialize, Data::Data3)(input),
+                14i32 => map(Data14::deserialize, Data::Data14)(input),
+                15i32 => map(Data15::deserialize, Data::Data15)(input),
+                24i32 => map(Data24::deserialize, Data::Data24)(input),
+                35i32 => map(Data35::deserialize, Data::Data35)(input),
+                36i32 => map(Data36::deserialize, Data::Data36)(input),
                 _ => Ok((input, Data::Default)),
             })(input)?;
             Ok((
@@ -377,26 +377,26 @@ impl<'t: 'a, 'a> Packet<'t> for EntityMetadataWrapper<'a> {
         (|input| {
             let (input, self_key) = (u8::deserialize)(input)?;
             let (input, self_r_type) = (VarInt::deserialize)(input)?;
-            let (input, self_value) = (|input| match &format!("{}", self_r_type)[..] {
-                "0" => map(i8::deserialize, EntityMetadata::Value0)(input),
-                "1" => map(VarInt::deserialize, EntityMetadata::Value1)(input),
-                "2" => map(f32::deserialize, EntityMetadata::Value2)(input),
-                "3" => map(PrefixedString::<'a, VarInt>::deserialize, EntityMetadata::Value3)(input),
-                "4" => map(PrefixedString::<'a, VarInt>::deserialize, EntityMetadata::Value4)(input),
-                "5" => map(Option::<VarString<'a>>::deserialize, EntityMetadata::Value5)(input),
-                "6" => map(Slot::deserialize, EntityMetadata::Value6)(input),
-                "7" => map(bool::deserialize, EntityMetadata::Value7)(input),
-                "8" => map(Value8::deserialize, EntityMetadata::Value8)(input),
-                "9" => map(Position::deserialize, EntityMetadata::Value9)(input),
-                "10" => map(Option::<Position>::deserialize, EntityMetadata::Value10)(input),
-                "11" => map(VarInt::deserialize, EntityMetadata::Value11)(input),
-                "12" => map(Option::<Uuid>::deserialize, EntityMetadata::Value12)(input),
-                "13" => map(VarInt::deserialize, EntityMetadata::Value13)(input),
-                "14" => map(Nbt::deserialize, EntityMetadata::Value14)(input),
-                "15" => map(Particle::deserialize, EntityMetadata::Value15)(input),
-                "16" => map(Value16::deserialize, EntityMetadata::Value16)(input),
-                "17" => map(VarInt::deserialize, EntityMetadata::Value17)(input),
-                "18" => map(VarInt::deserialize, EntityMetadata::Value18)(input),
+            let (input, self_value) = (|input| match self_r_type.0 {
+                0i32 => map(i8::deserialize, EntityMetadata::Value0)(input),
+                1i32 => map(VarInt::deserialize, EntityMetadata::Value1)(input),
+                2i32 => map(f32::deserialize, EntityMetadata::Value2)(input),
+                3i32 => map(PrefixedString::<'a, VarInt>::deserialize, EntityMetadata::Value3)(input),
+                4i32 => map(PrefixedString::<'a, VarInt>::deserialize, EntityMetadata::Value4)(input),
+                5i32 => map(Option::<VarString<'a>>::deserialize, EntityMetadata::Value5)(input),
+                6i32 => map(Slot::deserialize, EntityMetadata::Value6)(input),
+                7i32 => map(bool::deserialize, EntityMetadata::Value7)(input),
+                8i32 => map(Value8::deserialize, EntityMetadata::Value8)(input),
+                9i32 => map(Position::deserialize, EntityMetadata::Value9)(input),
+                10i32 => map(Option::<Position>::deserialize, EntityMetadata::Value10)(input),
+                11i32 => map(VarInt::deserialize, EntityMetadata::Value11)(input),
+                12i32 => map(Option::<Uuid>::deserialize, EntityMetadata::Value12)(input),
+                13i32 => map(VarInt::deserialize, EntityMetadata::Value13)(input),
+                14i32 => map(Nbt::deserialize, EntityMetadata::Value14)(input),
+                15i32 => map(Particle::deserialize, EntityMetadata::Value15)(input),
+                16i32 => map(Value16::deserialize, EntityMetadata::Value16)(input),
+                17i32 => map(VarInt::deserialize, EntityMetadata::Value17)(input),
+                18i32 => map(VarInt::deserialize, EntityMetadata::Value18)(input),
                 _ => Ok((input, EntityMetadata::Default)),
             })(input)?;
             Ok((
@@ -588,12 +588,12 @@ impl<'t> Packet<'t> for Float {
     fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
         (|input| {
             let (input, self_flags) = (FloatFlags::deserialize)(input)?;
-            let (input, self_min) = (|input| match &format!("{}", self_flags.min_present)[..] {
-                "1" => map(f32::deserialize, Min::Min1)(input),
+            let (input, self_min) = (|input| match self_flags.min_present {
+                1u8 => map(f32::deserialize, Min::Min1)(input),
                 _ => Ok((input, Min::Default)),
             })(input)?;
-            let (input, self_max) = (|input| match &format!("{}", self_flags.max_present)[..] {
-                "1" => map(f32::deserialize, Max::Max1)(input),
+            let (input, self_max) = (|input| match self_flags.max_present {
+                1u8 => map(f32::deserialize, Max::Max1)(input),
                 _ => Ok((input, Max::Default)),
             })(input)?;
             Ok((
@@ -687,12 +687,12 @@ impl<'t> Packet<'t> for Double {
     fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
         (|input| {
             let (input, self_flags) = (DoubleFlags::deserialize)(input)?;
-            let (input, self_min) = (|input| match &format!("{}", self_flags.min_present)[..] {
-                "1" => map(f64::deserialize, DoubleMin::DoubleMin1)(input),
+            let (input, self_min) = (|input| match self_flags.min_present {
+                1u8 => map(f64::deserialize, DoubleMin::DoubleMin1)(input),
                 _ => Ok((input, DoubleMin::Default)),
             })(input)?;
-            let (input, self_max) = (|input| match &format!("{}", self_flags.max_present)[..] {
-                "1" => map(f64::deserialize, DoubleMax::DoubleMax1)(input),
+            let (input, self_max) = (|input| match self_flags.max_present {
+                1u8 => map(f64::deserialize, DoubleMax::DoubleMax1)(input),
                 _ => Ok((input, DoubleMax::Default)),
             })(input)?;
             Ok((
@@ -786,12 +786,12 @@ impl<'t> Packet<'t> for Integer {
     fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
         (|input| {
             let (input, self_flags) = (IntegerFlags::deserialize)(input)?;
-            let (input, self_min) = (|input| match &format!("{}", self_flags.min_present)[..] {
-                "1" => map(i32::deserialize, IntegerMin::IntegerMin1)(input),
+            let (input, self_min) = (|input| match self_flags.min_present {
+                1u8 => map(i32::deserialize, IntegerMin::IntegerMin1)(input),
                 _ => Ok((input, IntegerMin::Default)),
             })(input)?;
-            let (input, self_max) = (|input| match &format!("{}", self_flags.max_present)[..] {
-                "1" => map(i32::deserialize, IntegerMax::IntegerMax1)(input),
+            let (input, self_max) = (|input| match self_flags.max_present {
+                1u8 => map(i32::deserialize, IntegerMax::IntegerMax1)(input),
                 _ => Ok((input, IntegerMax::Default)),
             })(input)?;
             Ok((
@@ -885,12 +885,12 @@ impl<'t> Packet<'t> for Long {
     fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
         (|input| {
             let (input, self_flags) = (LongFlags::deserialize)(input)?;
-            let (input, self_min) = (|input| match &format!("{}", self_flags.min_present)[..] {
-                "1" => map(i64::deserialize, LongMin::LongMin1)(input),
+            let (input, self_min) = (|input| match self_flags.min_present {
+                1u8 => map(i64::deserialize, LongMin::LongMin1)(input),
                 _ => Ok((input, LongMin::Default)),
             })(input)?;
-            let (input, self_max) = (|input| match &format!("{}", self_flags.max_present)[..] {
-                "1" => map(i64::deserialize, LongMax::LongMax1)(input),
+            let (input, self_max) = (|input| match self_flags.max_present {
+                1u8 => map(i64::deserialize, LongMax::LongMax1)(input),
                 _ => Ok((input, LongMax::Default)),
             })(input)?;
             Ok((
@@ -1219,18 +1219,18 @@ impl<'t: 'a, 'a> Packet<'t> for CommandNode<'a> {
         (|input| {
             let (input, self_flags) = (Flags::deserialize)(input)?;
             let (input, self_children) = (PrefixedArray::<VarInt, VarInt>::deserialize)(input)?;
-            let (input, self_redirect_node) = (|input| match &format!("{}", self_flags.has_redirect_node)[..] {
-                "1" => map(VarInt::deserialize, RedirectNode::RedirectNode1)(input),
+            let (input, self_redirect_node) = (|input| match self_flags.has_redirect_node {
+                1u8 => map(VarInt::deserialize, RedirectNode::RedirectNode1)(input),
                 _ => Ok((input, RedirectNode::Default)),
             })(input)?;
-            let (input, self_extra_node_data) = (|input| match &format!("{}", self_flags.command_node_type)[..] {
-                "0" => Ok((input, ExtraNodeData::ExtraNodeData0)),
-                "1" => map(ExtraNodeData1::deserialize, ExtraNodeData::ExtraNodeData1)(input),
-                "2" => map(
+            let (input, self_extra_node_data) = (|input| match self_flags.command_node_type {
+                0u8 => Ok((input, ExtraNodeData::ExtraNodeData0)),
+                1u8 => map(ExtraNodeData1::deserialize, ExtraNodeData::ExtraNodeData1)(input),
+                2u8 => map(
                     |input| {
                         let (input, self_extra_node_data_ExtraNodeData2_name) = (PrefixedString::<'a, VarInt>::deserialize)(input)?;
                         let (input, self_extra_node_data_ExtraNodeData2_parser) = (PrefixedString::<'a, VarInt>::deserialize)(input)?;
-                        let (input, self_extra_node_data_ExtraNodeData2_properties) = (|input| match &format!("{}", self_extra_node_data_ExtraNodeData2_parser)[..] {
+                        let (input, self_extra_node_data_ExtraNodeData2_properties) = (|input| match self_extra_node_data_ExtraNodeData2_parser.0 {
                             "brigadier:bool" => Ok((input, Properties::Bool)),
                             "brigadier:float" => map(Float::deserialize, Properties::Float)(input),
                             "brigadier:double" => map(Double::deserialize, Properties::Double)(input),
@@ -1294,8 +1294,8 @@ impl<'t: 'a, 'a> Packet<'t> for CommandNode<'a> {
                             "minecraft:uuid" => Ok((input, Properties::Uuid)),
                             _ => Ok((input, Properties::Default)),
                         })(input)?;
-                        let (input, self_extra_node_data_ExtraNodeData2_suggestion_type) = (|input| match &format!("{}", self_flags.has_custom_suggestions)[..] {
-                            "1" => map(PrefixedString::<'a, VarInt>::deserialize, SuggestionType::SuggestionType1)(input),
+                        let (input, self_extra_node_data_ExtraNodeData2_suggestion_type) = (|input| match self_flags.has_custom_suggestions {
+                            1u8 => map(PrefixedString::<'a, VarInt>::deserialize, SuggestionType::SuggestionType1)(input),
                             _ => Ok((input, SuggestionType::Default)),
                         })(input)?;
                         Ok((
@@ -1363,7 +1363,7 @@ pub mod handshaking {
             fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
                 (|input| {
                     let (input, self_name) = (VarInt::deserialize)(input)?;
-                    let (input, self_params) = (|input| match &format!("{}", self_name)[..] {
+                    let (input, self_params) = (|input| match self_name.0 {
                         _ => Ok((input, Params::Default)),
                     })(input)?;
                     Ok((input, ToClient { name: self_name, params: self_params }))
@@ -1426,9 +1426,9 @@ pub mod handshaking {
             fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
                 (|input| {
                     let (input, self_name) = (VarInt::deserialize)(input)?;
-                    let (input, self_params) = (|input| match &format!("{}", self_name)[..] {
-                        "0x00" => map(PacketSetProtocol::deserialize, Params::SetProtocol)(input),
-                        "0xfe" => map(PacketLegacyServerListPing::deserialize, Params::LegacyServerListPing)(input),
+                    let (input, self_params) = (|input| match self_name.0 {
+                        0x00i32 => map(PacketSetProtocol::deserialize, Params::SetProtocol)(input),
+                        0xfei32 => map(PacketLegacyServerListPing::deserialize, Params::LegacyServerListPing)(input),
                         _ => Ok((input, Params::Default)),
                     })(input)?;
                     Ok((input, ToServer { name: self_name, params: self_params }))
@@ -1490,9 +1490,9 @@ pub mod status {
             fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
                 (|input| {
                     let (input, self_name) = (VarInt::deserialize)(input)?;
-                    let (input, self_params) = (|input| match &format!("{}", self_name)[..] {
-                        "0x00" => map(PacketServerInfo::deserialize, Params::ServerInfo)(input),
-                        "0x01" => map(PacketPing::deserialize, Params::Ping)(input),
+                    let (input, self_params) = (|input| match self_name.0 {
+                        0x00i32 => map(PacketServerInfo::deserialize, Params::ServerInfo)(input),
+                        0x01i32 => map(PacketPing::deserialize, Params::Ping)(input),
                         _ => Ok((input, Params::Default)),
                     })(input)?;
                     Ok((input, ToClient { name: self_name, params: self_params }))
@@ -1550,9 +1550,9 @@ pub mod status {
             fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
                 (|input| {
                     let (input, self_name) = (VarInt::deserialize)(input)?;
-                    let (input, self_params) = (|input| match &format!("{}", self_name)[..] {
-                        "0x00" => map(PacketPingStart::deserialize, Params::PingStart)(input),
-                        "0x01" => map(PacketPing::deserialize, Params::Ping)(input),
+                    let (input, self_params) = (|input| match self_name.0 {
+                        0x00i32 => map(PacketPingStart::deserialize, Params::PingStart)(input),
+                        0x01i32 => map(PacketPing::deserialize, Params::Ping)(input),
                         _ => Ok((input, Params::Default)),
                     })(input)?;
                     Ok((input, ToServer { name: self_name, params: self_params }))
@@ -1640,12 +1640,12 @@ pub mod login {
             fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
                 (|input| {
                     let (input, self_name) = (VarInt::deserialize)(input)?;
-                    let (input, self_params) = (|input| match &format!("{}", self_name)[..] {
-                        "0x00" => map(PacketDisconnect::deserialize, Params::Disconnect)(input),
-                        "0x01" => map(PacketEncryptionBegin::deserialize, Params::EncryptionBegin)(input),
-                        "0x02" => map(PacketSuccess::deserialize, Params::Success)(input),
-                        "0x03" => map(PacketCompress::deserialize, Params::Compress)(input),
-                        "0x04" => map(PacketLoginPluginRequest::deserialize, Params::LoginPluginRequest)(input),
+                    let (input, self_params) = (|input| match self_name.0 {
+                        0x00i32 => map(PacketDisconnect::deserialize, Params::Disconnect)(input),
+                        0x01i32 => map(PacketEncryptionBegin::deserialize, Params::EncryptionBegin)(input),
+                        0x02i32 => map(PacketSuccess::deserialize, Params::Success)(input),
+                        0x03i32 => map(PacketCompress::deserialize, Params::Compress)(input),
+                        0x04i32 => map(PacketLoginPluginRequest::deserialize, Params::LoginPluginRequest)(input),
                         _ => Ok((input, Params::Default)),
                     })(input)?;
                     Ok((input, ToClient { name: self_name, params: self_params }))
@@ -1714,10 +1714,10 @@ pub mod login {
             fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
                 (|input| {
                     let (input, self_name) = (VarInt::deserialize)(input)?;
-                    let (input, self_params) = (|input| match &format!("{}", self_name)[..] {
-                        "0x00" => map(PacketLoginStart::deserialize, Params::LoginStart)(input),
-                        "0x01" => map(PacketEncryptionBegin::deserialize, Params::EncryptionBegin)(input),
-                        "0x02" => map(PacketLoginPluginResponse::deserialize, Params::LoginPluginResponse)(input),
+                    let (input, self_params) = (|input| match self_name.0 {
+                        0x00i32 => map(PacketLoginStart::deserialize, Params::LoginStart)(input),
+                        0x01i32 => map(PacketEncryptionBegin::deserialize, Params::EncryptionBegin)(input),
+                        0x02i32 => map(PacketLoginPluginResponse::deserialize, Params::LoginPluginResponse)(input),
                         _ => Ok((input, Params::Default)),
                     })(input)?;
                     Ok((input, ToServer { name: self_name, params: self_params }))
@@ -1884,8 +1884,8 @@ pub mod play {
                     let (input, self_icon) = (Slot::deserialize)(input)?;
                     let (input, self_frame_type) = (VarInt::deserialize)(input)?;
                     let (input, self_flags) = (Ident3Flags::deserialize)(input)?;
-                    let (input, self_background_texture) = (|input| match &format!("{}", self_flags.has_background_texture)[..] {
-                        "1" => map(PrefixedString::<'a, VarInt>::deserialize, BackgroundTexture::BackgroundTexture1)(input),
+                    let (input, self_background_texture) = (|input| match self_flags.has_background_texture {
+                        1u8 => map(PrefixedString::<'a, VarInt>::deserialize, BackgroundTexture::BackgroundTexture1)(input),
                         _ => Ok((input, BackgroundTexture::Default)),
                     })(input)?;
                     let (input, self_x_cord) = (f32::deserialize)(input)?;
@@ -2111,29 +2111,29 @@ pub mod play {
                 (|input| {
                     let (input, self_entity_uuid) = (Uuid::deserialize)(input)?;
                     let (input, self_action) = (VarInt::deserialize)(input)?;
-                    let (input, self_title) = (|input| match &format!("{}", self_action)[..] {
-                        "0" => map(PrefixedString::<'a, VarInt>::deserialize, Title::Title0)(input),
-                        "3" => map(PrefixedString::<'a, VarInt>::deserialize, Title::Title3)(input),
+                    let (input, self_title) = (|input| match self_action.0 {
+                        0i32 => map(PrefixedString::<'a, VarInt>::deserialize, Title::Title0)(input),
+                        3i32 => map(PrefixedString::<'a, VarInt>::deserialize, Title::Title3)(input),
                         _ => Ok((input, Title::Default)),
                     })(input)?;
-                    let (input, self_health) = (|input| match &format!("{}", self_action)[..] {
-                        "0" => map(f32::deserialize, Health::Health0)(input),
-                        "2" => map(f32::deserialize, Health::Health2)(input),
+                    let (input, self_health) = (|input| match self_action.0 {
+                        0i32 => map(f32::deserialize, Health::Health0)(input),
+                        2i32 => map(f32::deserialize, Health::Health2)(input),
                         _ => Ok((input, Health::Default)),
                     })(input)?;
-                    let (input, self_color) = (|input| match &format!("{}", self_action)[..] {
-                        "0" => map(VarInt::deserialize, Color::Color0)(input),
-                        "4" => map(VarInt::deserialize, Color::Color4)(input),
+                    let (input, self_color) = (|input| match self_action.0 {
+                        0i32 => map(VarInt::deserialize, Color::Color0)(input),
+                        4i32 => map(VarInt::deserialize, Color::Color4)(input),
                         _ => Ok((input, Color::Default)),
                     })(input)?;
-                    let (input, self_dividers) = (|input| match &format!("{}", self_action)[..] {
-                        "0" => map(VarInt::deserialize, Dividers::Dividers0)(input),
-                        "4" => map(VarInt::deserialize, Dividers::Dividers4)(input),
+                    let (input, self_dividers) = (|input| match self_action.0 {
+                        0i32 => map(VarInt::deserialize, Dividers::Dividers0)(input),
+                        4i32 => map(VarInt::deserialize, Dividers::Dividers4)(input),
                         _ => Ok((input, Dividers::Default)),
                     })(input)?;
-                    let (input, self_flags) = (|input| match &format!("{}", self_action)[..] {
-                        "0" => map(u8::deserialize, BossBarFlags::BossBarFlags0)(input),
-                        "5" => map(u8::deserialize, BossBarFlags::BossBarFlags5)(input),
+                    let (input, self_flags) = (|input| match self_action.0 {
+                        0i32 => map(u8::deserialize, BossBarFlags::BossBarFlags0)(input),
+                        5i32 => map(u8::deserialize, BossBarFlags::BossBarFlags5)(input),
                         _ => Ok((input, BossBarFlags::Default)),
                     })(input)?;
                     Ok((
@@ -2245,12 +2245,12 @@ pub mod play {
                     let (input, self_y) = (f64::deserialize)(input)?;
                     let (input, self_z) = (f64::deserialize)(input)?;
                     let (input, self_is_entity) = (bool::deserialize)(input)?;
-                    let (input, self_entity_id) = (|input| match &format!("{}", self_is_entity)[..] {
-                        "true" => map(VarInt::deserialize, EntityId::True)(input),
+                    let (input, self_entity_id) = (|input| match self_is_entity {
+                        true => map(VarInt::deserialize, EntityId::True)(input),
                         _ => Ok((input, EntityId::Default)),
                     })(input)?;
-                    let (input, self_entity_feet_eyes) = (|input| match &format!("{}", self_is_entity)[..] {
-                        "true" => map(PrefixedString::<'a, VarInt>::deserialize, EntityFeetEyes::True)(input),
+                    let (input, self_entity_feet_eyes) = (|input| match self_is_entity {
+                        true => map(PrefixedString::<'a, VarInt>::deserialize, EntityFeetEyes::True)(input),
                         _ => Ok((input, EntityFeetEyes::Default)),
                     })(input)?;
                     Ok((
@@ -2509,7 +2509,7 @@ pub mod play {
                 (|input| {
                     let (input, self_origin) = (Position::deserialize)(input)?;
                     let (input, self_position_type) = (PrefixedString::<'a, VarInt>::deserialize)(input)?;
-                    let (input, self_destination) = (|input| match &format!("{}", self_position_type)[..] {
+                    let (input, self_destination) = (|input| match self_position_type.0 {
                         "minecraft:block" => map(Position::deserialize, WorldParticlesData36Destination::MinecraftBlock)(input),
                         "minecraft:entity" => map(VarInt::deserialize, WorldParticlesData36Destination::Entity)(input),
                         _ => Ok((input, WorldParticlesData36Destination::Default)),
@@ -2609,14 +2609,14 @@ pub mod play {
                     let (input, self_offset_z) = (f32::deserialize)(input)?;
                     let (input, self_particle_data) = (f32::deserialize)(input)?;
                     let (input, self_particles) = (i32::deserialize)(input)?;
-                    let (input, self_data) = (|input| match &format!("{}", self_particle_id)[..] {
-                        "2" => map(WorldParticlesData2::deserialize, WorldParticlesData::WorldParticlesData2)(input),
-                        "3" => map(WorldParticlesData3::deserialize, WorldParticlesData::WorldParticlesData3)(input),
-                        "14" => map(WorldParticlesData14::deserialize, WorldParticlesData::WorldParticlesData14)(input),
-                        "15" => map(WorldParticlesData15::deserialize, WorldParticlesData::WorldParticlesData15)(input),
-                        "24" => map(WorldParticlesData24::deserialize, WorldParticlesData::WorldParticlesData24)(input),
-                        "35" => map(WorldParticlesData35::deserialize, WorldParticlesData::WorldParticlesData35)(input),
-                        "36" => map(WorldParticlesData36::deserialize, WorldParticlesData::WorldParticlesData36)(input),
+                    let (input, self_data) = (|input| match self_particle_id {
+                        2i32 => map(WorldParticlesData2::deserialize, WorldParticlesData::WorldParticlesData2)(input),
+                        3i32 => map(WorldParticlesData3::deserialize, WorldParticlesData::WorldParticlesData3)(input),
+                        14i32 => map(WorldParticlesData14::deserialize, WorldParticlesData::WorldParticlesData14)(input),
+                        15i32 => map(WorldParticlesData15::deserialize, WorldParticlesData::WorldParticlesData15)(input),
+                        24i32 => map(WorldParticlesData24::deserialize, WorldParticlesData::WorldParticlesData24)(input),
+                        35i32 => map(WorldParticlesData35::deserialize, WorldParticlesData::WorldParticlesData35)(input),
+                        36i32 => map(WorldParticlesData36::deserialize, WorldParticlesData::WorldParticlesData36)(input),
                         _ => Ok((input, WorldParticlesData::Default)),
                     })(input)?;
                     Ok((
@@ -2795,20 +2795,20 @@ pub mod play {
                     let (input, self_locked) = (bool::deserialize)(input)?;
                     let (input, self_icons) = (Option::<VarArray<Ident4>>::deserialize)(input)?;
                     let (input, self_columns) = (u8::deserialize)(input)?;
-                    let (input, self_rows) = (|input| match &format!("{}", self_columns)[..] {
-                        "0" => Ok((input, Rows::Rows0)),
+                    let (input, self_rows) = (|input| match self_columns {
+                        0u8 => Ok((input, Rows::Rows0)),
                         _ => map(u8::deserialize, Rows::Default)(input),
                     })(input)?;
-                    let (input, self_x) = (|input| match &format!("{}", self_columns)[..] {
-                        "0" => Ok((input, X::X0)),
+                    let (input, self_x) = (|input| match self_columns {
+                        0u8 => Ok((input, X::X0)),
                         _ => map(u8::deserialize, X::Default)(input),
                     })(input)?;
-                    let (input, self_y) = (|input| match &format!("{}", self_columns)[..] {
-                        "0" => Ok((input, Y::Y0)),
+                    let (input, self_y) = (|input| match self_columns {
+                        0u8 => Ok((input, Y::Y0)),
                         _ => map(u8::deserialize, Y::Default)(input),
                     })(input)?;
-                    let (input, self_data) = (|input| match &format!("{}", self_columns)[..] {
-                        "0" => Ok((input, MapData::MapData0)),
+                    let (input, self_data) = (|input| match self_columns {
+                        0u8 => Ok((input, MapData::MapData0)),
                         _ => map(PrefixedBuffer::<'a, VarInt>::deserialize, MapData::Default)(input),
                     })(input)?;
                     Ok((
@@ -3090,30 +3090,30 @@ pub mod play {
                             nom::multi::count(
                                 |input| {
                                     let (input, self_data_uuid) = (Uuid::deserialize)(input)?;
-                                    let (input, self_data_name) = (|input| match &format!("{}", self_action)[..] {
-                                        "0" => map(PrefixedString::<'a, VarInt>::deserialize, Name::Name0)(input),
+                                    let (input, self_data_name) = (|input| match self_action.0 {
+                                        0i32 => map(PrefixedString::<'a, VarInt>::deserialize, Name::Name0)(input),
                                         _ => Ok((input, Name::Default)),
                                     })(input)?;
-                                    let (input, self_data_properties) = (|input| match &format!("{}", self_action)[..] {
-                                        "0" => map(
+                                    let (input, self_data_properties) = (|input| match self_action.0 {
+                                        0i32 => map(
                                             PrefixedArray::<PlayerInfoDataItemProperties0<'a>, VarInt>::deserialize,
                                             PlayerInfoDataItemProperties::PlayerInfoDataItemProperties0,
                                         )(input),
                                         _ => Ok((input, PlayerInfoDataItemProperties::Default)),
                                     })(input)?;
-                                    let (input, self_data_gamemode) = (|input| match &format!("{}", self_action)[..] {
-                                        "0" => map(VarInt::deserialize, Gamemode::Gamemode0)(input),
-                                        "1" => map(VarInt::deserialize, Gamemode::Gamemode1)(input),
+                                    let (input, self_data_gamemode) = (|input| match self_action.0 {
+                                        0i32 => map(VarInt::deserialize, Gamemode::Gamemode0)(input),
+                                        1i32 => map(VarInt::deserialize, Gamemode::Gamemode1)(input),
                                         _ => Ok((input, Gamemode::Default)),
                                     })(input)?;
-                                    let (input, self_data_ping) = (|input| match &format!("{}", self_action)[..] {
-                                        "0" => map(VarInt::deserialize, Ping::Ping0)(input),
-                                        "2" => map(VarInt::deserialize, Ping::Ping2)(input),
+                                    let (input, self_data_ping) = (|input| match self_action.0 {
+                                        0i32 => map(VarInt::deserialize, Ping::Ping0)(input),
+                                        2i32 => map(VarInt::deserialize, Ping::Ping2)(input),
                                         _ => Ok((input, Ping::Default)),
                                     })(input)?;
-                                    let (input, self_data_display_name) = (|input| match &format!("{}", self_action)[..] {
-                                        "0" => map(Option::<VarString<'a>>::deserialize, PlayerInfoDataItemDisplayName::PlayerInfoDataItemDisplayName0)(input),
-                                        "3" => map(Option::<VarString<'a>>::deserialize, PlayerInfoDataItemDisplayName::PlayerInfoDataItemDisplayName3)(input),
+                                    let (input, self_data_display_name) = (|input| match self_action.0 {
+                                        0i32 => map(Option::<VarString<'a>>::deserialize, PlayerInfoDataItemDisplayName::PlayerInfoDataItemDisplayName0)(input),
+                                        3i32 => map(Option::<VarString<'a>>::deserialize, PlayerInfoDataItemDisplayName::PlayerInfoDataItemDisplayName3)(input),
                                         _ => Ok((input, PlayerInfoDataItemDisplayName::Default)),
                                     })(input)?;
                                     Ok((
@@ -3229,8 +3229,8 @@ pub mod play {
                     let (input, self_smoker_book_open) = (bool::deserialize)(input)?;
                     let (input, self_filtering_smoker) = (bool::deserialize)(input)?;
                     let (input, self_recipes1) = (PrefixedArray::<VarString<'a>, VarInt>::deserialize)(input)?;
-                    let (input, self_recipes2) = (|input| match &format!("{}", self_action)[..] {
-                        "0" => map(PrefixedArray::<VarString<'a>, VarInt>::deserialize, Recipes2::Recipes20)(input),
+                    let (input, self_recipes2) = (|input| match self_action.0 {
+                        0i32 => map(PrefixedArray::<VarString<'a>, VarInt>::deserialize, Recipes2::Recipes20)(input),
                         _ => Ok((input, Recipes2::Default)),
                     })(input)?;
                     Ok((
@@ -3487,14 +3487,14 @@ pub mod play {
                 (|input| {
                     let (input, self_name) = (PrefixedString::<'a, VarInt>::deserialize)(input)?;
                     let (input, self_action) = (i8::deserialize)(input)?;
-                    let (input, self_display_text) = (|input| match &format!("{}", self_action)[..] {
-                        "0" => map(PrefixedString::<'a, VarInt>::deserialize, DisplayText::DisplayText0)(input),
-                        "2" => map(PrefixedString::<'a, VarInt>::deserialize, DisplayText::DisplayText2)(input),
+                    let (input, self_display_text) = (|input| match self_action {
+                        0i8 => map(PrefixedString::<'a, VarInt>::deserialize, DisplayText::DisplayText0)(input),
+                        2i8 => map(PrefixedString::<'a, VarInt>::deserialize, DisplayText::DisplayText2)(input),
                         _ => Ok((input, DisplayText::Default)),
                     })(input)?;
-                    let (input, self_r_type) = (|input| match &format!("{}", self_action)[..] {
-                        "0" => map(VarInt::deserialize, RType::RType0)(input),
-                        "2" => map(VarInt::deserialize, RType::RType2)(input),
+                    let (input, self_r_type) = (|input| match self_action {
+                        0i8 => map(VarInt::deserialize, RType::RType0)(input),
+                        2i8 => map(VarInt::deserialize, RType::RType2)(input),
                         _ => Ok((input, RType::Default)),
                     })(input)?;
                     Ok((
@@ -3769,45 +3769,45 @@ pub mod play {
                 (|input| {
                     let (input, self_team) = (PrefixedString::<'a, VarInt>::deserialize)(input)?;
                     let (input, self_mode) = (i8::deserialize)(input)?;
-                    let (input, self_name) = (|input| match &format!("{}", self_mode)[..] {
-                        "0" => map(PrefixedString::<'a, VarInt>::deserialize, TeamsName::TeamsName0)(input),
-                        "2" => map(PrefixedString::<'a, VarInt>::deserialize, TeamsName::TeamsName2)(input),
+                    let (input, self_name) = (|input| match self_mode {
+                        0i8 => map(PrefixedString::<'a, VarInt>::deserialize, TeamsName::TeamsName0)(input),
+                        2i8 => map(PrefixedString::<'a, VarInt>::deserialize, TeamsName::TeamsName2)(input),
                         _ => Ok((input, TeamsName::Default)),
                     })(input)?;
-                    let (input, self_friendly_fire) = (|input| match &format!("{}", self_mode)[..] {
-                        "0" => map(i8::deserialize, FriendlyFire::FriendlyFire0)(input),
-                        "2" => map(i8::deserialize, FriendlyFire::FriendlyFire2)(input),
+                    let (input, self_friendly_fire) = (|input| match self_mode {
+                        0i8 => map(i8::deserialize, FriendlyFire::FriendlyFire0)(input),
+                        2i8 => map(i8::deserialize, FriendlyFire::FriendlyFire2)(input),
                         _ => Ok((input, FriendlyFire::Default)),
                     })(input)?;
-                    let (input, self_name_tag_visibility) = (|input| match &format!("{}", self_mode)[..] {
-                        "0" => map(PrefixedString::<'a, VarInt>::deserialize, NameTagVisibility::NameTagVisibility0)(input),
-                        "2" => map(PrefixedString::<'a, VarInt>::deserialize, NameTagVisibility::NameTagVisibility2)(input),
+                    let (input, self_name_tag_visibility) = (|input| match self_mode {
+                        0i8 => map(PrefixedString::<'a, VarInt>::deserialize, NameTagVisibility::NameTagVisibility0)(input),
+                        2i8 => map(PrefixedString::<'a, VarInt>::deserialize, NameTagVisibility::NameTagVisibility2)(input),
                         _ => Ok((input, NameTagVisibility::Default)),
                     })(input)?;
-                    let (input, self_collision_rule) = (|input| match &format!("{}", self_mode)[..] {
-                        "0" => map(PrefixedString::<'a, VarInt>::deserialize, CollisionRule::CollisionRule0)(input),
-                        "2" => map(PrefixedString::<'a, VarInt>::deserialize, CollisionRule::CollisionRule2)(input),
+                    let (input, self_collision_rule) = (|input| match self_mode {
+                        0i8 => map(PrefixedString::<'a, VarInt>::deserialize, CollisionRule::CollisionRule0)(input),
+                        2i8 => map(PrefixedString::<'a, VarInt>::deserialize, CollisionRule::CollisionRule2)(input),
                         _ => Ok((input, CollisionRule::Default)),
                     })(input)?;
-                    let (input, self_formatting) = (|input| match &format!("{}", self_mode)[..] {
-                        "0" => map(VarInt::deserialize, Formatting::Formatting0)(input),
-                        "2" => map(VarInt::deserialize, Formatting::Formatting2)(input),
+                    let (input, self_formatting) = (|input| match self_mode {
+                        0i8 => map(VarInt::deserialize, Formatting::Formatting0)(input),
+                        2i8 => map(VarInt::deserialize, Formatting::Formatting2)(input),
                         _ => Ok((input, Formatting::Default)),
                     })(input)?;
-                    let (input, self_prefix) = (|input| match &format!("{}", self_mode)[..] {
-                        "0" => map(PrefixedString::<'a, VarInt>::deserialize, Prefix::Prefix0)(input),
-                        "2" => map(PrefixedString::<'a, VarInt>::deserialize, Prefix::Prefix2)(input),
+                    let (input, self_prefix) = (|input| match self_mode {
+                        0i8 => map(PrefixedString::<'a, VarInt>::deserialize, Prefix::Prefix0)(input),
+                        2i8 => map(PrefixedString::<'a, VarInt>::deserialize, Prefix::Prefix2)(input),
                         _ => Ok((input, Prefix::Default)),
                     })(input)?;
-                    let (input, self_suffix) = (|input| match &format!("{}", self_mode)[..] {
-                        "0" => map(PrefixedString::<'a, VarInt>::deserialize, Suffix::Suffix0)(input),
-                        "2" => map(PrefixedString::<'a, VarInt>::deserialize, Suffix::Suffix2)(input),
+                    let (input, self_suffix) = (|input| match self_mode {
+                        0i8 => map(PrefixedString::<'a, VarInt>::deserialize, Suffix::Suffix0)(input),
+                        2i8 => map(PrefixedString::<'a, VarInt>::deserialize, Suffix::Suffix2)(input),
                         _ => Ok((input, Suffix::Default)),
                     })(input)?;
-                    let (input, self_players) = (|input| match &format!("{}", self_mode)[..] {
-                        "0" => map(PrefixedArray::<VarString<'a>, VarInt>::deserialize, Players::Players0)(input),
-                        "3" => map(PrefixedArray::<VarString<'a>, VarInt>::deserialize, Players::Players3)(input),
-                        "4" => map(PrefixedArray::<VarString<'a>, VarInt>::deserialize, Players::Players4)(input),
+                    let (input, self_players) = (|input| match self_mode {
+                        0i8 => map(PrefixedArray::<VarString<'a>, VarInt>::deserialize, Players::Players0)(input),
+                        3i8 => map(PrefixedArray::<VarString<'a>, VarInt>::deserialize, Players::Players3)(input),
+                        4i8 => map(PrefixedArray::<VarString<'a>, VarInt>::deserialize, Players::Players4)(input),
                         _ => Ok((input, Players::Default)),
                     })(input)?;
                     Ok((
@@ -3871,8 +3871,8 @@ pub mod play {
                     let (input, self_item_name) = (PrefixedString::<'a, VarInt>::deserialize)(input)?;
                     let (input, self_action) = (VarInt::deserialize)(input)?;
                     let (input, self_score_name) = (PrefixedString::<'a, VarInt>::deserialize)(input)?;
-                    let (input, self_value) = (|input| match &format!("{}", self_action)[..] {
-                        "1" => Ok((input, ScoreboardScoreValue::ScoreboardScoreValue1)),
+                    let (input, self_value) = (|input| match self_action.0 {
+                        1i32 => Ok((input, ScoreboardScoreValue::ScoreboardScoreValue1)),
                         _ => map(VarInt::deserialize, ScoreboardScoreValue::Default)(input),
                     })(input)?;
                     Ok((
@@ -3971,14 +3971,14 @@ pub mod play {
             fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
                 (|input| {
                     let (input, self_flags) = (i8::deserialize)(input)?;
-                    let (input, self_source) = (|input| match &format!("{}", self_flags)[..] {
-                        "3" => map(VarInt::deserialize, Source::Source3)(input),
-                        "1" => map(VarInt::deserialize, Source::Source1)(input),
+                    let (input, self_source) = (|input| match self_flags {
+                        3i8 => map(VarInt::deserialize, Source::Source3)(input),
+                        1i8 => map(VarInt::deserialize, Source::Source1)(input),
                         _ => Ok((input, Source::Default)),
                     })(input)?;
-                    let (input, self_sound) = (|input| match &format!("{}", self_flags)[..] {
-                        "3" => map(PrefixedString::<'a, VarInt>::deserialize, Sound::Sound3)(input),
-                        "2" => map(PrefixedString::<'a, VarInt>::deserialize, Sound::Sound2)(input),
+                    let (input, self_sound) = (|input| match self_flags {
+                        3i8 => map(PrefixedString::<'a, VarInt>::deserialize, Sound::Sound3)(input),
+                        2i8 => map(PrefixedString::<'a, VarInt>::deserialize, Sound::Sound2)(input),
                         _ => Ok((input, Sound::Default)),
                     })(input)?;
                     Ok((
@@ -4244,7 +4244,7 @@ pub mod play {
                 (|input| {
                     let (input, self_r_type) = (PrefixedString::<'a, VarInt>::deserialize)(input)?;
                     let (input, self_recipe_id) = (PrefixedString::<'a, VarInt>::deserialize)(input)?;
-                    let (input, self_data) = (|input| match &format!("{}", self_r_type)[..] {
+                    let (input, self_data) = (|input| match self_r_type.0 {
                         "minecraft:crafting_shapeless" => map(CraftingShapeless::deserialize, RecipeData::CraftingShapeless)(input),
                         "minecraft:crafting_shaped" => map(CraftingShaped::deserialize, RecipeData::CraftingShaped)(input),
                         "minecraft:crafting_special_armordye" => Ok((input, RecipeData::CraftingSpecialArmordye)),
@@ -4345,7 +4345,7 @@ pub mod play {
                 (|input| {
                     let (input, self_source_position) = (Position::deserialize)(input)?;
                     let (input, self_destination_identifier) = (PrefixedString::<'a, VarInt>::deserialize)(input)?;
-                    let (input, self_destination) = (|input| match &format!("{}", self_destination_identifier)[..] {
+                    let (input, self_destination) = (|input| match self_destination_identifier.0 {
                         "block" => map(Position::deserialize, SculkVibrationSignalDestination::Block)(input),
                         "entityId" => map(VarInt::deserialize, SculkVibrationSignalDestination::EntityId)(input),
                         _ => Ok((input, SculkVibrationSignalDestination::Default)),
@@ -4773,111 +4773,111 @@ pub mod play {
             fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
                 (|input| {
                     let (input, self_name) = (VarInt::deserialize)(input)?;
-                    let (input, self_params) = (|input| match &format!("{}", self_name)[..] {
-                        "0x00" => map(PacketSpawnEntity::deserialize, Params::SpawnEntity)(input),
-                        "0x01" => map(PacketSpawnEntityExperienceOrb::deserialize, Params::SpawnEntityExperienceOrb)(input),
-                        "0x02" => map(PacketSpawnEntityLiving::deserialize, Params::SpawnEntityLiving)(input),
-                        "0x03" => map(PacketSpawnEntityPainting::deserialize, Params::SpawnEntityPainting)(input),
-                        "0x04" => map(PacketNamedEntitySpawn::deserialize, Params::NamedEntitySpawn)(input),
-                        "0x05" => map(PacketSculkVibrationSignal::deserialize, Params::SculkVibrationSignal)(input),
-                        "0x06" => map(PacketAnimation::deserialize, Params::Animation)(input),
-                        "0x07" => map(PacketStatistics::deserialize, Params::Statistics)(input),
-                        "0x08" => map(PacketAcknowledgePlayerDigging::deserialize, Params::AcknowledgePlayerDigging)(input),
-                        "0x09" => map(PacketBlockBreakAnimation::deserialize, Params::BlockBreakAnimation)(input),
-                        "0x0a" => map(PacketTileEntityData::deserialize, Params::TileEntityData)(input),
-                        "0x0b" => map(PacketBlockAction::deserialize, Params::BlockAction)(input),
-                        "0x0c" => map(PacketBlockChange::deserialize, Params::BlockChange)(input),
-                        "0x0d" => map(PacketBossBar::deserialize, Params::BossBar)(input),
-                        "0x0e" => map(PacketDifficulty::deserialize, Params::Difficulty)(input),
-                        "0x0f" => map(PacketChat::deserialize, Params::Chat)(input),
-                        "0x10" => map(PacketClearTitles::deserialize, Params::ClearTitles)(input),
-                        "0x11" => map(PacketTabComplete::deserialize, Params::TabComplete)(input),
-                        "0x12" => map(PacketDeclareCommands::deserialize, Params::DeclareCommands)(input),
-                        "0x13" => map(PacketCloseWindow::deserialize, Params::CloseWindow)(input),
-                        "0x14" => map(PacketWindowItems::deserialize, Params::WindowItems)(input),
-                        "0x15" => map(PacketCraftProgressBar::deserialize, Params::CraftProgressBar)(input),
-                        "0x16" => map(PacketSetSlot::deserialize, Params::SetSlot)(input),
-                        "0x17" => map(PacketSetCooldown::deserialize, Params::SetCooldown)(input),
-                        "0x18" => map(PacketCustomPayload::deserialize, Params::CustomPayload)(input),
-                        "0x19" => map(PacketNamedSoundEffect::deserialize, Params::NamedSoundEffect)(input),
-                        "0x1a" => map(PacketKickDisconnect::deserialize, Params::KickDisconnect)(input),
-                        "0x1b" => map(PacketEntityStatus::deserialize, Params::EntityStatus)(input),
-                        "0x1c" => map(PacketExplosion::deserialize, Params::Explosion)(input),
-                        "0x1d" => map(PacketUnloadChunk::deserialize, Params::UnloadChunk)(input),
-                        "0x1e" => map(PacketGameStateChange::deserialize, Params::GameStateChange)(input),
-                        "0x1f" => map(PacketOpenHorseWindow::deserialize, Params::OpenHorseWindow)(input),
-                        "0x20" => map(PacketInitializeWorldBorder::deserialize, Params::InitializeWorldBorder)(input),
-                        "0x21" => map(PacketKeepAlive::deserialize, Params::KeepAlive)(input),
-                        "0x22" => map(PacketMapChunk::deserialize, Params::MapChunk)(input),
-                        "0x23" => map(PacketWorldEvent::deserialize, Params::WorldEvent)(input),
-                        "0x24" => map(PacketWorldParticles::deserialize, Params::WorldParticles)(input),
-                        "0x25" => map(PacketUpdateLight::deserialize, Params::UpdateLight)(input),
-                        "0x26" => map(PacketLogin::deserialize, Params::Login)(input),
-                        "0x27" => map(PacketMap::deserialize, Params::Map)(input),
-                        "0x28" => map(PacketTradeList::deserialize, Params::TradeList)(input),
-                        "0x29" => map(PacketRelEntityMove::deserialize, Params::RelEntityMove)(input),
-                        "0x2a" => map(PacketEntityMoveLook::deserialize, Params::EntityMoveLook)(input),
-                        "0x2b" => map(PacketEntityLook::deserialize, Params::EntityLook)(input),
-                        "0x2c" => map(PacketVehicleMove::deserialize, Params::VehicleMove)(input),
-                        "0x2d" => map(PacketOpenBook::deserialize, Params::OpenBook)(input),
-                        "0x2e" => map(PacketOpenWindow::deserialize, Params::OpenWindow)(input),
-                        "0x2f" => map(PacketOpenSignEntity::deserialize, Params::OpenSignEntity)(input),
-                        "0x30" => map(PacketPing::deserialize, Params::Ping)(input),
-                        "0x31" => map(PacketCraftRecipeResponse::deserialize, Params::CraftRecipeResponse)(input),
-                        "0x32" => map(PacketAbilities::deserialize, Params::Abilities)(input),
-                        "0x33" => map(PacketEndCombatEvent::deserialize, Params::EndCombatEvent)(input),
-                        "0x34" => map(PacketEnterCombatEvent::deserialize, Params::EnterCombatEvent)(input),
-                        "0x35" => map(PacketDeathCombatEvent::deserialize, Params::DeathCombatEvent)(input),
-                        "0x36" => map(PacketPlayerInfo::deserialize, Params::PlayerInfo)(input),
-                        "0x37" => map(PacketFacePlayer::deserialize, Params::FacePlayer)(input),
-                        "0x38" => map(PacketPosition::deserialize, Params::Position)(input),
-                        "0x39" => map(PacketUnlockRecipes::deserialize, Params::UnlockRecipes)(input),
-                        "0x3a" => map(PacketEntityDestroy::deserialize, Params::EntityDestroy)(input),
-                        "0x3b" => map(PacketRemoveEntityEffect::deserialize, Params::RemoveEntityEffect)(input),
-                        "0x3c" => map(PacketResourcePackSend::deserialize, Params::ResourcePackSend)(input),
-                        "0x3d" => map(PacketRespawn::deserialize, Params::Respawn)(input),
-                        "0x3e" => map(PacketEntityHeadRotation::deserialize, Params::EntityHeadRotation)(input),
-                        "0x3f" => map(PacketMultiBlockChange::deserialize, Params::MultiBlockChange)(input),
-                        "0x40" => map(PacketSelectAdvancementTab::deserialize, Params::SelectAdvancementTab)(input),
-                        "0x41" => map(PacketActionBar::deserialize, Params::ActionBar)(input),
-                        "0x42" => map(PacketWorldBorderCenter::deserialize, Params::WorldBorderCenter)(input),
-                        "0x43" => map(PacketWorldBorderLerpSize::deserialize, Params::WorldBorderLerpSize)(input),
-                        "0x44" => map(PacketWorldBorderSize::deserialize, Params::WorldBorderSize)(input),
-                        "0x45" => map(PacketWorldBorderWarningDelay::deserialize, Params::WorldBorderWarningDelay)(input),
-                        "0x46" => map(PacketWorldBorderWarningReach::deserialize, Params::WorldBorderWarningReach)(input),
-                        "0x47" => map(PacketCamera::deserialize, Params::Camera)(input),
-                        "0x48" => map(PacketHeldItemSlot::deserialize, Params::HeldItemSlot)(input),
-                        "0x49" => map(PacketUpdateViewPosition::deserialize, Params::UpdateViewPosition)(input),
-                        "0x4a" => map(PacketUpdateViewDistance::deserialize, Params::UpdateViewDistance)(input),
-                        "0x4b" => map(PacketSpawnPosition::deserialize, Params::SpawnPosition)(input),
-                        "0x4c" => map(PacketScoreboardDisplayObjective::deserialize, Params::ScoreboardDisplayObjective)(input),
-                        "0x4d" => map(PacketEntityMetadata::deserialize, Params::EntityMetadata)(input),
-                        "0x4e" => map(PacketAttachEntity::deserialize, Params::AttachEntity)(input),
-                        "0x4f" => map(PacketEntityVelocity::deserialize, Params::EntityVelocity)(input),
-                        "0x50" => map(PacketEntityEquipment::deserialize, Params::EntityEquipment)(input),
-                        "0x51" => map(PacketExperience::deserialize, Params::Experience)(input),
-                        "0x52" => map(PacketUpdateHealth::deserialize, Params::UpdateHealth)(input),
-                        "0x53" => map(PacketScoreboardObjective::deserialize, Params::ScoreboardObjective)(input),
-                        "0x54" => map(PacketSetPassengers::deserialize, Params::SetPassengers)(input),
-                        "0x55" => map(PacketTeams::deserialize, Params::Teams)(input),
-                        "0x56" => map(PacketScoreboardScore::deserialize, Params::ScoreboardScore)(input),
-                        "0x57" => map(PacketSimulationDistance::deserialize, Params::SimulationDistance)(input),
-                        "0x58" => map(PacketSetTitleSubtitle::deserialize, Params::SetTitleSubtitle)(input),
-                        "0x59" => map(PacketUpdateTime::deserialize, Params::UpdateTime)(input),
-                        "0x5a" => map(PacketSetTitleText::deserialize, Params::SetTitleText)(input),
-                        "0x5b" => map(PacketSetTitleTime::deserialize, Params::SetTitleTime)(input),
-                        "0x5c" => map(PacketEntitySoundEffect::deserialize, Params::EntitySoundEffect)(input),
-                        "0x5d" => map(PacketSoundEffect::deserialize, Params::SoundEffect)(input),
-                        "0x5e" => map(PacketStopSound::deserialize, Params::StopSound)(input),
-                        "0x5f" => map(PacketPlayerlistHeader::deserialize, Params::PlayerlistHeader)(input),
-                        "0x60" => map(PacketNbtQueryResponse::deserialize, Params::NbtQueryResponse)(input),
-                        "0x61" => map(PacketCollect::deserialize, Params::Collect)(input),
-                        "0x62" => map(PacketEntityTeleport::deserialize, Params::EntityTeleport)(input),
-                        "0x63" => map(PacketAdvancements::deserialize, Params::Advancements)(input),
-                        "0x64" => map(PacketEntityUpdateAttributes::deserialize, Params::EntityUpdateAttributes)(input),
-                        "0x65" => map(PacketEntityEffect::deserialize, Params::EntityEffect)(input),
-                        "0x66" => map(PacketDeclareRecipes::deserialize, Params::DeclareRecipes)(input),
-                        "0x67" => map(PacketTags::deserialize, Params::Tags)(input),
+                    let (input, self_params) = (|input| match self_name.0 {
+                        0x00i32 => map(PacketSpawnEntity::deserialize, Params::SpawnEntity)(input),
+                        0x01i32 => map(PacketSpawnEntityExperienceOrb::deserialize, Params::SpawnEntityExperienceOrb)(input),
+                        0x02i32 => map(PacketSpawnEntityLiving::deserialize, Params::SpawnEntityLiving)(input),
+                        0x03i32 => map(PacketSpawnEntityPainting::deserialize, Params::SpawnEntityPainting)(input),
+                        0x04i32 => map(PacketNamedEntitySpawn::deserialize, Params::NamedEntitySpawn)(input),
+                        0x05i32 => map(PacketSculkVibrationSignal::deserialize, Params::SculkVibrationSignal)(input),
+                        0x06i32 => map(PacketAnimation::deserialize, Params::Animation)(input),
+                        0x07i32 => map(PacketStatistics::deserialize, Params::Statistics)(input),
+                        0x08i32 => map(PacketAcknowledgePlayerDigging::deserialize, Params::AcknowledgePlayerDigging)(input),
+                        0x09i32 => map(PacketBlockBreakAnimation::deserialize, Params::BlockBreakAnimation)(input),
+                        0x0ai32 => map(PacketTileEntityData::deserialize, Params::TileEntityData)(input),
+                        0x0bi32 => map(PacketBlockAction::deserialize, Params::BlockAction)(input),
+                        0x0ci32 => map(PacketBlockChange::deserialize, Params::BlockChange)(input),
+                        0x0di32 => map(PacketBossBar::deserialize, Params::BossBar)(input),
+                        0x0ei32 => map(PacketDifficulty::deserialize, Params::Difficulty)(input),
+                        0x0fi32 => map(PacketChat::deserialize, Params::Chat)(input),
+                        0x10i32 => map(PacketClearTitles::deserialize, Params::ClearTitles)(input),
+                        0x11i32 => map(PacketTabComplete::deserialize, Params::TabComplete)(input),
+                        0x12i32 => map(PacketDeclareCommands::deserialize, Params::DeclareCommands)(input),
+                        0x13i32 => map(PacketCloseWindow::deserialize, Params::CloseWindow)(input),
+                        0x14i32 => map(PacketWindowItems::deserialize, Params::WindowItems)(input),
+                        0x15i32 => map(PacketCraftProgressBar::deserialize, Params::CraftProgressBar)(input),
+                        0x16i32 => map(PacketSetSlot::deserialize, Params::SetSlot)(input),
+                        0x17i32 => map(PacketSetCooldown::deserialize, Params::SetCooldown)(input),
+                        0x18i32 => map(PacketCustomPayload::deserialize, Params::CustomPayload)(input),
+                        0x19i32 => map(PacketNamedSoundEffect::deserialize, Params::NamedSoundEffect)(input),
+                        0x1ai32 => map(PacketKickDisconnect::deserialize, Params::KickDisconnect)(input),
+                        0x1bi32 => map(PacketEntityStatus::deserialize, Params::EntityStatus)(input),
+                        0x1ci32 => map(PacketExplosion::deserialize, Params::Explosion)(input),
+                        0x1di32 => map(PacketUnloadChunk::deserialize, Params::UnloadChunk)(input),
+                        0x1ei32 => map(PacketGameStateChange::deserialize, Params::GameStateChange)(input),
+                        0x1fi32 => map(PacketOpenHorseWindow::deserialize, Params::OpenHorseWindow)(input),
+                        0x20i32 => map(PacketInitializeWorldBorder::deserialize, Params::InitializeWorldBorder)(input),
+                        0x21i32 => map(PacketKeepAlive::deserialize, Params::KeepAlive)(input),
+                        0x22i32 => map(PacketMapChunk::deserialize, Params::MapChunk)(input),
+                        0x23i32 => map(PacketWorldEvent::deserialize, Params::WorldEvent)(input),
+                        0x24i32 => map(PacketWorldParticles::deserialize, Params::WorldParticles)(input),
+                        0x25i32 => map(PacketUpdateLight::deserialize, Params::UpdateLight)(input),
+                        0x26i32 => map(PacketLogin::deserialize, Params::Login)(input),
+                        0x27i32 => map(PacketMap::deserialize, Params::Map)(input),
+                        0x28i32 => map(PacketTradeList::deserialize, Params::TradeList)(input),
+                        0x29i32 => map(PacketRelEntityMove::deserialize, Params::RelEntityMove)(input),
+                        0x2ai32 => map(PacketEntityMoveLook::deserialize, Params::EntityMoveLook)(input),
+                        0x2bi32 => map(PacketEntityLook::deserialize, Params::EntityLook)(input),
+                        0x2ci32 => map(PacketVehicleMove::deserialize, Params::VehicleMove)(input),
+                        0x2di32 => map(PacketOpenBook::deserialize, Params::OpenBook)(input),
+                        0x2ei32 => map(PacketOpenWindow::deserialize, Params::OpenWindow)(input),
+                        0x2fi32 => map(PacketOpenSignEntity::deserialize, Params::OpenSignEntity)(input),
+                        0x30i32 => map(PacketPing::deserialize, Params::Ping)(input),
+                        0x31i32 => map(PacketCraftRecipeResponse::deserialize, Params::CraftRecipeResponse)(input),
+                        0x32i32 => map(PacketAbilities::deserialize, Params::Abilities)(input),
+                        0x33i32 => map(PacketEndCombatEvent::deserialize, Params::EndCombatEvent)(input),
+                        0x34i32 => map(PacketEnterCombatEvent::deserialize, Params::EnterCombatEvent)(input),
+                        0x35i32 => map(PacketDeathCombatEvent::deserialize, Params::DeathCombatEvent)(input),
+                        0x36i32 => map(PacketPlayerInfo::deserialize, Params::PlayerInfo)(input),
+                        0x37i32 => map(PacketFacePlayer::deserialize, Params::FacePlayer)(input),
+                        0x38i32 => map(PacketPosition::deserialize, Params::Position)(input),
+                        0x39i32 => map(PacketUnlockRecipes::deserialize, Params::UnlockRecipes)(input),
+                        0x3ai32 => map(PacketEntityDestroy::deserialize, Params::EntityDestroy)(input),
+                        0x3bi32 => map(PacketRemoveEntityEffect::deserialize, Params::RemoveEntityEffect)(input),
+                        0x3ci32 => map(PacketResourcePackSend::deserialize, Params::ResourcePackSend)(input),
+                        0x3di32 => map(PacketRespawn::deserialize, Params::Respawn)(input),
+                        0x3ei32 => map(PacketEntityHeadRotation::deserialize, Params::EntityHeadRotation)(input),
+                        0x3fi32 => map(PacketMultiBlockChange::deserialize, Params::MultiBlockChange)(input),
+                        0x40i32 => map(PacketSelectAdvancementTab::deserialize, Params::SelectAdvancementTab)(input),
+                        0x41i32 => map(PacketActionBar::deserialize, Params::ActionBar)(input),
+                        0x42i32 => map(PacketWorldBorderCenter::deserialize, Params::WorldBorderCenter)(input),
+                        0x43i32 => map(PacketWorldBorderLerpSize::deserialize, Params::WorldBorderLerpSize)(input),
+                        0x44i32 => map(PacketWorldBorderSize::deserialize, Params::WorldBorderSize)(input),
+                        0x45i32 => map(PacketWorldBorderWarningDelay::deserialize, Params::WorldBorderWarningDelay)(input),
+                        0x46i32 => map(PacketWorldBorderWarningReach::deserialize, Params::WorldBorderWarningReach)(input),
+                        0x47i32 => map(PacketCamera::deserialize, Params::Camera)(input),
+                        0x48i32 => map(PacketHeldItemSlot::deserialize, Params::HeldItemSlot)(input),
+                        0x49i32 => map(PacketUpdateViewPosition::deserialize, Params::UpdateViewPosition)(input),
+                        0x4ai32 => map(PacketUpdateViewDistance::deserialize, Params::UpdateViewDistance)(input),
+                        0x4bi32 => map(PacketSpawnPosition::deserialize, Params::SpawnPosition)(input),
+                        0x4ci32 => map(PacketScoreboardDisplayObjective::deserialize, Params::ScoreboardDisplayObjective)(input),
+                        0x4di32 => map(PacketEntityMetadata::deserialize, Params::EntityMetadata)(input),
+                        0x4ei32 => map(PacketAttachEntity::deserialize, Params::AttachEntity)(input),
+                        0x4fi32 => map(PacketEntityVelocity::deserialize, Params::EntityVelocity)(input),
+                        0x50i32 => map(PacketEntityEquipment::deserialize, Params::EntityEquipment)(input),
+                        0x51i32 => map(PacketExperience::deserialize, Params::Experience)(input),
+                        0x52i32 => map(PacketUpdateHealth::deserialize, Params::UpdateHealth)(input),
+                        0x53i32 => map(PacketScoreboardObjective::deserialize, Params::ScoreboardObjective)(input),
+                        0x54i32 => map(PacketSetPassengers::deserialize, Params::SetPassengers)(input),
+                        0x55i32 => map(PacketTeams::deserialize, Params::Teams)(input),
+                        0x56i32 => map(PacketScoreboardScore::deserialize, Params::ScoreboardScore)(input),
+                        0x57i32 => map(PacketSimulationDistance::deserialize, Params::SimulationDistance)(input),
+                        0x58i32 => map(PacketSetTitleSubtitle::deserialize, Params::SetTitleSubtitle)(input),
+                        0x59i32 => map(PacketUpdateTime::deserialize, Params::UpdateTime)(input),
+                        0x5ai32 => map(PacketSetTitleText::deserialize, Params::SetTitleText)(input),
+                        0x5bi32 => map(PacketSetTitleTime::deserialize, Params::SetTitleTime)(input),
+                        0x5ci32 => map(PacketEntitySoundEffect::deserialize, Params::EntitySoundEffect)(input),
+                        0x5di32 => map(PacketSoundEffect::deserialize, Params::SoundEffect)(input),
+                        0x5ei32 => map(PacketStopSound::deserialize, Params::StopSound)(input),
+                        0x5fi32 => map(PacketPlayerlistHeader::deserialize, Params::PlayerlistHeader)(input),
+                        0x60i32 => map(PacketNbtQueryResponse::deserialize, Params::NbtQueryResponse)(input),
+                        0x61i32 => map(PacketCollect::deserialize, Params::Collect)(input),
+                        0x62i32 => map(PacketEntityTeleport::deserialize, Params::EntityTeleport)(input),
+                        0x63i32 => map(PacketAdvancements::deserialize, Params::Advancements)(input),
+                        0x64i32 => map(PacketEntityUpdateAttributes::deserialize, Params::EntityUpdateAttributes)(input),
+                        0x65i32 => map(PacketEntityEffect::deserialize, Params::EntityEffect)(input),
+                        0x66i32 => map(PacketDeclareRecipes::deserialize, Params::DeclareRecipes)(input),
+                        0x67i32 => map(PacketTags::deserialize, Params::Tags)(input),
                         _ => Ok((input, Params::Default)),
                     })(input)?;
                     Ok((input, ToClient { name: self_name, params: self_params }))
@@ -5129,21 +5129,21 @@ pub mod play {
                 (|input| {
                     let (input, self_target) = (VarInt::deserialize)(input)?;
                     let (input, self_mouse) = (VarInt::deserialize)(input)?;
-                    let (input, self_x) = (|input| match &format!("{}", self_mouse)[..] {
-                        "2" => map(f32::deserialize, X::X2)(input),
+                    let (input, self_x) = (|input| match self_mouse.0 {
+                        2i32 => map(f32::deserialize, X::X2)(input),
                         _ => Ok((input, X::Default)),
                     })(input)?;
-                    let (input, self_y) = (|input| match &format!("{}", self_mouse)[..] {
-                        "2" => map(f32::deserialize, Y::Y2)(input),
+                    let (input, self_y) = (|input| match self_mouse.0 {
+                        2i32 => map(f32::deserialize, Y::Y2)(input),
                         _ => Ok((input, Y::Default)),
                     })(input)?;
-                    let (input, self_z) = (|input| match &format!("{}", self_mouse)[..] {
-                        "2" => map(f32::deserialize, Z::Z2)(input),
+                    let (input, self_z) = (|input| match self_mouse.0 {
+                        2i32 => map(f32::deserialize, Z::Z2)(input),
                         _ => Ok((input, Z::Default)),
                     })(input)?;
-                    let (input, self_hand) = (|input| match &format!("{}", self_mouse)[..] {
-                        "0" => map(VarInt::deserialize, Hand::Hand0)(input),
-                        "2" => map(VarInt::deserialize, Hand::Hand2)(input),
+                    let (input, self_hand) = (|input| match self_mouse.0 {
+                        0i32 => map(VarInt::deserialize, Hand::Hand0)(input),
+                        2i32 => map(VarInt::deserialize, Hand::Hand2)(input),
                         _ => Ok((input, Hand::Default)),
                     })(input)?;
                     let (input, self_sneaking) = (bool::deserialize)(input)?;
@@ -5345,9 +5345,9 @@ pub mod play {
             fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
                 (|input| {
                     let (input, self_action) = (VarInt::deserialize)(input)?;
-                    let (input, self_tab_id) = (|input| match &format!("{}", self_action)[..] {
-                        "0" => map(PrefixedString::<'a, VarInt>::deserialize, TabId::TabId0)(input),
-                        "1" => Ok((input, TabId::TabId1)),
+                    let (input, self_tab_id) = (|input| match self_action.0 {
+                        0i32 => map(PrefixedString::<'a, VarInt>::deserialize, TabId::TabId0)(input),
+                        1i32 => Ok((input, TabId::TabId1)),
                         _ => Ok((input, TabId::Default)),
                     })(input)?;
                     Ok((
@@ -5542,55 +5542,55 @@ pub mod play {
             fn deserialize(input: &'t [u8]) -> nom::IResult<&'t [u8], Self> {
                 (|input| {
                     let (input, self_name) = (VarInt::deserialize)(input)?;
-                    let (input, self_params) = (|input| match &format!("{}", self_name)[..] {
-                        "0x00" => map(PacketTeleportConfirm::deserialize, Params::TeleportConfirm)(input),
-                        "0x01" => map(PacketQueryBlockNbt::deserialize, Params::QueryBlockNbt)(input),
-                        "0x02" => map(PacketSetDifficulty::deserialize, Params::SetDifficulty)(input),
-                        "0x03" => map(PacketChat::deserialize, Params::Chat)(input),
-                        "0x04" => map(PacketClientCommand::deserialize, Params::ClientCommand)(input),
-                        "0x05" => map(PacketSettings::deserialize, Params::Settings)(input),
-                        "0x06" => map(PacketTabComplete::deserialize, Params::TabComplete)(input),
-                        "0x07" => map(PacketEnchantItem::deserialize, Params::EnchantItem)(input),
-                        "0x08" => map(PacketWindowClick::deserialize, Params::WindowClick)(input),
-                        "0x09" => map(PacketCloseWindow::deserialize, Params::CloseWindow)(input),
-                        "0x0a" => map(PacketCustomPayload::deserialize, Params::CustomPayload)(input),
-                        "0x0b" => map(PacketEditBook::deserialize, Params::EditBook)(input),
-                        "0x0c" => map(PacketQueryEntityNbt::deserialize, Params::QueryEntityNbt)(input),
-                        "0x0d" => map(PacketUseEntity::deserialize, Params::UseEntity)(input),
-                        "0x0e" => map(PacketGenerateStructure::deserialize, Params::GenerateStructure)(input),
-                        "0x0f" => map(PacketKeepAlive::deserialize, Params::KeepAlive)(input),
-                        "0x10" => map(PacketLockDifficulty::deserialize, Params::LockDifficulty)(input),
-                        "0x11" => map(PacketPosition::deserialize, Params::Position)(input),
-                        "0x12" => map(PacketPositionLook::deserialize, Params::PositionLook)(input),
-                        "0x13" => map(PacketLook::deserialize, Params::Look)(input),
-                        "0x14" => map(PacketFlying::deserialize, Params::Flying)(input),
-                        "0x15" => map(PacketVehicleMove::deserialize, Params::VehicleMove)(input),
-                        "0x16" => map(PacketSteerBoat::deserialize, Params::SteerBoat)(input),
-                        "0x17" => map(PacketPickItem::deserialize, Params::PickItem)(input),
-                        "0x18" => map(PacketCraftRecipeRequest::deserialize, Params::CraftRecipeRequest)(input),
-                        "0x19" => map(PacketAbilities::deserialize, Params::Abilities)(input),
-                        "0x1a" => map(PacketBlockDig::deserialize, Params::BlockDig)(input),
-                        "0x1b" => map(PacketEntityAction::deserialize, Params::EntityAction)(input),
-                        "0x1c" => map(PacketSteerVehicle::deserialize, Params::SteerVehicle)(input),
-                        "0x1d" => map(PacketPong::deserialize, Params::Pong)(input),
-                        "0x1e" => map(PacketRecipeBook::deserialize, Params::RecipeBook)(input),
-                        "0x1f" => map(PacketDisplayedRecipe::deserialize, Params::DisplayedRecipe)(input),
-                        "0x20" => map(PacketNameItem::deserialize, Params::NameItem)(input),
-                        "0x21" => map(PacketResourcePackReceive::deserialize, Params::ResourcePackReceive)(input),
-                        "0x22" => map(PacketAdvancementTab::deserialize, Params::AdvancementTab)(input),
-                        "0x23" => map(PacketSelectTrade::deserialize, Params::SelectTrade)(input),
-                        "0x24" => map(PacketSetBeaconEffect::deserialize, Params::SetBeaconEffect)(input),
-                        "0x25" => map(PacketHeldItemSlot::deserialize, Params::HeldItemSlot)(input),
-                        "0x26" => map(PacketUpdateCommandBlock::deserialize, Params::UpdateCommandBlock)(input),
-                        "0x27" => map(PacketUpdateCommandBlockMinecart::deserialize, Params::UpdateCommandBlockMinecart)(input),
-                        "0x28" => map(PacketSetCreativeSlot::deserialize, Params::SetCreativeSlot)(input),
-                        "0x29" => map(PacketUpdateJigsawBlock::deserialize, Params::UpdateJigsawBlock)(input),
-                        "0x2a" => map(PacketUpdateStructureBlock::deserialize, Params::UpdateStructureBlock)(input),
-                        "0x2b" => map(PacketUpdateSign::deserialize, Params::UpdateSign)(input),
-                        "0x2c" => map(PacketArmAnimation::deserialize, Params::ArmAnimation)(input),
-                        "0x2d" => map(PacketSpectate::deserialize, Params::Spectate)(input),
-                        "0x2e" => map(PacketBlockPlace::deserialize, Params::BlockPlace)(input),
-                        "0x2f" => map(PacketUseItem::deserialize, Params::UseItem)(input),
+                    let (input, self_params) = (|input| match self_name.0 {
+                        0x00i32 => map(PacketTeleportConfirm::deserialize, Params::TeleportConfirm)(input),
+                        0x01i32 => map(PacketQueryBlockNbt::deserialize, Params::QueryBlockNbt)(input),
+                        0x02i32 => map(PacketSetDifficulty::deserialize, Params::SetDifficulty)(input),
+                        0x03i32 => map(PacketChat::deserialize, Params::Chat)(input),
+                        0x04i32 => map(PacketClientCommand::deserialize, Params::ClientCommand)(input),
+                        0x05i32 => map(PacketSettings::deserialize, Params::Settings)(input),
+                        0x06i32 => map(PacketTabComplete::deserialize, Params::TabComplete)(input),
+                        0x07i32 => map(PacketEnchantItem::deserialize, Params::EnchantItem)(input),
+                        0x08i32 => map(PacketWindowClick::deserialize, Params::WindowClick)(input),
+                        0x09i32 => map(PacketCloseWindow::deserialize, Params::CloseWindow)(input),
+                        0x0ai32 => map(PacketCustomPayload::deserialize, Params::CustomPayload)(input),
+                        0x0bi32 => map(PacketEditBook::deserialize, Params::EditBook)(input),
+                        0x0ci32 => map(PacketQueryEntityNbt::deserialize, Params::QueryEntityNbt)(input),
+                        0x0di32 => map(PacketUseEntity::deserialize, Params::UseEntity)(input),
+                        0x0ei32 => map(PacketGenerateStructure::deserialize, Params::GenerateStructure)(input),
+                        0x0fi32 => map(PacketKeepAlive::deserialize, Params::KeepAlive)(input),
+                        0x10i32 => map(PacketLockDifficulty::deserialize, Params::LockDifficulty)(input),
+                        0x11i32 => map(PacketPosition::deserialize, Params::Position)(input),
+                        0x12i32 => map(PacketPositionLook::deserialize, Params::PositionLook)(input),
+                        0x13i32 => map(PacketLook::deserialize, Params::Look)(input),
+                        0x14i32 => map(PacketFlying::deserialize, Params::Flying)(input),
+                        0x15i32 => map(PacketVehicleMove::deserialize, Params::VehicleMove)(input),
+                        0x16i32 => map(PacketSteerBoat::deserialize, Params::SteerBoat)(input),
+                        0x17i32 => map(PacketPickItem::deserialize, Params::PickItem)(input),
+                        0x18i32 => map(PacketCraftRecipeRequest::deserialize, Params::CraftRecipeRequest)(input),
+                        0x19i32 => map(PacketAbilities::deserialize, Params::Abilities)(input),
+                        0x1ai32 => map(PacketBlockDig::deserialize, Params::BlockDig)(input),
+                        0x1bi32 => map(PacketEntityAction::deserialize, Params::EntityAction)(input),
+                        0x1ci32 => map(PacketSteerVehicle::deserialize, Params::SteerVehicle)(input),
+                        0x1di32 => map(PacketPong::deserialize, Params::Pong)(input),
+                        0x1ei32 => map(PacketRecipeBook::deserialize, Params::RecipeBook)(input),
+                        0x1fi32 => map(PacketDisplayedRecipe::deserialize, Params::DisplayedRecipe)(input),
+                        0x20i32 => map(PacketNameItem::deserialize, Params::NameItem)(input),
+                        0x21i32 => map(PacketResourcePackReceive::deserialize, Params::ResourcePackReceive)(input),
+                        0x22i32 => map(PacketAdvancementTab::deserialize, Params::AdvancementTab)(input),
+                        0x23i32 => map(PacketSelectTrade::deserialize, Params::SelectTrade)(input),
+                        0x24i32 => map(PacketSetBeaconEffect::deserialize, Params::SetBeaconEffect)(input),
+                        0x25i32 => map(PacketHeldItemSlot::deserialize, Params::HeldItemSlot)(input),
+                        0x26i32 => map(PacketUpdateCommandBlock::deserialize, Params::UpdateCommandBlock)(input),
+                        0x27i32 => map(PacketUpdateCommandBlockMinecart::deserialize, Params::UpdateCommandBlockMinecart)(input),
+                        0x28i32 => map(PacketSetCreativeSlot::deserialize, Params::SetCreativeSlot)(input),
+                        0x29i32 => map(PacketUpdateJigsawBlock::deserialize, Params::UpdateJigsawBlock)(input),
+                        0x2ai32 => map(PacketUpdateStructureBlock::deserialize, Params::UpdateStructureBlock)(input),
+                        0x2bi32 => map(PacketUpdateSign::deserialize, Params::UpdateSign)(input),
+                        0x2ci32 => map(PacketArmAnimation::deserialize, Params::ArmAnimation)(input),
+                        0x2di32 => map(PacketSpectate::deserialize, Params::Spectate)(input),
+                        0x2ei32 => map(PacketBlockPlace::deserialize, Params::BlockPlace)(input),
+                        0x2fi32 => map(PacketUseItem::deserialize, Params::UseItem)(input),
                         _ => Ok((input, Params::Default)),
                     })(input)?;
                     Ok((input, ToServer { name: self_name, params: self_params }))

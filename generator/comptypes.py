@@ -148,34 +148,32 @@ class Switch(IType):
         discriminant: Optional[str]
         name: str
         value: Optional[IType]
-        parent: 'Switch'
-        def __init__(self, discriminant: Optional[str], name: str, value: Optional[IType], parent: 'Switch'):
+        def __init__(self, discriminant: Optional[str], name: str, value: Optional[IType]):
             self.discriminant = discriminant
             self.name = name
             self.value = value if value and not is_void(value) else None
-            self.parent = parent
         def is_empty(self) -> bool:
             return self.value is None
         def variant(self, item: str) -> str:
             return self.name + ("" if self.is_empty() else f"({item})")
-        def tagged(self, item: str) -> str:
-            return f"{self.parent.ty_name()}::{self.variant(item)}"
+        def tagged(self, item: str, parent: 'Switch') -> str:
+            return f"{parent.ty_name()}::{self.variant(item)}"
         def definition(self) -> str:
             return self.variant(None if self.is_empty() else self.value.name())
-        def full_name(self) -> str:
-            return f"{self.parent.ty_name()}::{self.name}"
-        def de(self, previous: List[Tuple[str, IType]]) -> str:
-            arm = f"map({self.value.emit_de(previous)}, {self.full_name()})(input)" if self.value else f"Ok((input, {self.full_name()}))"
-            pattern = f'"{self.discriminant}"' if self.discriminant else "_"
+        def full_name(self, parent: 'Switch') -> str:
+            return f"{parent.ty_name()}::{self.name}"
+        def de(self, previous: List[Tuple[str, IType]], parent: 'Switch') -> str:
+            arm = f"map({self.value.emit_de(previous)}, {self.full_name(parent)})(input)" if self.value else f"Ok((input, {self.full_name(parent)}))"
+            pattern = f'{literal_of(parent.dty).lit.format(self.discriminant)}' if self.discriminant else "_"
             return f"{pattern} => {arm}"
-        def ser(self) -> str:
-            pattern = self.tagged('val')
+        def ser(self, parent: 'Switch') -> str:
+            pattern = self.tagged('val', parent)
             arm = f"{valued_ser(self.value, 'val')}" if self.value else "w"
             return f"{pattern} => {arm}"
-        def disc(self) -> str:
+        def disc(self, parent: 'Switch') -> str:
             if not self.discriminant:
-                return f"{self.parent.dty.ty_name()}::default()"
-            return self.parent.dty.make_literal(self.discriminant)
+                return f"{parent.dty.ty_name()}::default()"
+            return parent.dty.make_literal(self.discriminant)
             
     fields: List[Field]
     dty: IType | None # filled in during an optimizer pass
@@ -199,7 +197,7 @@ class Switch(IType):
                 match self {{
                     {
                         ''.join(
-                            [f'{a.tagged("_")} => {"todo!()" if not a.discriminant else (f"{q}{a.discriminant}{q}" if literal_of(self.dty).inner == "&str" else a.discriminant)}, ' for a in self.fields]
+                            [f'{a.tagged("_", self)} => {"todo!()" if not a.discriminant else (f"{q}{a.discriminant}{q}" if literal_of(self.dty).inner == "&str" else a.discriminant)}, ' for a in self.fields]
                         )
                     }
                 }}
@@ -227,9 +225,9 @@ class Switch(IType):
                 if seg_ty.discriminant_level() == 0:
                     separator = "."
         compare_to = prev[-1][0]
-        m = f'match &format!("{{}}", {compare_to})[..] {{\n'
+        m = f'match {literal_of(self.dty).unwrap.format(compare_to)} {{\n'
         arms = "".join(
-            [f"{a.de(previous + [(f'{previous[-1][0]}_{a.name}', a.value)])}, \n" for a in self.fields]
+            [f"{a.de(previous + [(f'{previous[-1][0]}_{a.name}', a.value)], self)}, \n" for a in self.fields]
         )
         return f"|input| {{ {m}{arms} }} }}"
         
@@ -239,7 +237,7 @@ class Switch(IType):
 
     def true_ser(self, val) -> str:
         arms = "".join(
-            [f"{a.ser()}, " for a in self.fields]
+            [f"{a.ser(self)}, " for a in self.fields]
         )
         x = f"""
         let w = match &{val} {{ {arms} }};
@@ -279,8 +277,8 @@ class Switch(IType):
             params["compareTo"],
             []
         )
-        default = Switch.Field(None, "Default", ctx.parse_type(params["default"], "Default"),s)
-        s.fields = [Switch.Field(*a, s) for a in fields] + [default]
+        default = Switch.Field(None, "Default", ctx.parse_type(params["default"], "Default"))
+        s.fields = [Switch.Field(*a) for a in fields] + [default]
 
         return s
 
