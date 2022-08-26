@@ -1,6 +1,9 @@
 #![feature(type_name_of_val)]
 #![allow(dead_code)]
 #![allow(unused_imports)]
+#![allow(clippy::needless_borrow)]
+#![allow(clippy::redundant_closure_call)]
+#![allow(clippy::let_and_return)]
 mod test;
 
 use std::fs::read_to_string;

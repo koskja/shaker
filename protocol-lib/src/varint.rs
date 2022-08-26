@@ -16,11 +16,11 @@ impl<'a, T: PrimInt + From<u8>> Packet<'a> for VInt<T> {
             bottom_byte &= 0x7F;
             val = val.unsigned_shr(7);
             if val.is_zero() {
-                w.write(&[bottom_byte])?;
+                w.write_all(&[bottom_byte])?;
                 return Ok(w);
             }
             bottom_byte |= 0x80;
-            w.write(&[bottom_byte])?;
+            w.write_all(&[bottom_byte])?;
         }
     }
 
@@ -44,10 +44,10 @@ impl<'a, T: PrimInt + From<u8>> Packet<'a> for VInt<T> {
     }
 }
 impl<T: PrimInt + From<u8>> VInt<T> {
-    pub fn deserialize_self<'a>(input: &'a [u8]) -> IResult<&'a [u8], T> {
+    pub fn deserialize_self(input: &[u8]) -> IResult<&[u8], T> {
         Self::deserialize(input).map(|(i, this)| (i, this.0))
     }
-    pub fn deserialize_prim<'a, U: num_traits::NumCast>(input: &'a [u8]) -> IResult<&'a [u8], U> {
+    pub fn deserialize_prim<U: num_traits::NumCast>(input: &[u8]) -> IResult<&[u8], U> {
         Self::deserialize(input).map(|(i, this)| (i, U::from(this.0).unwrap()))
     }
 }

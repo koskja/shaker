@@ -71,10 +71,10 @@ fn l_path(t: &syn::Path, out: &mut Vec<Lifetime>) {
             }
             syn::PathArguments::Parenthesized(x) => {
                 if let syn::ReturnType::Type(_, t) = &x.output {
-                    l_ty(&t, out)
+                    l_ty(t, out)
                 }
                 for i in &x.inputs {
-                    l_ty(&i, out)
+                    l_ty(i, out)
                 }
             }
         }

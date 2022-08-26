@@ -33,6 +33,7 @@ impl<'t: 'a, 'a, const MAX: usize> Packet<'t> for LimitedSlice<'a, MAX> {
         )(w)
     }
 
+    #[allow(clippy::redundant_closure)]
     fn deserialize(input: &'t [u8]) -> IResult<&'t [u8], Self> {
         nom::combinator::map(
             nom::multi::length_data(nom::combinator::verify(
@@ -79,7 +80,7 @@ impl<'a> Packet<'a> for Bool {
 pub struct PrefixedBuffer<'a, T>(pub &'a [u8], pub PhantomData<T>);
 impl<'t: 'a, 'a, T: Packet<'t> + PrimInt> Packet<'t> for PrefixedBuffer<'a, T> {
     fn serialize<W: Write>(&self, w: WriteContext<W>) -> GenResult<W> {
-        let length = <T as NumCast>::from(self.0.len()).ok_or_else(|| GenError::CustomError(0))?;
+        let length = <T as NumCast>::from(self.0.len()).ok_or(GenError::CustomError(0))?;
         let w = length.serialize(w)?;
         cookie_factory::combinator::slice(self.0)(w)
     }
@@ -121,7 +122,7 @@ impl<'a, T> Display for PrefixedString<'a, T> {
 pub struct PrefixedArray<T, U>(pub Vec<T>, pub PhantomData<U>);
 impl<'t, T: Packet<'t>, U: Packet<'t> + PrimInt> Packet<'t> for PrefixedArray<T, U> {
     fn serialize<W: Write>(&self, w: WriteContext<W>) -> GenResult<W> {
-        let length = <U as NumCast>::from(self.0.len()).ok_or_else(|| GenError::CustomError(0))?;
+        let length = <U as NumCast>::from(self.0.len()).ok_or(GenError::CustomError(0))?;
         let mut w = length.serialize(w)?;
         w = self.serialize_ext(w)?;
         Ok(w)
@@ -136,12 +137,12 @@ impl<'t, T: Packet<'t>, U: Packet<'t> + PrimInt> Packet<'t> for PrefixedArray<T,
 }
 impl<'t, T: Packet<'t>, U: Packet<'t> + PrimInt> PrefixedArray<T, U> {
     pub fn deserialize_ext(input: &'t [u8], size: U) -> IResult<&'t [u8], Self> {
-        let size = size
-            .to_usize()
-            .ok_or(nom::Err::Error(nom::error::Error::new(
+        let size = size.to_usize().ok_or_else(|| {
+            nom::Err::Error(nom::error::Error::new(
                 input,
                 nom::error::ErrorKind::TooLarge,
-            )))?;
+            ))
+        })?;
         map(count(T::deserialize, size), |x| Self(x, PhantomData))(input)
     }
     pub fn serialize_ext<W: Write>(&self, mut w: WriteContext<W>) -> GenResult<W> {

@@ -10,10 +10,7 @@ use std::collections::HashSet;
 use lifetime::get_type_lifetimes;
 use proc_macro2::TokenStream;
 use quote::{ToTokens, __private::Literal};
-use syn::{
-    parse::Parser, punctuated::Punctuated, ExprLit, Lifetime, MetaList,
-    NestedMeta,
-};
+use syn::{parse::Parser, punctuated::Punctuated, ExprLit, Lifetime, MetaList, NestedMeta};
 
 /// Derives a `Packet` implementation for a given struct.
 /// The struct is represented as a heterogenous list of its fields, and the `Packet` impl is deferred to each of their respective impls.
@@ -63,7 +60,7 @@ fn impl_packet(ast: &syn::DeriveInput) -> TokenStream {
                     .collect(),
                 syn::Fields::Unit => todo!(),
             };
-            if fields.len() == 0 {
+            if fields.is_empty() {
                 return quote! {
                 impl #impl_generics Packet<'_t> for #name #type_generics #where_clause {
                     fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -75,7 +72,7 @@ fn impl_packet(ast: &syn::DeriveInput) -> TokenStream {
                     }
                 }
 
-                }
+                };
             }
             let f_names: Vec<_> = fields.iter().map(|(x, _)| x).collect();
             let f_types: Vec<_> = fields.iter().map(|(_, x)| x).collect();
@@ -97,7 +94,6 @@ fn impl_packet(ast: &syn::DeriveInput) -> TokenStream {
                     }
                 }
             }
-            .into()
         }
         syn::Data::Enum(e) => {
             let start_expr = syn::Expr::Lit(ExprLit {
