@@ -40,39 +40,18 @@ pub struct RTrue {
     item_count: i8,
     nbt_data: OptionalNbt,
 }
-pub enum Ident0 {
-    RFalse,
-    RTrue(RTrue),
-    Default,
-}
-
-impl Ident0 {
-    pub fn discriminant(&self) -> bool {
-        match self {
-            Ident0::RFalse => false,
-            Ident0::RTrue(_) => true,
-            Ident0::Default => todo!(),
-        }
-    }
-    pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-        let w = match &self {
-            Ident0::RFalse => w,
-            Ident0::RTrue(val) => RTrue::serialize(&val, w)?,
-            Ident0::Default => w,
-        };
-
-        Ok(w)
-    }
-}
-
 pub struct Slot {
     present: bool,
-    ident0: Ident0,
+    ident0: Option<RTrue>,
 }
 impl<'t> Packet<'t> for Slot {
     fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
         let w = bool::serialize(&self.present, w)?;
-        let w = Ident0::serialize(&self.ident0, w)?;
+
+        let w = match &self.ident0 {
+            Some(val) => RTrue::serialize(&val, w)?,
+            None => w,
+        };
 
         Ok(w)
     }
@@ -81,9 +60,8 @@ impl<'t> Packet<'t> for Slot {
         (|input| {
             let (input, self_present) = (bool::deserialize)(input)?;
             let (input, self_ident0) = (|input| match self_present {
-                false => Ok((input, Ident0::RFalse)),
-                true => map(RTrue::deserialize, Ident0::RTrue)(input),
-                _ => Ok((input, Ident0::Default)),
+                true => map(RTrue::deserialize, Some)(input),
+                _ => Ok((input, None)),
             })(input)?;
             Ok((
                 input,
@@ -2173,57 +2151,14 @@ pub mod play {
             nodes: VarArray<CommandNode<'a>>,
             root_index: VarInt,
         }
-        pub enum EntityId {
-            True(VarInt),
-            Default,
-        }
-
-        impl EntityId {
-            pub fn discriminant(&self) -> bool {
-                match self {
-                    EntityId::True(_) => true,
-                    EntityId::Default => todo!(),
-                }
-            }
-            pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = match &self {
-                    EntityId::True(val) => VarInt::serialize(&val, w)?,
-                    EntityId::Default => w,
-                };
-
-                Ok(w)
-            }
-        }
-        pub enum EntityFeetEyes<'a> {
-            True(VarString<'a>),
-            Default,
-        }
-
-        impl<'a> EntityFeetEyes<'a> {
-            pub fn discriminant(&self) -> bool {
-                match self {
-                    EntityFeetEyes::True(_) => true,
-                    EntityFeetEyes::Default => todo!(),
-                }
-            }
-            pub fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
-                let w = match &self {
-                    EntityFeetEyes::True(val) => PrefixedString::<'a, VarInt>::serialize(&val, w)?,
-                    EntityFeetEyes::Default => w,
-                };
-
-                Ok(w)
-            }
-        }
-
         pub struct PacketFacePlayer<'a> {
             feet_eyes: VarInt,
             x: f64,
             y: f64,
             z: f64,
             is_entity: bool,
-            entity_id: EntityId,
-            entity_feet_eyes: EntityFeetEyes<'a>,
+            entity_id: Option<VarInt>,
+            entity_feet_eyes: Option<VarString<'a>>,
         }
         impl<'t: 'a, 'a> Packet<'t> for PacketFacePlayer<'a> {
             fn serialize<W: std::io::Write>(&self, w: cookie_factory::WriteContext<W>) -> cookie_factory::GenResult<W> {
@@ -2232,8 +2167,16 @@ pub mod play {
                 let w = f64::serialize(&self.y, w)?;
                 let w = f64::serialize(&self.z, w)?;
                 let w = bool::serialize(&self.is_entity, w)?;
-                let w = EntityId::serialize(&self.entity_id, w)?;
-                let w = EntityFeetEyes::serialize(&self.entity_feet_eyes, w)?;
+
+                let w = match &self.entity_id {
+                    Some(val) => VarInt::serialize(&val, w)?,
+                    None => w,
+                };
+
+                let w = match &self.entity_feet_eyes {
+                    Some(val) => PrefixedString::<'a, VarInt>::serialize(&val, w)?,
+                    None => w,
+                };
 
                 Ok(w)
             }
@@ -2246,12 +2189,12 @@ pub mod play {
                     let (input, self_z) = (f64::deserialize)(input)?;
                     let (input, self_is_entity) = (bool::deserialize)(input)?;
                     let (input, self_entity_id) = (|input| match self_is_entity {
-                        true => map(VarInt::deserialize, EntityId::True)(input),
-                        _ => Ok((input, EntityId::Default)),
+                        true => map(VarInt::deserialize, Some)(input),
+                        _ => Ok((input, None)),
                     })(input)?;
                     let (input, self_entity_feet_eyes) = (|input| match self_is_entity {
-                        true => map(PrefixedString::<'a, VarInt>::deserialize, EntityFeetEyes::True)(input),
-                        _ => Ok((input, EntityFeetEyes::Default)),
+                        true => map(PrefixedString::<'a, VarInt>::deserialize, Some)(input),
+                        _ => Ok((input, None)),
                     })(input)?;
                     Ok((
                         input,

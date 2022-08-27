@@ -266,12 +266,6 @@ class Switch(IType):
             n = make_camelcase(vn) if d.isdigit() else make_camelcase(vn).replace(name, "")
             return (d, n, ty2)
         fields = [make_variant(a[0], a[1]) for a in params["fields"].items()]
-        # fv = list(fields.values())
-        # if len(fv) == 2:
-        #    if (isinstance(fv[0], NativeType) and fv[0].void):
-        #        return NativeType(f'Option<{fv[1].name()}>')
-        #    elif (isinstance(fv[1], NativeType) and fv[1].void):
-        #        return NativeType(f'Option<{fv[0].name()}>')
         s = Switch(
             name,
             params["compareTo"],
@@ -283,7 +277,6 @@ class Switch(IType):
         return s
 
 
-# class DelegatedOption: `Switch` with `Some`/`None` variants, depending on an arbitrary field
 
 
 class Bitfield(IType):
